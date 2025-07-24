@@ -5,7 +5,7 @@
   },
   "navigation": {
     "home": "Home",
-    "calculator": "Loans", 
+    "calculator": "Loans",
     "how_it_works": "How it Works",
     "contact": "Contact"
   },
@@ -41,7 +41,7 @@
         "description": "Enter your details and choose the desired amount and term"
       },
       "step2": {
-        "title": "Get approval", 
+        "title": "Get approval",
         "description": "Automatic verification and response within minutes"
       },
       "step3": {
@@ -130,7 +130,7 @@
     "title": "Identity Verification",
     "steps": {
       "personal": "Personal Data",
-      "documents": "Documents", 
+      "documents": "Documents",
       "face": "Verification"
     },
     "personal_info": {
@@ -156,7 +156,7 @@
       "id_card": "ID Card",
       "id_description": "Upload a photo of both sides of your ID card",
       "front_side": "Front side",
-      "back_side": "Back side", 
+      "back_side": "Back side",
       "upload_text": "Click or drop file here",
       "camera_front": "Use camera for front side",
       "camera_back": "Use camera for back side",
@@ -207,7 +207,7 @@
     "highlights": {
       "housing": "Housing loans",
       "auto": "Auto loans",
-      "education": "Education loans", 
+      "education": "Education loans",
       "business": "Business loans"
     },
     "big_stat": "BGN approved loans",
@@ -221,9 +221,9 @@
     "title": "Identity Verification",
     "subtitle": "Complete the verification form to finalize your loan application",
     "steps": {
-      "personal_data": "Personal Data",
-      "documents": "Documents",
-      "verification": "Verification"
+      "personal_info": "Personal Info",
+      "photo_capture": "Photo Capture",
+      "complete": "Complete"
     },
     "step1": {
       "title": "Enter your personal information",
@@ -245,62 +245,63 @@
       "continue": "Continue"
     },
     "step2": {
-      "title": "Upload your documents",
-      "id_card": "ID Card",
-      "id_card_description": "Upload photos of both sides of your ID card",
-      "front_side": "Front Side",
-      "back_side": "Back Side",
-      "upload_text": "Click or drop file here",
-      "camera_front": "Use camera for front side",
-      "camera_back": "Use camera for back side",
-      "income_document": "Income Document",
-      "income_description": "Employment record, contract, tax statement or other document",
+      "title": "Capture Required Photos",
+      "description": "Follow the guided process to capture all required photos using your camera",
+      "photo1": "ID Front",
+      "photo2": "ID Back",
+      "photo3": "Selfie with ID Front",
+      "photo4": "Selfie with ID Back",
+      "photo5": "Selfie Only",
+      "instructions": {
+        "id_front_title": "Capture Front Side of ID",
+        "id_front_text": "Position your ID card's front side clearly in the frame and capture a photo",
+        "id_back_title": "Capture Back Side of ID",
+        "id_back_text": "Position your ID card's back side clearly in the frame and capture a photo",
+        "selfie_id_front_title": "Take Selfie with ID Front",
+        "selfie_id_front_text": "Hold your ID card's front side next to your face and take a selfie",
+        "selfie_id_back_title": "Take Selfie with ID Back",
+        "selfie_id_back_text": "Hold your ID card's back side next to your face and take a selfie",
+        "selfie_only_title": "Take Your Selfie",
+        "selfie_only_text": "Look directly at the camera and take a clear selfie"
+      },
+      "tips": {
+        "lighting": "Ensure good lighting",
+        "steady": "Keep the camera steady",
+        "readable": "Make sure text is readable"
+      },
+      "start_capture": "Tap to start camera",
+      "start_camera": "Start Camera",
+      "capture_photo": "Capture Photo",
+      "retake": "Retake",
+      "next_photo": "Next Photo",
       "back": "Back",
       "continue": "Continue"
     },
     "step3": {
-      "title": "Face Verification",
-      "description": "Take a selfie to compare with the face from your ID card",
-      "info": {
-        "lighting": "Ensure good lighting",
-        "look_camera": "Look directly at the camera",
-        "remove_accessories": "Remove hats and glasses"
-      },
-      "placeholder": "Click to start camera",
-      "start_camera": "Start Camera",
-      "take_photo": "Take Photo",
-      "upload_photo": "Upload Photo",
-      "back": "Back",
-      "submit": "Submit Application"
-    },
-    "camera_modal": {
-      "title": "Document Capture",
-      "capture": "Capture",
-      "cancel": "Cancel",
-      "close": "Close"
-    },
-    "success": {
-      "title": "Application submitted successfully!",
-      "thank_you": "Thank you for your trust! You will receive a response within 15-30 minutes.",
-      "next_steps": "Next steps:",
+      "title": "All Set!",
+      "description": "Your verification photos have been captured successfully. We're now processing your application.",
+      "summary_title": "Captured Photos:",
+      "next_steps": "What happens next:",
       "step_list": {
-        "step1": "We will review your documents",
-        "step2": "We will send you an email with the result",
-        "step3": "Upon approval - funds will be transferred"
+        "step1": "We will review your photos and information",
+        "step2": "You'll receive an email with the decision",
+        "step3": "Upon approval, funds will be transferred"
       },
-      "contact_info": "For questions contact us:",
-      "back_home": "Back to Home"
+      "contact_info": "For questions, contact us:",
+      "submit": "Submit Application",
+      "back_home": "Back to Home",
+      "success_title": "Application Submitted Successfully!",
+      "success_message": "Thank you for your trust! You will receive a response within 15-30 minutes."
     },
     "validation": {
       "fill_required": "Please fill in all required fields.",
       "egn_invalid": "Personal ID Number must be 10 digits.",
-      "id_cards_required": "Please upload photos of both sides of your ID card.",
-      "income_doc_required": "Please upload an income document.",
-      "face_photo_required": "Please take a selfie for face verification.",
+      "photos_required": "Please capture all required photos.",
       "file_invalid": "Please select a valid file",
       "file_too_large": "File is too large. Maximum size: 10MB.",
-      "camera_error": "Cannot access camera. Please use the file upload option."
+      "camera_error": "Cannot access camera. Please check camera permissions.",
+      "submission_error": "There was an error submitting your application. Please try again."
     },
-    "uploading": "Uploading..."
+    "uploading": "Submitting..."
   }
-} 
+}
