@@ -8,6 +8,7 @@ const https = require("https");
 const fs = require("fs");
 const os = require("os");
 const AWS = require("aws-sdk");
+const multer = require("multer");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,14 +32,34 @@ app.use(express.static("."));
 let client;
 let db;
 
-// AWS Rekognition configuration
+// AWS configuration with hardcoded credentials for verification bucket
 AWS.config.update({
   region: process.env.AWS_REGION || "us-east-1",
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  accessKeyId: "AKIAWR2VGD2QWZOJIGPD",
+  secretAccessKey: "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",
 });
 
 const rekognition = new AWS.Rekognition();
+const s3 = new AWS.S3();
+
+// S3 bucket configuration for session recordings
+const SESSION_RECORDING_BUCKET = "verification-form-bucket";
+
+// Multer configuration for handling video uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB limit for video files
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept video files
+    if (file.mimetype.startsWith("video/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only video files are allowed"), false);
+    }
+  },
+});
 
 // Initialize MongoDB connection
 async function initializeDatabase() {
@@ -359,6 +380,8 @@ app.post("/api/submit-verification", async (req, res) => {
         userAgent: req.get("User-Agent"),
         status: "pending",
         createdAt: new Date(),
+        sessionRecordings: [], // Initialize empty array for recordings
+        ...req.body.metadata, // Include any additional metadata from frontend
       },
     };
 
@@ -440,6 +463,224 @@ app.get("/api/health", (req, res) => {
     database: db ? "connected" : "disconnected",
   });
 });
+
+// Debug endpoint to check verification data
+app.get("/api/debug/verification/:sessionId", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    if (!db) {
+      return res.status(500).json({
+        success: false,
+        error: "Database not connected",
+      });
+    }
+
+    const collection = db.collection(COLLECTION_NAME);
+    const verification = await collection.findOne(
+      { sessionId },
+      {
+        projection: {
+          "photos.idFront.data": 0,
+          "photos.idBack.data": 0,
+          "photos.selfieWithIdFront.data": 0,
+          "photos.selfieWithIdBack.data": 0,
+          "photos.selfieOnly.data": 0,
+        },
+      }
+    );
+
+    if (!verification) {
+      return res.status(404).json({
+        success: false,
+        error: "Verification not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        sessionId: verification.sessionId,
+        metadata: verification.metadata,
+        hasSessionRecordings: !!(
+          verification.metadata && verification.metadata.sessionRecordings
+        ),
+        sessionRecordingsCount:
+          verification.metadata?.sessionRecordings?.length || 0,
+        sessionRecordings: verification.metadata?.sessionRecordings || [],
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error in debug endpoint:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Debug endpoint to list all verifications
+app.get("/api/debug/verifications", async (req, res) => {
+  try {
+    if (!db) {
+      return res.status(500).json({
+        success: false,
+        error: "Database not connected",
+      });
+    }
+
+    const collection = db.collection(COLLECTION_NAME);
+    const verifications = await collection
+      .find(
+        {},
+        {
+          projection: {
+            sessionId: 1,
+            "personalInfo.firstName": 1,
+            "personalInfo.lastName": 1,
+            "personalInfo.email": 1,
+            "metadata.submissionDate": 1,
+            "metadata.sessionRecordings": 1,
+            "metadata.status": 1,
+          },
+        }
+      )
+      .sort({ "metadata.submissionDate": -1 })
+      .limit(10)
+      .toArray();
+
+    const summary = verifications.map((v) => ({
+      sessionId: v.sessionId,
+      name: `${v.personalInfo?.firstName || ""} ${
+        v.personalInfo?.lastName || ""
+      }`.trim(),
+      email: v.personalInfo?.email,
+      submissionDate: v.metadata?.submissionDate,
+      status: v.metadata?.status || "unknown",
+      hasRecordings: !!(
+        v.metadata?.sessionRecordings && v.metadata.sessionRecordings.length > 0
+      ),
+      recordingCount: v.metadata?.sessionRecordings?.length || 0,
+      recordings:
+        v.metadata?.sessionRecordings?.map((r) => ({
+          camera: r.cameraType,
+          s3Location: r.s3Location,
+          fileSize: r.fileSize,
+        })) || [],
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        total: verifications.length,
+        verifications: summary,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error in debug verifications endpoint:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// API endpoint to upload session recordings to S3
+app.post(
+  "/api/upload-session-recording",
+  upload.single("video"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: "No video file provided",
+        });
+      }
+
+      const { sessionId, cameraType, duration, size } = req.body;
+
+      if (!sessionId || !cameraType) {
+        return res.status(400).json({
+          success: false,
+          error: "SessionId and cameraType are required",
+        });
+      }
+
+      // Generate unique filename
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const filename = `${sessionId}/${cameraType}_${timestamp}.webm`;
+
+      console.log(
+        `📹 Uploading session recording: ${filename} (${req.file.size} bytes)`
+      );
+
+      // Upload to S3
+      const uploadParams = {
+        Bucket: SESSION_RECORDING_BUCKET,
+        Key: filename,
+        Body: req.file.buffer,
+        ContentType: req.file.mimetype,
+        Metadata: {
+          sessionId: sessionId,
+          cameraType: cameraType,
+          duration: duration || "0",
+          originalSize: size || req.file.size.toString(),
+          uploadedAt: new Date().toISOString(),
+        },
+      };
+
+      const s3Result = await s3.upload(uploadParams).promise();
+
+      console.log(`✅ Session recording uploaded to S3: ${s3Result.Location}`);
+
+      // Update MongoDB with recording metadata
+      if (db) {
+        try {
+          const collection = db.collection(COLLECTION_NAME);
+          await collection.updateOne(
+            { sessionId },
+            {
+              $push: {
+                "metadata.sessionRecordings": {
+                  cameraType: cameraType,
+                  s3Location: s3Result.Location,
+                  s3Key: s3Result.Key,
+                  uploadedAt: new Date(),
+                  duration: parseInt(duration) || 0,
+                  fileSize: req.file.size,
+                },
+              },
+            }
+          );
+          console.log(
+            `📝 Recording metadata saved to MongoDB for session: ${sessionId}`
+          );
+        } catch (dbError) {
+          console.warn(
+            "⚠️ Failed to update MongoDB with recording metadata:",
+            dbError
+          );
+        }
+      }
+
+      res.json({
+        success: true,
+        message: "Session recording uploaded successfully",
+        s3Location: s3Result.Location,
+        filename: filename,
+        size: req.file.size,
+      });
+    } catch (error) {
+      console.error("❌ Error uploading session recording:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to upload session recording",
+        details: error.message,
+      });
+    }
+  }
+);
 
 // Serve the main verification page
 app.get("/", (req, res) => {

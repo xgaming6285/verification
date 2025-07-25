@@ -8,6 +8,210 @@ let translationManager = null;
 let isVerificationInProgress = false;
 let verificationPassed = false;
 
+// Video Recording Manager Class for Session Recording
+class VideoRecordingManager {
+  constructor() {
+    this.isRecording = false;
+    this.mediaRecorders = [];
+    this.recordedChunks = [];
+    this.sessionId = null;
+    this.startTime = null;
+    this.streams = [];
+  }
+
+  async initializeRecording() {
+    try {
+      this.sessionId =
+        localStorage.getItem("kyc_session_id") || this.generateSessionId();
+      localStorage.setItem("kyc_session_id", this.sessionId);
+
+      console.log("🎥 Initializing session recording...", this.sessionId);
+
+      // Try to get both front and back camera streams
+      const frontCameraStream = await this.getCameraStream("user");
+      const backCameraStream = await this.getCameraStream("environment");
+
+      if (frontCameraStream) {
+        this.streams.push({ type: "front", stream: frontCameraStream });
+      }
+
+      if (backCameraStream) {
+        this.streams.push({ type: "back", stream: backCameraStream });
+      }
+
+      console.log(
+        `📹 Initialized ${this.streams.length} camera streams for recording`
+      );
+      return true;
+    } catch (error) {
+      console.error("❌ Failed to initialize recording:", error);
+      return false;
+    }
+  }
+
+  async getCameraStream(facingMode) {
+    try {
+      const constraints = {
+        video: {
+          facingMode: facingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: true, // Include audio for better verification
+      };
+
+      return await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (error) {
+      console.warn(`⚠️ Could not access ${facingMode} camera:`, error);
+      return null;
+    }
+  }
+
+  generateSessionId() {
+    return "rec_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+  }
+
+  startRecording() {
+    if (this.isRecording || this.streams.length === 0) {
+      return false;
+    }
+
+    this.isRecording = true;
+    this.startTime = new Date();
+    this.recordedChunks = [];
+    this.mediaRecorders = [];
+
+    console.log("🔴 Starting session recording...");
+
+    this.streams.forEach((streamInfo, index) => {
+      try {
+        const mediaRecorder = new MediaRecorder(streamInfo.stream, {
+          mimeType: "video/webm;codecs=vp9,opus",
+        });
+
+        const chunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            chunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: "video/webm" });
+          this.recordedChunks.push({
+            type: streamInfo.type,
+            blob: blob,
+            size: blob.size,
+            duration: Date.now() - this.startTime.getTime(),
+          });
+          console.log(
+            `📹 ${streamInfo.type} camera recording stopped:`,
+            blob.size,
+            "bytes"
+          );
+        };
+
+        mediaRecorder.start(1000); // Record in 1-second chunks
+        this.mediaRecorders.push(mediaRecorder);
+
+        console.log(`🎬 Started recording from ${streamInfo.type} camera`);
+      } catch (error) {
+        console.error(
+          `❌ Failed to start recording from ${streamInfo.type} camera:`,
+          error
+        );
+      }
+    });
+
+    return true;
+  }
+
+  stopRecording() {
+    if (!this.isRecording) {
+      return false;
+    }
+
+    this.isRecording = false;
+    console.log("⏹️ Stopping session recording...");
+
+    this.mediaRecorders.forEach((recorder) => {
+      if (recorder.state !== "inactive") {
+        recorder.stop();
+      }
+    });
+
+    // Stop all streams
+    this.streams.forEach((streamInfo) => {
+      streamInfo.stream.getTracks().forEach((track) => track.stop());
+    });
+
+    return true;
+  }
+
+  async uploadRecordings() {
+    if (this.recordedChunks.length === 0) {
+      console.warn("⚠️ No recordings to upload");
+      return [];
+    }
+
+    console.log("☁️ Uploading session recordings to S3...");
+
+    try {
+      const uploadPromises = this.recordedChunks.map(
+        async (recording, index) => {
+          const formData = new FormData();
+          const filename = `${this.sessionId}_${
+            recording.type
+          }_${Date.now()}.webm`;
+
+          formData.append("video", recording.blob, filename);
+          formData.append("sessionId", this.sessionId);
+          formData.append("cameraType", recording.type);
+          formData.append("duration", recording.duration);
+          formData.append("size", recording.size);
+
+          const response = await fetch("/api/upload-session-recording", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to upload ${recording.type} recording`);
+          }
+
+          const result = await response.json();
+
+          // Return enhanced result with recording metadata
+          return {
+            ...result,
+            cameraType: recording.type,
+            duration: recording.duration,
+            originalSize: recording.size,
+          };
+        }
+      );
+
+      const results = await Promise.all(uploadPromises);
+      console.log("✅ All session recordings uploaded successfully:", results);
+      return results;
+    } catch (error) {
+      console.error("❌ Failed to upload session recordings:", error);
+      return [];
+    }
+  }
+
+  cleanup() {
+    this.stopRecording();
+    this.recordedChunks = [];
+    this.mediaRecorders = [];
+    this.streams = [];
+  }
+}
+
+// Initialize the recording manager
+window.videoRecordingManager = new VideoRecordingManager();
+
 // Photo capture sequence configuration
 const PHOTO_SEQUENCE = [
   {
@@ -66,6 +270,30 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Set language to English by default
   if (translationManager.getCurrentLanguage() !== "en") {
     await translationManager.changeLanguage("en");
+  }
+
+  // Initialize session recording
+  try {
+    console.log("🎥 Initializing session recording system...");
+    const recordingInitialized =
+      await window.videoRecordingManager.initializeRecording();
+    if (recordingInitialized) {
+      console.log("✅ Session recording ready - starting background recording");
+      // Start recording immediately when page loads
+      const recordingStarted = window.videoRecordingManager.startRecording();
+      if (recordingStarted) {
+        console.log("🔴 Session recording active");
+      } else {
+        console.warn("⚠️ Failed to start session recording");
+      }
+    } else {
+      console.warn(
+        "⚠️ Session recording not available - continuing without recording"
+      );
+    }
+  } catch (error) {
+    console.error("❌ Failed to initialize session recording:", error);
+    console.log("📝 Verification will continue without session recording");
   }
 
   // Mobile Navigation Toggle
@@ -839,6 +1067,48 @@ async function submitApplication() {
   submitBtn.disabled = true;
 
   try {
+    // Stop session recording and upload videos first
+    let sessionRecordingData = [];
+    if (
+      window.videoRecordingManager &&
+      window.videoRecordingManager.isRecording
+    ) {
+      console.log("🎬 Finalizing session recording...");
+      submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Finalizing session recording...`;
+
+      window.videoRecordingManager.stopRecording();
+
+      // Wait a moment for recording to finalize
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Upload session recordings to S3
+      submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Uploading session recording...`;
+      const uploadResults =
+        await window.videoRecordingManager.uploadRecordings();
+
+      if (uploadResults && Array.isArray(uploadResults)) {
+        console.log(
+          "📹 Session recordings uploaded successfully:",
+          uploadResults
+        );
+        // Store the recording data to include in submission
+        sessionRecordingData = uploadResults.map((result) => ({
+          cameraType: result.cameraType || "unknown",
+          s3Location: result.s3Location,
+          s3Key: result.filename,
+          fileSize: result.size,
+          uploadedAt: new Date(),
+          duration: 0, // Will be updated by S3 upload endpoint
+        }));
+      }
+    }
+
+    // Update button for application submission
+    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t(
+      "verification.uploading",
+      "Submitting application..."
+    )}`;
+
     // Collect personal information
     const formData = new FormData(
       document.getElementById("personal-info-form")
@@ -876,12 +1146,52 @@ async function submitApplication() {
       photoHistory: historyData,
       submissionDate: new Date().toISOString(),
       sessionId: localStorage.getItem("kyc_session_id") || generateSessionId(),
+      metadata: {
+        userAgent: navigator.userAgent,
+        screenResolution: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language,
+        sessionRecorded: window.videoRecordingManager
+          ? window.videoRecordingManager.recordedChunks.length > 0
+          : false,
+        submittedAt: new Date().toISOString(),
+        sessionRecordings: sessionRecordingData, // Include recording data directly
+      },
     };
+
+    console.log("📝 Submitting verification with session recordings:", {
+      sessionId: submissionData.sessionId,
+      recordingCount: sessionRecordingData.length,
+      recordings: sessionRecordingData.map((r) => ({
+        camera: r.cameraType,
+        s3: r.s3Location,
+      })),
+    });
 
     // Submit to MongoDB
     const success = await submitToDatabase(submissionData);
 
     if (success) {
+      console.log("✅ Verification submitted successfully");
+
+      // Debug: Check what was actually stored
+      if (sessionRecordingData.length > 0) {
+        try {
+          const debugResponse = await fetch(
+            `/api/debug/verification/${submissionData.sessionId}`
+          );
+          const debugData = await debugResponse.json();
+          console.log("🔍 Debug - Stored verification data:", debugData);
+        } catch (debugError) {
+          console.warn("⚠️ Debug check failed:", debugError);
+        }
+      }
+
+      // Cleanup recording resources
+      if (window.videoRecordingManager) {
+        window.videoRecordingManager.cleanup();
+      }
+
       // Hide submit button and show back to home button
       submitBtn.style.display = "none";
       document.querySelector(".back-home-btn").style.display = "inline-flex";
@@ -993,13 +1303,30 @@ function stopAllStreams() {
 }
 
 // Handle page unload
-window.addEventListener("beforeunload", function () {
+window.addEventListener("beforeunload", function (event) {
   stopAllStreams();
   if (
     window.videoRecordingManager &&
     window.videoRecordingManager.isRecording
   ) {
+    console.log("🔚 Page unloading - stopping session recording");
     window.videoRecordingManager.stopRecording();
+
+    // Try to upload recordings before page closes (may not always work due to browser limitations)
+    try {
+      window.videoRecordingManager.uploadRecordings();
+    } catch (error) {
+      console.warn("⚠️ Could not upload recordings on page unload:", error);
+    }
+  }
+});
+
+// Handle page visibility change for mobile scenarios
+document.addEventListener("visibilitychange", function () {
+  if (document.hidden) {
+    console.log("📱 Page hidden - keeping recording active");
+  } else {
+    console.log("📱 Page visible - recording continues");
   }
 });
 
