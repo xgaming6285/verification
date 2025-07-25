@@ -51,18 +51,41 @@ class VideoRecordingManager {
 
   async getCameraStream(facingMode) {
     try {
+      // iOS-compatible constraints
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
       const constraints = {
         video: {
           facingMode: facingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: isIOS ? { ideal: 640, max: 1280 } : { ideal: 1280 },
+          height: isIOS ? { ideal: 480, max: 720 } : { ideal: 720 },
         },
         audio: true, // Include audio for better verification
       };
 
+      console.log(
+        `📱 Getting ${facingMode} camera stream for ${
+          isIOS ? "iOS" : "other"
+        } device`
+      );
       return await navigator.mediaDevices.getUserMedia(constraints);
     } catch (error) {
       console.warn(`⚠️ Could not access ${facingMode} camera:`, error);
+
+      // iOS fallback with simpler constraints
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        try {
+          console.log("🔄 Trying iOS fallback constraints...");
+          const fallbackConstraints = {
+            video: { facingMode: facingMode },
+            audio: true,
+          };
+          return await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+        } catch (fallbackError) {
+          console.warn("⚠️ iOS fallback also failed:", fallbackError);
+        }
+      }
+
       return null;
     }
   }
@@ -212,6 +235,42 @@ class VideoRecordingManager {
 // Initialize the recording manager
 window.videoRecordingManager = new VideoRecordingManager();
 
+// iOS Compatibility and Debug Functions
+window.iosDebugInfo = function () {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const videos = document.querySelectorAll("video");
+
+  console.log("📱 iOS Debug Information:");
+  console.log("- Device is iOS:", isIOS);
+  console.log("- Safari version:", navigator.userAgent);
+  console.log("- Video elements found:", videos.length);
+
+  videos.forEach((video, index) => {
+    console.log(`Video ${index + 1}:`, {
+      id: video.id,
+      hasPlaysinline: video.hasAttribute("playsinline"),
+      isMuted: video.muted,
+      readyState: video.readyState,
+      srcObject: !!video.srcObject,
+      style: video.style.display,
+    });
+  });
+
+  if (window.videoRecordingManager) {
+    console.log("Recording Manager:", {
+      isRecording: window.videoRecordingManager.isRecording,
+      streamsCount: window.videoRecordingManager.streams.length,
+      sessionId: window.videoRecordingManager.sessionId,
+    });
+  }
+
+  return {
+    isIOS,
+    videoCount: videos.length,
+    recordingActive: window.videoRecordingManager?.isRecording || false,
+  };
+};
+
 // Photo capture sequence configuration
 const PHOTO_SEQUENCE = [
   {
@@ -263,6 +322,9 @@ const PHOTO_SEQUENCE = [
 
 // Initialize translation system and setup
 document.addEventListener("DOMContentLoaded", async function () {
+  // Apply iOS camera fixes first
+  handleIOSCameraDisplay();
+
   // Initialize translation manager
   translationManager = new TranslationManager();
   await translationManager.init();
@@ -320,6 +382,68 @@ document.addEventListener("DOMContentLoaded", async function () {
     photoHistory[photo.id] = [];
   });
 });
+
+// Handle iOS-specific video and camera issues
+function handleIOSCameraDisplay() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  if (isIOS) {
+    console.log("📱 iOS device detected - applying compatibility fixes");
+
+    // Apply iOS fixes to all video elements
+    const videoElements = document.querySelectorAll("video");
+    videoElements.forEach((video) => {
+      video.setAttribute("playsinline", true);
+      video.setAttribute("webkit-playsinline", true);
+      video.muted = true;
+
+      // iOS video play fix
+      const originalPlay = video.play;
+      video.play = function () {
+        const playPromise = originalPlay.call(this);
+        if (playPromise !== undefined) {
+          return playPromise.catch((error) => {
+            console.warn("iOS video play failed, retrying:", error);
+            return new Promise((resolve) => {
+              setTimeout(() => {
+                originalPlay
+                  .call(this)
+                  .then(resolve)
+                  .catch(() => {
+                    console.warn("iOS video play retry also failed");
+                    resolve();
+                  });
+              }, 100);
+            });
+          });
+        }
+        return playPromise;
+      };
+    });
+
+    // Add iOS-specific CSS fixes
+    const style = document.createElement("style");
+    style.textContent = `
+      /* iOS video display fixes */
+      video {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+      }
+      
+      .camera-capture-area video {
+        object-fit: cover !important;
+        -webkit-object-fit: cover !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  return isIOS;
+}
+
+// Initialize iOS fixes in existing DOMContentLoaded event
 
 // Helper function to get translated text
 function t(key, defaultValue = "") {
@@ -600,20 +724,31 @@ function startCameraCapture() {
   // Create appropriate guide overlay
   createGuideOverlay(currentPhoto.guide);
 
-  // Camera constraints based on current photo
+  // Camera constraints based on current photo with iOS compatibility
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const constraints = {
     video: {
       facingMode: currentPhoto.camera,
-      width: { ideal: 1920 },
-      height: { ideal: 1080 },
+      width: isIOS ? { ideal: 640, max: 1920 } : { ideal: 1920 },
+      height: isIOS ? { ideal: 480, max: 1080 } : { ideal: 1080 },
     },
   };
+
+  console.log(
+    `📱 Starting camera capture for ${currentPhoto.name} on ${
+      isIOS ? "iOS" : "other"
+    } device`
+  );
 
   navigator.mediaDevices
     .getUserMedia(constraints)
     .then(function (stream) {
       currentStream = stream;
       video.srcObject = stream;
+
+      // Apply comprehensive iOS setup
+      setupVideoElementForIOS(video);
+
       video.style.display = "block";
       placeholder.style.display = "none";
       overlay.style.display = "block";
@@ -629,9 +764,14 @@ function startCameraCapture() {
         guide: currentPhoto.guide,
         buttonVisible: !captureBtn.classList.contains("hidden"),
         buttonDisplay: captureBtn.style.display,
+        isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
+        videoReady: video.readyState >= 2,
       });
 
-      video.play();
+      // Use enhanced iOS-compatible video play
+      playVideoSafely(video).then(() => {
+        console.log("✅ Video playing successfully");
+      });
     })
     .catch(function (error) {
       console.error("Error accessing camera:", error);
@@ -1339,3 +1479,62 @@ document.addEventListener("keydown", function (event) {
     }
   }
 });
+
+// Comprehensive video element setup for iOS compatibility
+function setupVideoElementForIOS(video) {
+  if (!video) return;
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  if (isIOS) {
+    video.setAttribute("playsinline", true);
+    video.setAttribute("webkit-playsinline", true);
+    video.muted = true;
+
+    // Add CSS for better iOS compatibility
+    video.style.webkitTransform = "translateZ(0)";
+    video.style.transform = "translateZ(0)";
+    video.style.webkitBackfaceVisibility = "hidden";
+    video.style.backfaceVisibility = "hidden";
+
+    console.log(
+      `📱 iOS video setup applied to: ${video.id || "unnamed video"}`
+    );
+  }
+}
+
+// Enhanced video play function for iOS compatibility
+function playVideoSafely(video) {
+  if (!video) return Promise.resolve();
+
+  setupVideoElementForIOS(video);
+
+  const playPromise = video.play();
+  if (playPromise !== undefined) {
+    return playPromise.catch((error) => {
+      console.warn(
+        `⚠️ Video play failed for ${
+          video.id || "unnamed"
+        }, trying iOS fallback:`,
+        error
+      );
+
+      // iOS fallback - try again after a short delay
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          video
+            .play()
+            .then(resolve)
+            .catch(() => {
+              console.warn(
+                `❌ iOS video play fallback failed for ${video.id || "unnamed"}`
+              );
+              resolve();
+            });
+        }, 100);
+      });
+    });
+  }
+
+  return Promise.resolve();
+}
