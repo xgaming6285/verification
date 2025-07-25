@@ -285,7 +285,20 @@
               </div>
             </div>
 
-            <div class="current-capture-section">
+            <!-- Photo Navigation -->
+            <div
+              class="photo-navigation"
+              id="photo-navigation"
+              style="display: none"
+            >
+              <h4>Photo Progress</h4>
+              <div class="nav-photos" id="nav-photos">
+                <!-- Navigation photos will be inserted here -->
+              </div>
+            </div>
+
+            <!-- Current Capture Section -->
+            <div class="current-capture-section" id="current-capture-section">
               <div class="capture-instructions" id="capture-instructions">
                 <div class="instruction-icon">
                   <i class="fas fa-id-card"></i>
@@ -325,33 +338,6 @@
                 </div>
               </div>
 
-              <div class="camera-capture-area">
-                <video
-                  id="capture-video"
-                  autoplay
-                  muted
-                  style="display: none"
-                ></video>
-                <canvas id="capture-canvas" style="display: none"></canvas>
-                <div class="camera-placeholder" id="camera-placeholder">
-                  <i class="fas fa-camera"></i>
-                  <p data-translate="verification.step2.start_capture">
-                    Tap to start camera
-                  </p>
-                </div>
-                <div
-                  class="camera-overlay"
-                  id="camera-overlay"
-                  style="display: none"
-                >
-                  <div class="capture-frame" id="capture-frame"></div>
-                </div>
-              </div>
-
-              <div class="captured-photos" id="captured-photos">
-                <!-- Captured photos will be displayed here -->
-              </div>
-
               <div class="capture-controls">
                 <button
                   type="button"
@@ -364,39 +350,26 @@
                     >Start Camera</span
                   >
                 </button>
+              </div>
+            </div>
+
+            <!-- Results Page -->
+            <div class="results-page" id="results-page" style="display: none">
+              <div class="results-header">
+                <h3>Review Your Photos</h3>
+                <p>You can retake any photo or submit your application</p>
+              </div>
+              <div class="results-grid" id="results-grid">
+                <!-- Result photos will be inserted here -->
+              </div>
+              <div class="results-actions">
                 <button
                   type="button"
-                  class="capture-photo-btn"
-                  id="capture-photo-btn"
-                  onclick="captureCurrentPhoto()"
-                  style="display: none"
+                  class="submit-all-btn"
+                  onclick="proceedToVerification()"
                 >
-                  <i class="fas fa-camera"></i>
-                  <span data-translate="verification.step2.capture_photo"
-                    >Capture Photo</span
-                  >
-                </button>
-                <button
-                  type="button"
-                  class="retake-btn"
-                  id="retake-btn"
-                  onclick="retakePhoto()"
-                  style="display: none"
-                >
-                  <i class="fas fa-redo"></i>
-                  <span data-translate="verification.step2.retake">Retake</span>
-                </button>
-                <button
-                  type="button"
-                  class="next-photo-btn"
-                  id="next-photo-btn"
-                  onclick="nextPhoto()"
-                  style="display: none"
-                >
+                  <span>Submit All Photos</span>
                   <i class="fas fa-arrow-right"></i>
-                  <span data-translate="verification.step2.next_photo"
-                    >Next Photo</span
-                  >
                 </button>
               </div>
             </div>
@@ -419,6 +392,53 @@
                 <i class="fas fa-arrow-right"></i>
               </button>
             </div>
+          </div>
+
+          <!-- Full Screen Camera -->
+          <div class="camera-capture-area" id="camera-capture-area">
+            <div class="camera-header">
+              <div class="camera-step-info">
+                <h5 id="camera-step-title">Capture ID Front</h5>
+                <p id="camera-step-description">
+                  Position your ID card in the guide
+                </p>
+              </div>
+              <button class="camera-close-btn" onclick="closeCameraCapture()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+
+            <video
+              id="capture-video"
+              autoplay
+              muted
+              style="display: none"
+            ></video>
+            <canvas id="capture-canvas" style="display: none"></canvas>
+
+            <div class="camera-placeholder" id="camera-placeholder">
+              <i class="fas fa-camera"></i>
+              <p>Loading camera...</p>
+            </div>
+
+            <div
+              class="camera-overlay"
+              id="camera-overlay"
+              style="display: none"
+            >
+              <!-- Guide overlays will be dynamically inserted here -->
+            </div>
+
+            <!-- Capture button positioned over the camera view -->
+            <button
+              type="button"
+              class="capture-photo-btn hidden"
+              id="capture-photo-btn"
+              onclick="captureCurrentPhoto()"
+            >
+              <i class="fas fa-camera"></i>
+              <span>Capture Photo</span>
+            </button>
           </div>
 
           <!-- Step 3: Complete -->

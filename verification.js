@@ -2,6 +2,7 @@
 let currentStep = 1;
 let currentPhotoStep = 1;
 let capturedPhotos = {};
+let photoHistory = {}; // Store all versions of photos including retakes
 let currentStream = null;
 let translationManager = null;
 let isVerificationInProgress = false;
@@ -16,6 +17,7 @@ const PHOTO_SEQUENCE = [
     icon: "fas fa-id-card",
     titleKey: "verification.step2.instructions.id_front_title",
     textKey: "verification.step2.instructions.id_front_text",
+    guide: "id-guide",
   },
   {
     id: "idBack",
@@ -24,6 +26,7 @@ const PHOTO_SEQUENCE = [
     icon: "fas fa-id-card-alt",
     titleKey: "verification.step2.instructions.id_back_title",
     textKey: "verification.step2.instructions.id_back_text",
+    guide: "id-guide",
   },
   {
     id: "selfieWithIdFront",
@@ -32,6 +35,7 @@ const PHOTO_SEQUENCE = [
     icon: "fas fa-user-plus",
     titleKey: "verification.step2.instructions.selfie_id_front_title",
     textKey: "verification.step2.instructions.selfie_id_front_text",
+    guide: "face-with-id-guide",
   },
   {
     id: "selfieWithIdBack",
@@ -40,6 +44,7 @@ const PHOTO_SEQUENCE = [
     icon: "fas fa-user-check",
     titleKey: "verification.step2.instructions.selfie_id_back_title",
     textKey: "verification.step2.instructions.selfie_id_back_text",
+    guide: "face-with-id-guide",
   },
   {
     id: "selfieOnly",
@@ -48,6 +53,7 @@ const PHOTO_SEQUENCE = [
     icon: "fas fa-user",
     titleKey: "verification.step2.instructions.selfie_only_title",
     textKey: "verification.step2.instructions.selfie_only_text",
+    guide: "face-guide",
   },
 ];
 
@@ -80,6 +86,11 @@ document.addEventListener("DOMContentLoaded", async function () {
       });
     });
   }
+
+  // Initialize photo history for all photo types
+  PHOTO_SEQUENCE.forEach((photo) => {
+    photoHistory[photo.id] = [];
+  });
 });
 
 // Helper function to get translated text
@@ -132,6 +143,7 @@ function prevStep(stepNumber) {
   // Stop camera if going back from photo capture
   if (currentStep === 2) {
     stopCamera();
+    closeCameraCapture();
   }
 
   // Mark current step as inactive
@@ -222,7 +234,19 @@ function initializePhotoCapture() {
   currentPhotoStep = 1;
   updateCaptureInstructions();
   updateProgressIndicator();
-  resetCaptureInterface();
+  updatePhotoNavigation();
+  showCaptureInterface();
+}
+
+function showCaptureInterface() {
+  document.getElementById("current-capture-section").style.display = "block";
+  document.getElementById("results-page").style.display = "none";
+}
+
+function showResultsPage() {
+  document.getElementById("current-capture-section").style.display = "none";
+  document.getElementById("results-page").style.display = "block";
+  updateResultsPage();
 }
 
 function updateCaptureInstructions() {
@@ -259,27 +283,94 @@ function updateProgressIndicator() {
   });
 }
 
-function resetCaptureInterface() {
-  const video = document.getElementById("capture-video");
-  const placeholder = document.getElementById("camera-placeholder");
-  const overlay = document.getElementById("camera-overlay");
+function updatePhotoNavigation() {
+  const photoNavigation = document.getElementById("photo-navigation");
+  const navPhotos = document.getElementById("nav-photos");
 
-  video.style.display = "none";
-  placeholder.style.display = "block";
-  overlay.style.display = "none";
+  // Show navigation if any photos have been captured
+  if (Object.keys(capturedPhotos).length > 0) {
+    photoNavigation.style.display = "block";
 
-  // Reset buttons
-  document.getElementById("start-camera-btn").style.display = "inline-flex";
-  document.getElementById("capture-photo-btn").style.display = "none";
-  document.getElementById("retake-btn").style.display = "none";
-  document.getElementById("next-photo-btn").style.display = "none";
+    navPhotos.innerHTML = "";
+    PHOTO_SEQUENCE.forEach((photo, index) => {
+      const navItem = document.createElement("div");
+      navItem.className = "nav-photo-item";
+      if (index + 1 === currentPhotoStep) navItem.classList.add("current");
+      if (capturedPhotos[photo.id]) navItem.classList.add("completed");
+
+      navItem.onclick = () => navigateToPhoto(index + 1);
+
+      const thumbnail = document.createElement("div");
+      thumbnail.className = "nav-photo-thumbnail";
+
+      if (capturedPhotos[photo.id]) {
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(capturedPhotos[photo.id]);
+        thumbnail.appendChild(img);
+      } else {
+        const placeholder = document.createElement("div");
+        placeholder.className = "nav-photo-placeholder";
+        placeholder.textContent = index + 1;
+        thumbnail.appendChild(placeholder);
+      }
+
+      const label = document.createElement("div");
+      label.className = "nav-photo-label";
+      label.textContent = photo.name;
+
+      navItem.appendChild(thumbnail);
+      navItem.appendChild(label);
+      navPhotos.appendChild(navItem);
+    });
+  } else {
+    photoNavigation.style.display = "none";
+  }
+}
+
+function navigateToPhoto(photoStep) {
+  currentPhotoStep = photoStep;
+  updateCaptureInstructions();
+  updateProgressIndicator();
+  updatePhotoNavigation();
+  showCaptureInterface();
 }
 
 function startCameraCapture() {
   const currentPhoto = PHOTO_SEQUENCE[currentPhotoStep - 1];
+  const cameraArea = document.getElementById("camera-capture-area");
   const video = document.getElementById("capture-video");
   const placeholder = document.getElementById("camera-placeholder");
   const overlay = document.getElementById("camera-overlay");
+  const stepTitle = document.getElementById("camera-step-title");
+  const stepDescription = document.getElementById("camera-step-description");
+
+  // Update camera header
+  stepTitle.textContent = currentPhoto.name;
+  stepDescription.textContent = t(
+    currentPhoto.textKey,
+    `Position your ${currentPhoto.name.toLowerCase()}`
+  );
+
+  // Show full-screen camera
+  cameraArea.classList.add("active");
+
+  // Add specific class for different capture types
+  cameraArea.classList.remove(
+    "id-capture",
+    "face-capture",
+    "face-with-id-capture"
+  );
+
+  if (currentPhoto.guide === "id-guide") {
+    cameraArea.classList.add("id-capture");
+  } else if (currentPhoto.guide === "face-guide") {
+    cameraArea.classList.add("face-capture");
+  } else if (currentPhoto.guide === "face-with-id-guide") {
+    cameraArea.classList.add("face-with-id-capture");
+  }
+
+  // Create appropriate guide overlay
+  createGuideOverlay(currentPhoto.guide);
 
   // Camera constraints based on current photo
   const constraints = {
@@ -300,9 +391,17 @@ function startCameraCapture() {
       overlay.style.display = "block";
 
       // Update button visibility
-      document.getElementById("start-camera-btn").style.display = "none";
-      document.getElementById("capture-photo-btn").style.display =
-        "inline-flex";
+      const captureBtn = document.getElementById("capture-photo-btn");
+      captureBtn.classList.remove("hidden");
+      captureBtn.style.display = "flex";
+
+      // Debug log
+      console.log("Capture button should be visible now:", {
+        photoType: currentPhoto.name,
+        guide: currentPhoto.guide,
+        buttonVisible: !captureBtn.classList.contains("hidden"),
+        buttonDisplay: captureBtn.style.display,
+      });
 
       video.play();
     })
@@ -314,7 +413,58 @@ function startCameraCapture() {
           "Cannot access camera. Please check camera permissions."
         )
       );
+      closeCameraCapture();
     });
+}
+
+function createGuideOverlay(guideType) {
+  const overlay = document.getElementById("camera-overlay");
+  overlay.innerHTML = "";
+
+  switch (guideType) {
+    case "id-guide":
+      overlay.innerHTML = '<div class="id-guide"></div>';
+      break;
+    case "face-guide":
+      overlay.innerHTML = '<div class="face-guide"></div>';
+      break;
+    case "face-with-id-guide":
+      overlay.innerHTML = `
+        <div class="face-with-id-guide">
+          <div class="face-area"></div>
+          <div class="id-area"></div>
+        </div>
+      `;
+      break;
+  }
+}
+
+function closeCameraCapture() {
+  const cameraArea = document.getElementById("camera-capture-area");
+  const video = document.getElementById("capture-video");
+  const placeholder = document.getElementById("camera-placeholder");
+  const overlay = document.getElementById("camera-overlay");
+
+  // Hide full-screen camera
+  cameraArea.classList.remove("active");
+  cameraArea.classList.remove(
+    "id-capture",
+    "face-capture",
+    "face-with-id-capture"
+  );
+
+  // Reset interface
+  video.style.display = "none";
+  placeholder.style.display = "flex";
+  overlay.style.display = "none";
+
+  // Hide capture button
+  const captureBtn = document.getElementById("capture-photo-btn");
+  captureBtn.classList.add("hidden");
+  captureBtn.style.display = "none";
+
+  // Stop camera
+  stopCamera();
 }
 
 function captureCurrentPhoto() {
@@ -338,110 +488,137 @@ function captureCurrentPhoto() {
         type: "image/jpeg",
       });
 
-      // Store the captured photo
+      // Store in history (always save)
+      if (!photoHistory[currentPhoto.id]) {
+        photoHistory[currentPhoto.id] = [];
+      }
+      photoHistory[currentPhoto.id].push({
+        file: file,
+        timestamp: Date.now(),
+        version: photoHistory[currentPhoto.id].length + 1,
+      });
+
+      // Store as current photo
       capturedPhotos[currentPhoto.id] = file;
 
-      // Show captured photo
-      displayCapturedPhoto(file, currentPhoto);
+      // Close camera
+      closeCameraCapture();
 
-      // Update button visibility
-      document.getElementById("capture-photo-btn").style.display = "none";
-      document.getElementById("retake-btn").style.display = "inline-flex";
-      document.getElementById("next-photo-btn").style.display = "inline-flex";
+      // Update navigation
+      updatePhotoNavigation();
+      updateProgressIndicator();
 
-      // Stop camera for now
-      stopCamera();
+      // Auto-proceed to next photo or show results
+      if (currentPhotoStep < PHOTO_SEQUENCE.length) {
+        currentPhotoStep++;
+        updateCaptureInstructions();
+        updateProgressIndicator();
+        updatePhotoNavigation();
+      } else {
+        // All photos captured, show results page
+        showResultsPage();
+      }
     },
     "image/jpeg",
     0.9
   );
 }
 
-function displayCapturedPhoto(file, photoInfo) {
-  const capturedPhotosContainer = document.getElementById("captured-photos");
-
-  // Create preview element
-  const photoPreview = document.createElement("div");
-  photoPreview.className = "photo-preview";
-  photoPreview.innerHTML = `
-        <div class="photo-info">
-            <i class="${photoInfo.icon}"></i>
-            <span>${photoInfo.name}</span>
-        </div>
-        <div class="photo-thumbnail">
-            <img src="${URL.createObjectURL(file)}" alt="${photoInfo.name}">
-        </div>
-    `;
-
-  capturedPhotosContainer.appendChild(photoPreview);
+function retakePhoto(photoId) {
+  // Find the photo step
+  const photoIndex = PHOTO_SEQUENCE.findIndex((photo) => photo.id === photoId);
+  if (photoIndex !== -1) {
+    navigateToPhoto(photoIndex + 1);
+  }
 }
 
-function retakePhoto() {
-  const currentPhoto = PHOTO_SEQUENCE[currentPhotoStep - 1];
+function updateResultsPage() {
+  const resultsGrid = document.getElementById("results-grid");
+  resultsGrid.innerHTML = "";
 
-  // Remove the captured photo
-  delete capturedPhotos[currentPhoto.id];
+  PHOTO_SEQUENCE.forEach((photo) => {
+    if (capturedPhotos[photo.id]) {
+      const resultItem = document.createElement("div");
+      resultItem.className = "result-photo-item";
 
-  // Clear the preview
-  const capturedPhotosContainer = document.getElementById("captured-photos");
-  const photoPreview = capturedPhotosContainer.lastElementChild;
-  if (photoPreview) {
-    photoPreview.remove();
-  }
+      const history = photoHistory[photo.id] || [];
+      const currentVersion = history.length;
 
-  // Reset interface and restart camera
-  resetCaptureInterface();
-  startCameraCapture();
+      resultItem.innerHTML = `
+        <div class="result-photo-header">
+          <div class="result-photo-info">
+            <i class="${photo.icon}"></i>
+            <span>${photo.name}</span>
+          </div>
+          ${
+            currentVersion > 1
+              ? `<div class="history-indicator">v${currentVersion}</div>`
+              : ""
+          }
+        </div>
+        <div class="result-photo-thumbnail">
+          <img src="${URL.createObjectURL(capturedPhotos[photo.id])}" alt="${
+        photo.name
+      }">
+        </div>
+        <button class="retake-photo-btn" onclick="retakePhoto('${photo.id}')">
+          <i class="fas fa-redo"></i>
+          Retake
+        </button>
+      `;
+
+      resultsGrid.appendChild(resultItem);
+    }
+  });
 }
 
-function nextPhoto() {
-  if (currentPhotoStep < PHOTO_SEQUENCE.length) {
-    currentPhotoStep++;
-    updateCaptureInstructions();
-    updateProgressIndicator();
-    resetCaptureInterface();
-  } else {
-    // All photos captured, start identity verification
-    startIdentityVerification();
+function proceedToVerification() {
+  // Check if all photos are captured
+  if (Object.keys(capturedPhotos).length < PHOTO_SEQUENCE.length) {
+    alert("Please capture all required photos before proceeding.");
+    return;
   }
+
+  // Start identity verification
+  startIdentityVerification();
 }
 
 // Start AWS Rekognition identity verification
 async function startIdentityVerification() {
   if (isVerificationInProgress) return;
-  
+
   isVerificationInProgress = true;
-  
+
   // Show verification in progress
   showVerificationInProgress();
-  
+
   try {
     // Get the required images
     const idFrontImage = capturedPhotos.idFront;
     const selfieOnlyImage = capturedPhotos.selfieOnly;
-    
+
     if (!idFrontImage || !selfieOnlyImage) {
       throw new Error("Required images not found");
     }
-    
+
     // Convert files to base64
     const idFrontBase64 = await fileToBase64(idFrontImage);
     const selfieOnlyBase64 = await fileToBase64(selfieOnlyImage);
-    
+
     // Call verification API
-    const response = await fetch('/api/verify-identity', {
-      method: 'POST',
+    const response = await fetch("/api/verify-identity", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         idFrontImage: idFrontBase64,
-        selfieOnlyImage: selfieOnlyBase64
-      })
+        selfieOnlyImage: selfieOnlyBase64,
+      }),
     });
-    
+
     const result = await response.json();
-    
+
     if (result.success) {
       if (result.verified) {
         // Verification passed
@@ -453,11 +630,10 @@ async function startIdentityVerification() {
         showVerificationFailed(result);
       }
     } else {
-      throw new Error(result.error || 'Verification failed');
+      throw new Error(result.error || "Verification failed");
     }
-    
   } catch (error) {
-    console.error('Identity verification error:', error);
+    console.error("Identity verification error:", error);
     showVerificationError(error.message);
   } finally {
     isVerificationInProgress = false;
@@ -466,9 +642,9 @@ async function startIdentityVerification() {
 
 // Show verification in progress UI
 function showVerificationInProgress() {
-  const captureSection = document.querySelector('.current-capture-section');
-  
-  captureSection.innerHTML = `
+  const resultsPage = document.getElementById("results-page");
+
+  resultsPage.innerHTML = `
     <div class="verification-progress">
       <div class="verification-icon">
         <i class="fas fa-shield-check"></i>
@@ -498,15 +674,17 @@ function showVerificationInProgress() {
 
 // Show verification success
 function showVerificationSuccess(result) {
-  const captureSection = document.querySelector('.current-capture-section');
-  
-  captureSection.innerHTML = `
+  const resultsPage = document.getElementById("results-page");
+
+  resultsPage.innerHTML = `
     <div class="verification-result success">
       <div class="result-icon">
         <i class="fas fa-check-circle"></i>
       </div>
       <h4>Identity Verification Successful!</h4>
-      <p>Your identity has been verified with ${result.similarity.toFixed(1)}% similarity.</p>
+      <p>Your identity has been verified with ${result.similarity.toFixed(
+        1
+      )}% similarity.</p>
       <div class="verification-details">
         <div class="detail-item">
           <span class="label">Similarity:</span>
@@ -519,19 +697,19 @@ function showVerificationSuccess(result) {
       </div>
     </div>
   `;
-  
+
   // Show continue button
   document.getElementById("continue-to-complete").style.display = "inline-flex";
-  
+
   // Update verification status
   verificationPassed = true;
 }
 
 // Show verification failed
 function showVerificationFailed(result) {
-  const captureSection = document.querySelector('.current-capture-section');
-  
-  captureSection.innerHTML = `
+  const resultsPage = document.getElementById("results-page");
+
+  resultsPage.innerHTML = `
     <div class="verification-result failed">
       <div class="result-icon">
         <i class="fas fa-times-circle"></i>
@@ -550,9 +728,9 @@ function showVerificationFailed(result) {
 
 // Show verification error
 function showVerificationError(errorMessage) {
-  const captureSection = document.querySelector('.current-capture-section');
-  
-  captureSection.innerHTML = `
+  const resultsPage = document.getElementById("results-page");
+
+  resultsPage.innerHTML = `
     <div class="verification-result error">
       <div class="result-icon">
         <i class="fas fa-exclamation-triangle"></i>
@@ -571,16 +749,8 @@ function showVerificationError(errorMessage) {
 
 // Retry verification function
 function retryVerification() {
-  // Reset to first photo capture
-  currentPhotoStep = 1;
-  capturedPhotos = {};
-  verificationPassed = false;
-  
-  // Clear captured photos display
-  document.getElementById("captured-photos").innerHTML = "";
-  
-  // Reset capture interface
-  initializePhotoCapture();
+  // Go back to results page
+  showResultsPage();
 }
 
 function stopCamera() {
@@ -604,7 +774,7 @@ function initializeCompletePage() {
 // Update submit button state based on verification
 function updateSubmitButtonState() {
   const submitBtn = document.querySelector(".submit-application-btn");
-  
+
   if (!verificationPassed) {
     submitBtn.disabled = true;
     submitBtn.classList.add("disabled");
@@ -650,13 +820,15 @@ function displayPhotoSummary() {
 // Submit Application with MongoDB integration
 async function submitApplication() {
   const submitBtn = document.querySelector(".submit-application-btn");
-  
+
   // Check if verification has passed
   if (!verificationPassed) {
-    alert("Please complete identity verification before submitting your application.");
+    alert(
+      "Please complete identity verification before submitting your application."
+    );
     return;
   }
-  
+
   const originalText = submitBtn.innerHTML;
 
   // Show loading state
@@ -678,14 +850,30 @@ async function submitApplication() {
 
     // Prepare photos for upload (convert to base64)
     const photoData = {};
+    const historyData = {};
+
     for (const [photoId, file] of Object.entries(capturedPhotos)) {
       photoData[photoId] = await fileToBase64(file);
+    }
+
+    // Include photo history
+    for (const [photoId, history] of Object.entries(photoHistory)) {
+      if (history.length > 0) {
+        historyData[photoId] = await Promise.all(
+          history.map(async (item) => ({
+            data: await fileToBase64(item.file),
+            timestamp: item.timestamp,
+            version: item.version,
+          }))
+        );
+      }
     }
 
     // Create submission data
     const submissionData = {
       personalInfo: personalInfo,
       photos: photoData,
+      photoHistory: historyData,
       submissionDate: new Date().toISOString(),
       sessionId: localStorage.getItem("kyc_session_id") || generateSessionId(),
     };
@@ -757,6 +945,10 @@ async function submitToDatabase(data) {
       JSON.stringify({
         personalInfo: data.personalInfo,
         photoCount: Object.keys(data.photos).length,
+        historyCount: Object.values(data.photoHistory).reduce(
+          (total, history) => total + history.length,
+          0
+        ),
         submissionDate: data.submissionDate,
       })
     );
@@ -808,5 +1000,15 @@ window.addEventListener("beforeunload", function () {
     window.videoRecordingManager.isRecording
   ) {
     window.videoRecordingManager.stopRecording();
+  }
+});
+
+// Handle escape key to close camera
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Escape") {
+    const cameraArea = document.getElementById("camera-capture-area");
+    if (cameraArea.classList.contains("active")) {
+      closeCameraCapture();
+    }
   }
 });

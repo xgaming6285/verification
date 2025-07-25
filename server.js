@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const { MongoClient } = require("mongodb");
@@ -31,9 +33,9 @@ let db;
 
 // AWS Rekognition configuration
 AWS.config.update({
-  region: process.env.AWS_REGION || 'us-east-1',
+  region: process.env.AWS_REGION || "us-east-1",
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
 
 const rekognition = new AWS.Rekognition();
@@ -161,8 +163,8 @@ function getLocalIPAddresses() {
 // Helper function to convert base64 image to buffer
 function base64ToBuffer(base64String) {
   // Remove the data URL prefix (e.g., "data:image/jpeg;base64,")
-  const base64Data = base64String.replace(/^data:image\/[a-z]+;base64,/, '');
-  return Buffer.from(base64Data, 'base64');
+  const base64Data = base64String.replace(/^data:image\/[a-z]+;base64,/, "");
+  return Buffer.from(base64Data, "base64");
 }
 
 // API endpoint for AWS Rekognition face verification
@@ -174,7 +176,7 @@ app.post("/api/verify-identity", async (req, res) => {
     if (!idFrontImage || !selfieOnlyImage) {
       return res.status(400).json({
         success: false,
-        error: "Both ID front image and selfie image are required"
+        error: "Both ID front image and selfie image are required",
       });
     }
 
@@ -185,12 +187,12 @@ app.post("/api/verify-identity", async (req, res) => {
     // AWS Rekognition parameters for face comparison
     const params = {
       SourceImage: {
-        Bytes: selfieBuffer // The selfie is the source
+        Bytes: selfieBuffer, // The selfie is the source
       },
       TargetImage: {
-        Bytes: idFrontBuffer // The ID photo is the target
+        Bytes: idFrontBuffer, // The ID photo is the target
       },
-      SimilarityThreshold: 80 // Minimum similarity threshold (80%)
+      SimilarityThreshold: 80, // Minimum similarity threshold (80%)
     };
 
     console.log("🔍 Starting face comparison with AWS Rekognition...");
@@ -200,7 +202,7 @@ app.post("/api/verify-identity", async (req, res) => {
 
     console.log("📊 Rekognition result:", {
       faceMatches: result.FaceMatches.length,
-      unmatched: result.UnmatchedFaces.length
+      unmatched: result.UnmatchedFaces.length,
     });
 
     // Check if faces match
@@ -208,56 +210,60 @@ app.post("/api/verify-identity", async (req, res) => {
       const similarity = result.FaceMatches[0].Similarity;
       const confidence = result.FaceMatches[0].Face.Confidence;
 
-      console.log(`✅ Face verification successful - Similarity: ${similarity.toFixed(2)}%, Confidence: ${confidence.toFixed(2)}%`);
+      console.log(
+        `✅ Face verification successful - Similarity: ${similarity.toFixed(
+          2
+        )}%, Confidence: ${confidence.toFixed(2)}%`
+      );
 
       res.json({
         success: true,
         verified: true,
         similarity: similarity,
         confidence: confidence,
-        message: "Identity verification successful"
+        message: "Identity verification successful",
       });
     } else {
       console.log("❌ Face verification failed - No matching faces found");
-      
+
       res.json({
         success: true,
         verified: false,
         similarity: 0,
         confidence: 0,
-        message: "Identity verification failed - faces do not match"
+        message: "Identity verification failed - faces do not match",
       });
     }
-
   } catch (error) {
     console.error("❌ AWS Rekognition error:", error);
-    
+
     // Handle specific AWS errors
-    if (error.code === 'InvalidImageFormatException') {
+    if (error.code === "InvalidImageFormatException") {
       return res.status(400).json({
         success: false,
-        error: "Invalid image format. Please ensure images are in JPEG or PNG format."
+        error:
+          "Invalid image format. Please ensure images are in JPEG or PNG format.",
       });
-    } else if (error.code === 'InvalidS3ObjectException') {
+    } else if (error.code === "InvalidS3ObjectException") {
       return res.status(400).json({
         success: false,
-        error: "Invalid image data provided."
+        error: "Invalid image data provided.",
       });
-    } else if (error.code === 'ImageTooLargeException') {
+    } else if (error.code === "ImageTooLargeException") {
       return res.status(400).json({
         success: false,
-        error: "Image is too large. Please use smaller images."
+        error: "Image is too large. Please use smaller images.",
       });
-    } else if (error.code === 'AccessDenied') {
+    } else if (error.code === "AccessDenied") {
       return res.status(500).json({
         success: false,
-        error: "AWS access denied. Please check your credentials."
+        error: "AWS access denied. Please check your credentials.",
       });
     }
 
     res.status(500).json({
       success: false,
-      error: "Identity verification service temporarily unavailable"
+      error: "Identity verification service temporarily unavailable",
     });
   }
 });
