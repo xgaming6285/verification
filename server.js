@@ -21,8 +21,18 @@ const MONGODB_URI =
 const DATABASE_NAME = "temporary";
 const COLLECTION_NAME = "verifications";
 
-// Middleware
-app.use(cors());
+// Middleware with CORS configuration for cross-domain access
+app.use(
+  cors({
+    origin: [
+      "https://ftd-copy-g4r6.vercel.app",
+      "https://ftd-backend-xjbf.onrender.com",
+      "http://localhost:3000",
+      "http://localhost:5173",
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: "50mb" })); // Increased limit for base64 images
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
