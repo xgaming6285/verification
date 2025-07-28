@@ -45,7 +45,7 @@ let db;
 
 // AWS configuration - use environment variables for security
 AWS.config.update({
-  region: process.env.AWS_REGION || "eu-north-1",
+  region: "eu-north-1", // Hardcode region to avoid environment variable issues
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
@@ -53,7 +53,9 @@ AWS.config.update({
 const rekognition = new AWS.Rekognition();
 const s3 = new AWS.S3({
   signatureVersion: "v4",
-  region: process.env.AWS_REGION || "eu-north-1",
+  region: "eu-north-1", // Hardcode the correct region
+  s3ForcePathStyle: false,
+  endpoint: "https://s3.eu-north-1.amazonaws.com",
 });
 
 // S3 bucket configuration for session recordings
