@@ -45,7 +45,7 @@ let db;
 
 // AWS configuration - use environment variables for security
 AWS.config.update({
-  region: process.env.AWS_REGION || "us-east-1",
+  region: process.env.AWS_REGION || "eu-north-1",
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
@@ -53,7 +53,7 @@ AWS.config.update({
 const rekognition = new AWS.Rekognition();
 const s3 = new AWS.S3({
   signatureVersion: "v4",
-  region: process.env.AWS_REGION || "us-east-1",
+  region: process.env.AWS_REGION || "eu-north-1",
 });
 
 // S3 bucket configuration for session recordings

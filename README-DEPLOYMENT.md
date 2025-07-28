@@ -31,7 +31,7 @@ You need to set these **sensitive environment variables** in Render dashboard:
 - `MONGODB_URI` - Your MongoDB connection string
 - `AWS_ACCESS_KEY_ID` - AWS access key for Rekognition
 - `AWS_SECRET_ACCESS_KEY` - AWS secret key for Rekognition
-- `AWS_REGION` - AWS region (default: us-east-1)
+- `AWS_REGION` - AWS region (default: eu-north-1)
 - `NODE_ENV` - Set to "production"
 
 #### Current Hardcoded Values (UPDATE THESE!):
