@@ -88,25 +88,6 @@
         </div>
 
         <div class="verification-steps">
-          <div class="step-indicator">
-            <div class="step-item active" data-step="1">
-              <div class="step-number">1</div>
-              <span data-translate="verification.steps.personal_info"
-                >Personal Info</span
-              >
-            </div>
-            <div class="step-item" data-step="2">
-              <div class="step-number">2</div>
-              <span data-translate="verification.steps.photo_capture"
-                >Photo Capture</span
-              >
-            </div>
-            <div class="step-item" data-step="3">
-              <div class="step-number">3</div>
-              <span data-translate="verification.steps.complete">Complete</span>
-            </div>
-          </div>
-
           <!-- Step 1: Personal Information -->
           <div class="verification-step active" id="step-1">
             <h3 data-translate="verification.step1.title">
@@ -829,47 +810,30 @@
             <div class="photo-capture-progress">
               <div class="progress-indicator">
                 <div class="progress-step active" data-photo="1">
-                  <div class="progress-number">1</div>
                   <span data-translate="verification.step2.photo1"
                     >ID Front</span
                   >
                 </div>
                 <div class="progress-step" data-photo="2">
-                  <div class="progress-number">2</div>
                   <span data-translate="verification.step2.photo2"
                     >ID Back</span
                   >
                 </div>
                 <div class="progress-step" data-photo="3">
-                  <div class="progress-number">3</div>
                   <span data-translate="verification.step2.photo3"
                     >Selfie with ID Front</span
                   >
                 </div>
                 <div class="progress-step" data-photo="4">
-                  <div class="progress-number">4</div>
                   <span data-translate="verification.step2.photo4"
                     >Selfie with ID Back</span
                   >
                 </div>
                 <div class="progress-step" data-photo="5">
-                  <div class="progress-number">5</div>
                   <span data-translate="verification.step2.photo5"
                     >Selfie Only</span
                   >
                 </div>
-              </div>
-            </div>
-
-            <!-- Photo Navigation -->
-            <div
-              class="photo-navigation"
-              id="photo-navigation"
-              style="display: none"
-            >
-              <h4>Photo Progress</h4>
-              <div class="nav-photos" id="nav-photos">
-                <!-- Navigation photos will be inserted here -->
               </div>
             </div>
 
@@ -925,27 +889,6 @@
                   <span data-translate="verification.step2.start_camera"
                     >Start Camera</span
                   >
-                </button>
-              </div>
-            </div>
-
-            <!-- Results Page -->
-            <div class="results-page" id="results-page" style="display: none">
-              <div class="results-header">
-                <h3>Review Your Photos</h3>
-                <p>You can retake any photo or submit your application</p>
-              </div>
-              <div class="results-grid" id="results-grid">
-                <!-- Result photos will be inserted here -->
-              </div>
-              <div class="results-actions">
-                <button
-                  type="button"
-                  class="submit-all-btn"
-                  onclick="proceedToVerification()"
-                >
-                  <span>Submit All Photos</span>
-                  <i class="fas fa-arrow-right"></i>
                 </button>
               </div>
             </div>
@@ -1030,13 +973,6 @@
                 Your verification photos have been captured successfully. We're
                 now processing your application.
               </p>
-
-              <div class="captured-summary">
-                <h4 data-translate="verification.step3.summary_title">
-                  Captured Photos:
-                </h4>
-                <div class="photo-summary-grid" id="photo-summary"></div>
-              </div>
 
               <div class="processing-info">
                 <div class="processing-steps">

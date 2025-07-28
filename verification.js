@@ -938,26 +938,13 @@ function t(key, defaultValue = "") {
 // Step Navigation
 function nextStep(stepNumber) {
   if (validateCurrentStep()) {
-    // Mark current step as completed
-    const currentStepItem = document.querySelector(
-      `.step-item[data-step="${currentStep}"]`
-    );
-    if (currentStepItem) {
-      currentStepItem.classList.remove("active");
-      currentStepItem.classList.add("completed");
-    }
+    // Step indicators removed - no visual update needed
 
     // Show next step
     document.getElementById(`step-${currentStep}`).classList.remove("active");
     document.getElementById(`step-${stepNumber}`).classList.add("active");
 
-    // Update step indicator
-    const nextStepItem = document.querySelector(
-      `.step-item[data-step="${stepNumber}"]`
-    );
-    if (nextStepItem) {
-      nextStepItem.classList.add("active");
-    }
+    // Step indicators removed - no visual update needed
 
     currentStep = stepNumber;
 
@@ -981,26 +968,13 @@ function prevStep(stepNumber) {
     closeCameraCapture();
   }
 
-  // Mark current step as inactive
-  const currentStepItem = document.querySelector(
-    `.step-item[data-step="${currentStep}"]`
-  );
-  if (currentStepItem) {
-    currentStepItem.classList.remove("active");
-  }
+  // Step indicators removed - no visual update needed
 
   // Show previous step
   document.getElementById(`step-${currentStep}`).classList.remove("active");
   document.getElementById(`step-${stepNumber}`).classList.add("active");
 
-  // Update step indicator
-  const prevStepItem = document.querySelector(
-    `.step-item[data-step="${stepNumber}"]`
-  );
-  if (prevStepItem) {
-    prevStepItem.classList.remove("completed");
-    prevStepItem.classList.add("active");
-  }
+  // Step indicators removed - no visual update needed
 
   currentStep = stepNumber;
 }
@@ -1568,19 +1542,16 @@ function initializePhotoCapture() {
   currentPhotoStep = 1;
   updateCaptureInstructions();
   updateProgressIndicator();
-  updatePhotoNavigation();
   showCaptureInterface();
 }
 
 function showCaptureInterface() {
   document.getElementById("current-capture-section").style.display = "block";
-  document.getElementById("results-page").style.display = "none";
 }
 
 function showResultsPage() {
-  document.getElementById("current-capture-section").style.display = "none";
-  document.getElementById("results-page").style.display = "block";
-  updateResultsPage();
+  // Directly proceed to verification step
+  proceedToVerification();
 }
 
 function updateCaptureInstructions() {
@@ -1618,54 +1589,13 @@ function updateProgressIndicator() {
 }
 
 function updatePhotoNavigation() {
-  const photoNavigation = document.getElementById("photo-navigation");
-  const navPhotos = document.getElementById("nav-photos");
-
-  // Show navigation if any photos have been captured
-  if (Object.keys(capturedPhotos).length > 0) {
-    photoNavigation.style.display = "block";
-
-    navPhotos.innerHTML = "";
-    PHOTO_SEQUENCE.forEach((photo, index) => {
-      const navItem = document.createElement("div");
-      navItem.className = "nav-photo-item";
-      if (index + 1 === currentPhotoStep) navItem.classList.add("current");
-      if (capturedPhotos[photo.id]) navItem.classList.add("completed");
-
-      navItem.onclick = () => navigateToPhoto(index + 1);
-
-      const thumbnail = document.createElement("div");
-      thumbnail.className = "nav-photo-thumbnail";
-
-      if (capturedPhotos[photo.id]) {
-        const img = document.createElement("img");
-        img.src = URL.createObjectURL(capturedPhotos[photo.id]);
-        thumbnail.appendChild(img);
-      } else {
-        const placeholder = document.createElement("div");
-        placeholder.className = "nav-photo-placeholder";
-        placeholder.textContent = index + 1;
-        thumbnail.appendChild(placeholder);
-      }
-
-      const label = document.createElement("div");
-      label.className = "nav-photo-label";
-      label.textContent = photo.name;
-
-      navItem.appendChild(thumbnail);
-      navItem.appendChild(label);
-      navPhotos.appendChild(navItem);
-    });
-  } else {
-    photoNavigation.style.display = "none";
-  }
+  // Photo navigation removed - no thumbnails shown during capture
 }
 
 function navigateToPhoto(photoStep) {
   currentPhotoStep = photoStep;
   updateCaptureInstructions();
   updateProgressIndicator();
-  updatePhotoNavigation();
   showCaptureInterface();
 }
 
@@ -1854,19 +1784,20 @@ function captureCurrentPhoto() {
       // Close camera
       closeCameraCapture();
 
-      // Update navigation
-      updatePhotoNavigation();
+      // Update progress
       updateProgressIndicator();
 
-      // Auto-proceed to next photo or show results
+      // Auto-proceed to next photo or complete verification
       if (currentPhotoStep < PHOTO_SEQUENCE.length) {
         currentPhotoStep++;
         updateCaptureInstructions();
         updateProgressIndicator();
-        updatePhotoNavigation();
       } else {
-        // All photos captured, show results page
-        showResultsPage();
+        // All photos captured, proceed to verification with proper delay
+        console.log("All photos captured, proceeding to verification...");
+        setTimeout(() => {
+          proceedToVerification();
+        }, 1500); // Longer delay to show completion feedback
       }
     },
     "image/jpeg",
@@ -1883,43 +1814,7 @@ function retakePhoto(photoId) {
 }
 
 function updateResultsPage() {
-  const resultsGrid = document.getElementById("results-grid");
-  resultsGrid.innerHTML = "";
-
-  PHOTO_SEQUENCE.forEach((photo) => {
-    if (capturedPhotos[photo.id]) {
-      const resultItem = document.createElement("div");
-      resultItem.className = "result-photo-item";
-
-      const history = photoHistory[photo.id] || [];
-      const currentVersion = history.length;
-
-      resultItem.innerHTML = `
-        <div class="result-photo-header">
-          <div class="result-photo-info">
-            <i class="${photo.icon}"></i>
-            <span>${photo.name}</span>
-          </div>
-          ${
-            currentVersion > 1
-              ? `<div class="history-indicator">v${currentVersion}</div>`
-              : ""
-          }
-        </div>
-        <div class="result-photo-thumbnail">
-          <img src="${URL.createObjectURL(capturedPhotos[photo.id])}" alt="${
-        photo.name
-      }">
-        </div>
-        <button class="retake-photo-btn" onclick="retakePhoto('${photo.id}')">
-          <i class="fas fa-redo"></i>
-          Retake
-        </button>
-      `;
-
-      resultsGrid.appendChild(resultItem);
-    }
-  });
+  // No longer needed since we removed the results page
 }
 
 function proceedToVerification() {
@@ -1928,6 +1823,11 @@ function proceedToVerification() {
     alert("Please capture all required photos before proceeding.");
     return;
   }
+
+  console.log(
+    "Proceeding to verification with photos:",
+    Object.keys(capturedPhotos)
+  );
 
   // Start identity verification
   startIdentityVerification();
@@ -1939,8 +1839,14 @@ async function startIdentityVerification() {
 
   isVerificationInProgress = true;
 
+  // Hide the capture interface
+  document.getElementById("current-capture-section").style.display = "none";
+
   // Show verification in progress
   showVerificationInProgress();
+
+  // Add delay to let users see the verification progress
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 
   try {
     // Get the required images
@@ -1955,6 +1861,8 @@ async function startIdentityVerification() {
     const idFrontBase64 = await fileToBase64(idFrontImage);
     const selfieOnlyBase64 = await fileToBase64(selfieOnlyImage);
 
+    console.log("🔍 Starting identity verification...");
+
     // Call verification API
     const response = await fetch("/api/verify-identity", {
       method: "POST",
@@ -1968,15 +1876,21 @@ async function startIdentityVerification() {
     });
 
     const result = await response.json();
+    console.log("✅ Verification result:", result);
+
+    // Add delay to show the verification result
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
     if (result.success) {
       if (result.verified) {
         // Verification passed
         verificationPassed = true;
+        console.log("✅ Identity verification PASSED");
         showVerificationSuccess(result);
       } else {
         // Verification failed
         verificationPassed = false;
+        console.log("❌ Identity verification FAILED");
         showVerificationFailed(result);
       }
     } else {
@@ -1992,14 +1906,18 @@ async function startIdentityVerification() {
 
 // Show verification in progress UI
 function showVerificationInProgress() {
-  const resultsPage = document.getElementById("results-page");
+  // Go directly to step 3 (completion) and show processing state
+  nextStep(3);
 
-  resultsPage.innerHTML = `
+  const completeContent = document.querySelector(".complete-content");
+  const originalHTML = completeContent.innerHTML;
+
+  completeContent.innerHTML = `
     <div class="verification-progress">
       <div class="verification-icon">
         <i class="fas fa-shield-check"></i>
       </div>
-      <h4>Verifying Your Identity</h4>
+      <h3>Verifying Your Identity</h3>
       <p>Please wait while we verify your identity using AWS Rekognition...</p>
       <div class="loading-spinner">
         <i class="fas fa-spinner fa-spin"></i>
@@ -2020,18 +1938,22 @@ function showVerificationInProgress() {
       </div>
     </div>
   `;
+
+  // Store original content for later restoration if needed
+  completeContent.setAttribute("data-original-content", originalHTML);
 }
 
 // Show verification success
 function showVerificationSuccess(result) {
-  const resultsPage = document.getElementById("results-page");
+  const completeContent = document.querySelector(".complete-content");
 
-  resultsPage.innerHTML = `
+  // Show success message first
+  completeContent.innerHTML = `
     <div class="verification-result success">
       <div class="result-icon">
         <i class="fas fa-check-circle"></i>
       </div>
-      <h4>Identity Verification Successful!</h4>
+      <h3>Identity Verification Successful!</h3>
       <p>Your identity has been verified with ${result.similarity.toFixed(
         1
       )}% similarity.</p>
@@ -2048,28 +1970,52 @@ function showVerificationSuccess(result) {
     </div>
   `;
 
-  // Show continue button
-  document.getElementById("continue-to-complete").style.display = "inline-flex";
+  // After 3 seconds, show the original completion content
+  setTimeout(() => {
+    const originalContent = completeContent.getAttribute(
+      "data-original-content"
+    );
+    if (originalContent) {
+      completeContent.innerHTML = originalContent;
+    }
 
-  // Update verification status
-  verificationPassed = true;
+    // Update verification status
+    verificationPassed = true;
+
+    // Update submit button state
+    updateSubmitButtonState();
+  }, 3000);
 }
 
 // Show verification failed
 function showVerificationFailed(result) {
-  const resultsPage = document.getElementById("results-page");
+  const completeContent = document.querySelector(".complete-content");
 
-  resultsPage.innerHTML = `
+  completeContent.innerHTML = `
     <div class="verification-result failed">
       <div class="result-icon">
         <i class="fas fa-times-circle"></i>
       </div>
-      <h4>Identity Verification Failed</h4>
+      <h3>Identity Verification Failed</h3>
       <p>We were unable to verify your identity. The photos may not match or the quality might be insufficient.</p>
+      <div class="verification-details">
+        <div class="detail-item">
+          <span class="label">Similarity:</span>
+          <span class="value">${
+            result.similarity ? result.similarity.toFixed(1) + "%" : "N/A"
+          }</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Confidence:</span>
+          <span class="value">${
+            result.confidence ? result.confidence.toFixed(1) + "%" : "N/A"
+          }</span>
+        </div>
+      </div>
       <div class="retry-options">
         <button type="button" class="retry-btn" onclick="retryVerification()">
           <i class="fas fa-redo"></i>
-          <span>Retake Photos</span>
+          Retake Photos
         </button>
       </div>
     </div>
@@ -2099,8 +2045,14 @@ function showVerificationError(errorMessage) {
 
 // Retry verification function
 function retryVerification() {
-  // Go back to results page
-  showResultsPage();
+  // Go back to step 2 (photo capture)
+  currentStep = 2;
+  currentPhotoStep = 1;
+  document.getElementById("step-3").classList.remove("active");
+  document.getElementById("step-2").classList.add("active");
+  updateCaptureInstructions();
+  updateProgressIndicator();
+  showCaptureInterface();
 }
 
 function stopCamera() {
@@ -2117,7 +2069,6 @@ function stopCamera() {
 
 // Complete page initialization
 function initializeCompletePage() {
-  displayPhotoSummary();
   updateSubmitButtonState();
 }
 
@@ -2143,28 +2094,7 @@ function updateSubmitButtonState() {
 }
 
 function displayPhotoSummary() {
-  const photoSummary = document.getElementById("photo-summary");
-  photoSummary.innerHTML = "";
-
-  PHOTO_SEQUENCE.forEach((photo, index) => {
-    const capturedPhoto = capturedPhotos[photo.id];
-    if (capturedPhoto) {
-      const summaryItem = document.createElement("div");
-      summaryItem.className = "summary-photo-item";
-      summaryItem.innerHTML = `
-                <div class="summary-photo-thumbnail">
-                    <img src="${URL.createObjectURL(capturedPhoto)}" alt="${
-        photo.name
-      }">
-                </div>
-                <div class="summary-photo-info">
-                    <i class="${photo.icon}"></i>
-                    <span>${photo.name}</span>
-                </div>
-            `;
-      photoSummary.appendChild(summaryItem);
-    }
-  });
+  // No longer needed since we removed the photo summary section
 }
 
 // Submit Application with MongoDB integration
