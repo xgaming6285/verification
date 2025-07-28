@@ -707,6 +707,18 @@ window.iosDebugInfo = function () {
   };
 };
 
+// Dynamic viewport height function for mobile browsers
+function setDynamicViewportHeight() {
+  let vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty("--vh", `${vh}px`);
+
+  // Update on resize (for orientation changes)
+  window.addEventListener("resize", () => {
+    let vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty("--vh", `${vh}px`);
+  });
+}
+
 // Add codec debugging function
 window.checkCodecSupport = function () {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -1049,18 +1061,8 @@ function prevFieldStep() {
 }
 
 function updateFieldProgress() {
-  // Update progress bar
-  const progressFill = document.getElementById("sub-step-progress-fill");
-  const progressPercent = (currentFieldStep / totalFieldSteps) * 100;
-  if (progressFill) {
-    progressFill.style.width = `${progressPercent}%`;
-  }
-
-  // Update progress text
-  const currentFieldStepElement = document.getElementById("current-field-step");
-  if (currentFieldStepElement) {
-    currentFieldStepElement.textContent = currentFieldStep;
-  }
+  // Progress indicators removed for clean app-like design
+  // Navigation is now purely button-based
 }
 
 // Address-specific functions
@@ -1353,14 +1355,8 @@ function validateCurrentField() {
   return true;
 }
 
-// Initialize field progress on page load
+// Initialize app-like verification experience on page load
 document.addEventListener("DOMContentLoaded", function () {
-  // Set initial field progress
-  if (document.getElementById("total-field-steps")) {
-    document.getElementById("total-field-steps").textContent = totalFieldSteps;
-  }
-  updateFieldProgress();
-
   // Focus on first field
   setTimeout(() => {
     focusCurrentField();
@@ -1386,6 +1382,9 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   });
+
+  // Set dynamic viewport height for mobile browsers
+  setDynamicViewportHeight();
 });
 
 function handleKeyboardNavigation(event) {
@@ -1577,15 +1576,8 @@ function updateCaptureInstructions() {
 }
 
 function updateProgressIndicator() {
-  const progressSteps = document.querySelectorAll(".progress-step");
-  progressSteps.forEach((step, index) => {
-    step.classList.remove("active", "completed");
-    if (index + 1 < currentPhotoStep) {
-      step.classList.add("completed");
-    } else if (index + 1 === currentPhotoStep) {
-      step.classList.add("active");
-    }
-  });
+  // Progress indicators removed for clean app-like design
+  // Current photo step is managed purely through content updates
 }
 
 function updatePhotoNavigation() {

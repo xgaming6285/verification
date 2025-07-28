@@ -1,94 +1,87 @@
 /* Verification Page Specific Styles */
 .verification-page {
-  background: linear-gradient(
-    135deg,
-    var(--bg-light) 0%,
-    var(--bg-lighter) 100%
-  );
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   min-height: 100vh;
-  padding: 100px 0 50px;
-}
-
-.verification-header-page {
-  text-align: center;
-  margin-bottom: 60px;
-}
-
-.verification-header-page h1 {
-  font-size: 42px;
-  font-weight: 700;
-  color: var(--text-dark);
-  margin-bottom: 16px;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  padding: 0;
 }
 
-.verification-header-page h1 i {
-  color: var(--primary-color);
-  font-size: 38px;
-}
-
-.verification-header-page p {
-  font-size: 18px;
-  color: var(--text-light);
-  max-width: 600px;
-  margin: 0 auto;
+.verification-page .container {
+  width: 100%;
+  max-width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 .verification-steps {
   background: var(--bg-white);
-  border-radius: var(--radius-2xl);
-  padding: 40px;
-  box-shadow: var(--shadow-xl);
-  border: 1px solid var(--border-light);
-  max-width: 900px;
+  border-radius: 0;
+  width: 100%;
+  height: 100vh;
+  box-shadow: none;
+  border: none;
+  max-width: 100%;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  overflow: hidden;
+}
+
+.verification-step {
+  display: none;
+  width: 100%;
+  max-width: 500px;
+  height: 100%;
+  overflow: hidden;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.verification-step.active {
+  display: flex;
+}
+
+/* Step Header */
+.step-header {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.step-header h2 {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 16px;
+}
+
+.step-header p {
+  font-size: 18px;
+  color: var(--text-light);
+  line-height: 1.5;
+  max-width: 400px;
   margin: 0 auto;
 }
 
-/* Sub-step Progress Indicator */
-.sub-step-indicator {
-  margin-bottom: 30px;
-  padding: 20px 0;
-}
-
-.sub-step-progress {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 8px;
-  background: var(--border-light);
-  border-radius: 4px;
-  overflow: hidden;
-  position: relative;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary-color), #1d4ed8);
-  border-radius: 4px;
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  width: 7.14%; /* Initial width for step 1 of 14 */
-}
-
-.progress-text {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-dark);
-  white-space: nowrap;
-}
-
-/* Sub-steps Container with Slide Animation */
+/* Sub-steps Container - Full Height */
 .sub-steps-container {
   position: relative;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-  min-height: 450px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .personal-info-sub-step {
@@ -96,9 +89,13 @@
   top: 0;
   left: 0;
   width: 100%;
+  height: 100%;
   opacity: 0;
   transform: translateX(100%);
   transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 20px;
   background: var(--bg-white);
 }
@@ -108,20 +105,11 @@
   transform: translateX(0);
 }
 
-.personal-info-sub-step.slide-out-left {
-  opacity: 0;
-  transform: translateX(-100%);
-}
-
-.personal-info-sub-step.slide-in-right {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-/* Field Step Content */
+/* Field Step Content - Centered */
 .field-step-content {
   text-align: center;
-  max-width: 500px;
+  max-width: 400px;
+  width: 100%;
   margin: 0 auto;
 }
 
@@ -133,7 +121,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 24px;
+  margin: 0 auto 32px;
   box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
 }
 
@@ -146,23 +134,23 @@
   font-size: 28px;
   font-weight: 700;
   color: var(--text-dark);
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .field-step-content p {
   font-size: 16px;
   color: var(--text-light);
-  margin-bottom: 32px;
+  margin-bottom: 40px;
   line-height: 1.6;
 }
 
 /* Single Field Form */
 .single-field-form {
-  margin-bottom: 30px;
+  width: 100%;
 }
 
 .single-field-form .form-group {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
   position: relative;
 }
 
@@ -170,15 +158,15 @@
 .single-field-form textarea,
 .single-field-form select {
   width: 100%;
-  padding: 16px 20px;
+  padding: 20px 24px;
   border: 2px solid var(--border-light);
-  border-radius: 12px;
-  font-size: 16px;
+  border-radius: 16px;
+  font-size: 18px;
   font-weight: 500;
   color: var(--text-dark);
   background: var(--bg-white);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .single-field-form input:focus,
@@ -186,8 +174,8 @@
 .single-field-form select:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  transform: translateY(-1px);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  transform: translateY(-2px);
 }
 
 .single-field-form input::placeholder,
@@ -224,26 +212,27 @@
 /* Field Navigation Buttons */
 .field-navigation {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  gap: 16px;
-  margin-top: 32px;
+  gap: 20px;
+  margin-top: 40px;
+  width: 100%;
 }
 
 .prev-field-btn,
 .next-field-btn,
 .complete-personal-info-btn {
-  padding: 14px 28px;
+  padding: 16px 32px;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 120px;
+  gap: 12px;
+  min-width: 140px;
   justify-content: center;
 }
 
@@ -263,19 +252,20 @@
 .complete-personal-info-btn {
   background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
   color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  flex: 1;
+  max-width: 240px;
 }
 
 .next-field-btn:hover,
 .complete-personal-info-btn:hover {
   background: linear-gradient(135deg, #1d4ed8, #1e40af);
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
 }
 
 .complete-personal-info-btn {
   background: linear-gradient(135deg, #059669, #047857);
-  flex: 1;
 }
 
 .complete-personal-info-btn:hover {
@@ -343,116 +333,146 @@
   animation: slideOutToRight 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* Mobile Responsiveness for Field Steps */
+/* Mobile Responsiveness for App-like Design */
 @media (max-width: 768px) {
-  .sub-steps-container {
-    min-height: 400px;
-    /* Prevent viewport jumping on input focus */
-    position: relative;
-    overflow-x: hidden;
+  .verification-page {
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100); /* Dynamic viewport height */
+  }
+
+  .verification-page .container {
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+  }
+
+  .verification-steps {
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+    padding: 20px 16px;
+  }
+
+  .verification-step {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .step-header {
+    margin-bottom: 30px;
+  }
+
+  .step-header h2 {
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
+
+  .step-header p {
+    font-size: 16px;
+    max-width: 320px;
   }
 
   .field-step-content {
-    padding: 0 16px;
-    /* Ensure content stays within viewport */
-    max-width: 100%;
-    box-sizing: border-box;
+    max-width: 320px;
+    padding: 0;
   }
 
-  /* Prevent form fields from going off-screen */
-  .personal-info-sub-step {
-    padding: 16px;
-    /* Ensure proper positioning */
-    left: 0;
-    right: 0;
-    width: 100%;
-    box-sizing: border-box;
-    /* Prevent content from extending beyond viewport */
-    overflow-x: hidden;
-  }
-
-  /* Fix for iPhone input focus jumping */
-  .single-field-form {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
-  .single-field-form .form-group {
+  .field-icon {
+    width: 70px;
+    height: 70px;
     margin-bottom: 24px;
-    position: relative;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
+  }
+
+  .field-icon i {
+    font-size: 32px;
+  }
+
+  .field-step-content h4 {
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+
+  .field-step-content p {
+    font-size: 15px;
+    margin-bottom: 32px;
   }
 
   .single-field-form input,
   .single-field-form textarea,
   .single-field-form select {
-    width: 100%;
-    max-width: 100%;
-    padding: 16px 18px;
-    font-size: 16px; /* Prevent iOS zoom on focus */
-    box-sizing: border-box;
-    /* Prevent viewport shift on focus */
-    transform: none;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  }
-
-  /* Prevent iOS zoom and jumping on input focus */
-  .single-field-form input:focus,
-  .single-field-form textarea:focus,
-  .single-field-form select:focus {
-    /* Disable zoom prevention that might cause jumping */
-    -webkit-user-select: auto;
-    -webkit-transform: none;
-    transform: none !important;
-    /* Smooth focus without jumping */
-    transition: all 0.2s ease;
-  }
-
-  .field-icon {
-    width: 60px;
-    height: 60px;
-    margin-bottom: 20px;
-  }
-
-  .field-icon i {
-    font-size: 28px;
-  }
-
-  .field-step-content h4 {
-    font-size: 24px;
-    margin-bottom: 10px;
-  }
-
-  .field-step-content p {
-    font-size: 14px;
-    margin-bottom: 24px;
+    padding: 18px 20px;
+    font-size: 16px; /* Prevent iOS zoom */
+    border-radius: 12px;
   }
 
   .field-navigation {
+    margin-top: 32px;
     flex-direction: column;
-    gap: 12px;
-    width: 100%;
-    box-sizing: border-box;
+    gap: 16px;
   }
 
   .prev-field-btn,
   .next-field-btn,
   .complete-personal-info-btn {
     width: 100%;
-    padding: 12px 24px;
-    font-size: 14px;
-    box-sizing: border-box;
+    max-width: 280px;
+    padding: 14px 28px;
+    margin: 0 auto;
   }
 
-  .sub-step-progress {
-    gap: 12px;
+  /* Photo Capture Mobile */
+  .current-capture-section {
+    padding: 32px 20px;
+    border-radius: 20px;
+    max-width: 340px;
   }
 
-  .progress-text {
-    font-size: 12px;
+  .instruction-icon {
+    width: 70px;
+    height: 70px;
+    margin-bottom: 20px;
+  }
+
+  .instruction-icon i {
+    font-size: 32px;
+  }
+
+  .capture-instructions h4 {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  .capture-instructions p {
+    font-size: 15px;
+    margin-bottom: 20px;
+  }
+
+  .camera-tips {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .tip-item {
+    font-size: 13px;
+  }
+
+  .camera-start-btn {
+    padding: 14px 28px;
+    font-size: 15px;
+  }
+
+  /* Step Navigation Mobile */
+  .step-navigation {
+    bottom: 30px;
+    max-width: 320px;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .prev-btn,
+  .next-btn {
+    width: 100%;
+    max-width: 200px;
+    padding: 12px 20px;
+    margin: 0 auto;
   }
 }
 
@@ -659,14 +679,16 @@
 /* Current Capture Section */
 .current-capture-section {
   background: var(--bg-lighter);
-  border-radius: var(--radius-xl);
-  padding: 30px;
-  margin-bottom: 30px;
+  border-radius: 24px;
+  padding: 40px;
+  margin-bottom: 40px;
+  width: 100%;
+  max-width: 500px;
 }
 
 .capture-instructions {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
 }
 
 .instruction-icon {
@@ -677,7 +699,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 20px;
+  margin: 0 auto 24px;
 }
 
 .instruction-icon i {
@@ -689,19 +711,19 @@
   font-size: 24px;
   font-weight: 600;
   color: var(--text-dark);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .capture-instructions p {
   font-size: 16px;
   color: var(--text-light);
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .camera-tips {
   display: flex;
   justify-content: center;
-  gap: 30px;
+  gap: 24px;
   flex-wrap: wrap;
 }
 
@@ -716,6 +738,94 @@
 .tip-item i {
   color: var(--primary-color);
   font-size: 16px;
+}
+
+.capture-controls {
+  text-align: center;
+}
+
+.camera-start-btn {
+  background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 auto;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+}
+
+.camera-start-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+/* Step Navigation */
+.step-navigation {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  max-width: 400px;
+  justify-content: center;
+}
+
+.prev-btn,
+.next-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prev-btn {
+  background: var(--bg-lighter);
+  color: var(--text-dark);
+  border: 2px solid var(--border-light);
+}
+
+.prev-btn:hover {
+  background: var(--border-light);
+  transform: translateY(-2px);
+}
+
+.next-btn {
+  background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+  color: white;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+}
+
+.next-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+/* Remove old progress indicators and other unused styles */
+.sub-step-indicator,
+.photo-capture-progress,
+.progress-indicator,
+.progress-step,
+.progress-number,
+.nav-photos,
+.photo-navigation {
+  display: none !important;
 }
 
 /* Full Screen Camera Capture Area */
@@ -1215,38 +1325,39 @@
 /* Complete Page Styles */
 .complete-content {
   text-align: center;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 .complete-icon {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   background: var(--success-color, #10b981);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 30px;
+  margin: 0 auto 24px;
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
 }
 
 .complete-icon i {
   color: white;
-  font-size: 48px;
+  font-size: 36px;
 }
 
 .complete-content h3 {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--text-dark);
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 }
 
 .complete-content p {
-  font-size: 18px;
+  font-size: 16px;
   color: var(--text-light);
-  margin-bottom: 30px;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-bottom: 32px;
+  line-height: 1.6;
 }
 
 .captured-summary {
@@ -1343,26 +1454,55 @@
   justify-content: center;
   gap: 20px;
   flex-wrap: wrap;
+  margin-top: 40px;
 }
 
 .submit-application-btn {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
   color: white;
   border: none;
   padding: 16px 32px;
-  border-radius: var(--radius-lg);
-  font-size: 18px;
+  border-radius: 12px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   gap: 10px;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  min-width: 200px;
+  justify-content: center;
 }
 
 .submit-application-btn:hover {
-  background: #1d4ed8;
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
   transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+.back-home-btn {
+  background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  min-width: 200px;
+  justify-content: center;
+}
+
+.back-home-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
 }
 
 .success-banner {
@@ -1898,12 +2038,79 @@
 /* Extra small devices */
 @media (max-width: 480px) {
   .verification-steps {
-    padding: 20px 12px;
-    margin: 0 5px;
+    padding: 16px 12px;
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
   }
 
+  .step-header h2 {
+    font-size: 24px;
+  }
+
+  .step-header p {
+    font-size: 14px;
+    max-width: 280px;
+  }
+
+  .field-step-content {
+    max-width: 280px;
+  }
+
+  .field-step-content h4 {
+    font-size: 20px;
+  }
+
+  .field-step-content p {
+    font-size: 14px;
+  }
+
+  .field-icon {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 20px;
+  }
+
+  .field-icon i {
+    font-size: 28px;
+  }
+
+  .single-field-form input,
+  .single-field-form textarea,
+  .single-field-form select {
+    padding: 16px 18px;
+    font-size: 16px !important; /* Prevent iOS zoom */
+    border-radius: 10px;
+  }
+
+  .prev-field-btn,
+  .next-field-btn,
+  .complete-personal-info-btn {
+    max-width: 260px;
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+
+  /* Photo Capture Small Screens */
   .current-capture-section {
-    padding: 20px;
+    padding: 24px 16px;
+    max-width: 300px;
+  }
+
+  .instruction-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .instruction-icon i {
+    font-size: 28px;
+  }
+
+  .capture-instructions h4 {
+    font-size: 18px;
+  }
+
+  .capture-instructions p {
+    font-size: 14px;
   }
 
   .camera-tips {
@@ -1914,40 +2121,66 @@
     font-size: 12px;
   }
 
+  .camera-start-btn {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+
+  /* Complete Page Small Screens */
+  .complete-content {
+    max-width: 280px;
+  }
+
+  .complete-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .complete-icon i {
+    font-size: 28px;
+  }
+
+  .complete-content h3 {
+    font-size: 22px;
+  }
+
+  .complete-content p {
+    font-size: 14px;
+  }
+
+  .submit-application-btn,
+  .back-home-btn {
+    min-width: 180px;
+    padding: 14px 24px;
+    font-size: 14px;
+  }
+
+  /* Step Navigation Small Screens */
+  .step-navigation {
+    bottom: 20px;
+    max-width: 280px;
+  }
+
+  .prev-btn,
+  .next-btn {
+    max-width: 180px;
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+
+  /* Camera guides for small screens */
   .id-guide {
-    width: 320px;
-    height: 200px;
+    width: 280px;
+    height: 180px;
   }
 
   .face-guide {
-    width: 200px;
-    height: 280px;
-    border-radius: 100px;
+    width: 180px;
+    height: 250px;
+    border-radius: 90px;
   }
 
-  .nav-photo-thumbnail {
-    width: 50px;
-    height: 32px;
-  }
-
-  .nav-photo-label {
-    font-size: 9px;
-  }
-
-  .results-header h3 {
-    font-size: 24px;
-  }
-
-  .result-photo-thumbnail {
-    height: 80px;
-  }
-
-  .retake-photo-btn {
-    padding: 6px 12px;
-    font-size: 11px;
-  }
-
-  /* Extra safe area for very small devices */
+  /* Camera button positioning for small screens */
   .capture-photo-btn {
     bottom: 50px !important;
   }

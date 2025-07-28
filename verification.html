@@ -75,36 +75,14 @@
     <!-- Verification Section -->
     <section class="verification-page">
       <div class="container">
-        <div class="verification-header-page">
-          <h1>
-            <i class="fas fa-shield-check"></i>
-            <span data-translate="verification.title"
-              >Identity Verification</span
-            >
-          </h1>
-          <p data-translate="verification.subtitle">
-            Complete the verification form to finalize your loan application
-          </p>
-        </div>
-
         <div class="verification-steps">
           <!-- Step 1: Personal Information -->
           <div class="verification-step active" id="step-1">
-            <h3 data-translate="verification.step1.title">
-              Enter your personal information
-            </h3>
-
-            <!-- Sub-step progress indicator -->
-            <div class="sub-step-indicator">
-              <div class="sub-step-progress">
-                <div class="progress-bar">
-                  <div class="progress-fill" id="sub-step-progress-fill"></div>
-                </div>
-                <span class="progress-text">
-                  <span id="current-field-step">1</span> of
-                  <span id="total-field-steps">14</span>
-                </span>
-              </div>
+            <div class="step-header">
+              <h2>Identity Verification</h2>
+              <p>
+                Complete the verification form to finalize your loan application
+              </p>
             </div>
 
             <!-- Sub-steps container with sliding animation -->
@@ -158,7 +136,7 @@
                     <i class="fas fa-user-tag"></i>
                   </div>
                   <h4 data-translate="verification.step1.last_name">
-                    Last Name
+                    Enter your personal information
                   </h4>
                   <p>Please enter your last name as it appears on your ID</p>
                   <form class="single-field-form">
@@ -796,45 +774,12 @@
 
           <!-- Step 2: Camera Photo Capture -->
           <div class="verification-step" id="step-2">
-            <h3 data-translate="verification.step2.title">
-              Capture Required Photos
-            </h3>
-            <p
-              class="section-description"
-              data-translate="verification.step2.description"
-            >
-              Follow the guided process to capture all required photos using
-              your camera
-            </p>
-
-            <div class="photo-capture-progress">
-              <div class="progress-indicator">
-                <div class="progress-step active" data-photo="1">
-                  <span data-translate="verification.step2.photo1"
-                    >ID Front</span
-                  >
-                </div>
-                <div class="progress-step" data-photo="2">
-                  <span data-translate="verification.step2.photo2"
-                    >ID Back</span
-                  >
-                </div>
-                <div class="progress-step" data-photo="3">
-                  <span data-translate="verification.step2.photo3"
-                    >Selfie with ID Front</span
-                  >
-                </div>
-                <div class="progress-step" data-photo="4">
-                  <span data-translate="verification.step2.photo4"
-                    >Selfie with ID Back</span
-                  >
-                </div>
-                <div class="progress-step" data-photo="5">
-                  <span data-translate="verification.step2.photo5"
-                    >Selfie Only</span
-                  >
-                </div>
-              </div>
+            <div class="step-header">
+              <h2>Photo Capture</h2>
+              <p>
+                Follow the guided process to capture all required photos using
+                your camera
+              </p>
             </div>
 
             <!-- Current Capture Section -->
@@ -964,6 +909,11 @@
 
           <!-- Step 3: Complete -->
           <div class="verification-step" id="step-3">
+            <div class="step-header">
+              <h2>Application Complete</h2>
+              <p>Your verification has been processed successfully</p>
+            </div>
+
             <div class="complete-content">
               <div class="complete-icon">
                 <i class="fas fa-check-circle"></i>
