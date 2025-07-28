@@ -1,5 +1,7 @@
 // Verification Page JavaScript
 let currentStep = 1;
+let currentFieldStep = 1; // Current field step within personal information (1-14)
+let totalFieldSteps = 14; // Total number of field steps
 let currentPhotoStep = 1;
 let capturedPhotos = {};
 let photoHistory = {}; // Store all versions of photos including retakes
@@ -7,6 +9,198 @@ let currentStream = null;
 let translationManager = null;
 let isVerificationInProgress = false;
 let verificationPassed = false;
+
+// Country and address data
+const COUNTRIES = {
+  BG: { name: "Bulgaria", hasStates: false, postalFormat: /^\d{4}$/ },
+  US: {
+    name: "United States",
+    hasStates: true,
+    postalFormat: /^\d{5}(-\d{4})?$/,
+  },
+  GB: {
+    name: "United Kingdom",
+    hasStates: false,
+    postalFormat: /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i,
+  },
+  DE: { name: "Germany", hasStates: true, postalFormat: /^\d{5}$/ },
+  FR: { name: "France", hasStates: false, postalFormat: /^\d{5}$/ },
+  CA: {
+    name: "Canada",
+    hasStates: true,
+    postalFormat: /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i,
+  },
+  AU: { name: "Australia", hasStates: true, postalFormat: /^\d{4}$/ },
+  IT: { name: "Italy", hasStates: false, postalFormat: /^\d{5}$/ },
+  ES: { name: "Spain", hasStates: false, postalFormat: /^\d{5}$/ },
+  NL: {
+    name: "Netherlands",
+    hasStates: false,
+    postalFormat: /^\d{4}\s?[A-Z]{2}$/i,
+  },
+  IN: { name: "India", hasStates: true, postalFormat: /^\d{6}$/ },
+  BR: { name: "Brazil", hasStates: true, postalFormat: /^\d{5}-?\d{3}$/ },
+  RU: { name: "Russia", hasStates: false, postalFormat: /^\d{6}$/ },
+  JP: { name: "Japan", hasStates: false, postalFormat: /^\d{3}-?\d{4}$/ },
+  CN: { name: "China", hasStates: false, postalFormat: /^\d{6}$/ },
+};
+
+const STATES_PROVINCES = {
+  US: [
+    { code: "AL", name: "Alabama" },
+    { code: "AK", name: "Alaska" },
+    { code: "AZ", name: "Arizona" },
+    { code: "AR", name: "Arkansas" },
+    { code: "CA", name: "California" },
+    { code: "CO", name: "Colorado" },
+    { code: "CT", name: "Connecticut" },
+    { code: "DE", name: "Delaware" },
+    { code: "FL", name: "Florida" },
+    { code: "GA", name: "Georgia" },
+    { code: "HI", name: "Hawaii" },
+    { code: "ID", name: "Idaho" },
+    { code: "IL", name: "Illinois" },
+    { code: "IN", name: "Indiana" },
+    { code: "IA", name: "Iowa" },
+    { code: "KS", name: "Kansas" },
+    { code: "KY", name: "Kentucky" },
+    { code: "LA", name: "Louisiana" },
+    { code: "ME", name: "Maine" },
+    { code: "MD", name: "Maryland" },
+    { code: "MA", name: "Massachusetts" },
+    { code: "MI", name: "Michigan" },
+    { code: "MN", name: "Minnesota" },
+    { code: "MS", name: "Mississippi" },
+    { code: "MO", name: "Missouri" },
+    { code: "MT", name: "Montana" },
+    { code: "NE", name: "Nebraska" },
+    { code: "NV", name: "Nevada" },
+    { code: "NH", name: "New Hampshire" },
+    { code: "NJ", name: "New Jersey" },
+    { code: "NM", name: "New Mexico" },
+    { code: "NY", name: "New York" },
+    { code: "NC", name: "North Carolina" },
+    { code: "ND", name: "North Dakota" },
+    { code: "OH", name: "Ohio" },
+    { code: "OK", name: "Oklahoma" },
+    { code: "OR", name: "Oregon" },
+    { code: "PA", name: "Pennsylvania" },
+    { code: "RI", name: "Rhode Island" },
+    { code: "SC", name: "South Carolina" },
+    { code: "SD", name: "South Dakota" },
+    { code: "TN", name: "Tennessee" },
+    { code: "TX", name: "Texas" },
+    { code: "UT", name: "Utah" },
+    { code: "VT", name: "Vermont" },
+    { code: "VA", name: "Virginia" },
+    { code: "WA", name: "Washington" },
+    { code: "WV", name: "West Virginia" },
+    { code: "WI", name: "Wisconsin" },
+    { code: "WY", name: "Wyoming" },
+  ],
+  CA: [
+    { code: "AB", name: "Alberta" },
+    { code: "BC", name: "British Columbia" },
+    { code: "MB", name: "Manitoba" },
+    { code: "NB", name: "New Brunswick" },
+    { code: "NL", name: "Newfoundland and Labrador" },
+    { code: "NT", name: "Northwest Territories" },
+    { code: "NS", name: "Nova Scotia" },
+    { code: "NU", name: "Nunavut" },
+    { code: "ON", name: "Ontario" },
+    { code: "PE", name: "Prince Edward Island" },
+    { code: "QC", name: "Quebec" },
+    { code: "SK", name: "Saskatchewan" },
+    { code: "YT", name: "Yukon" },
+  ],
+  AU: [
+    { code: "NSW", name: "New South Wales" },
+    { code: "VIC", name: "Victoria" },
+    { code: "QLD", name: "Queensland" },
+    { code: "WA", name: "Western Australia" },
+    { code: "SA", name: "South Australia" },
+    { code: "TAS", name: "Tasmania" },
+    { code: "ACT", name: "Australian Capital Territory" },
+    { code: "NT", name: "Northern Territory" },
+  ],
+  DE: [
+    { code: "BW", name: "Baden-Württemberg" },
+    { code: "BY", name: "Bavaria" },
+    { code: "BE", name: "Berlin" },
+    { code: "BB", name: "Brandenburg" },
+    { code: "HB", name: "Bremen" },
+    { code: "HH", name: "Hamburg" },
+    { code: "HE", name: "Hesse" },
+    { code: "MV", name: "Mecklenburg-Vorpommern" },
+    { code: "NI", name: "Lower Saxony" },
+    { code: "NW", name: "North Rhine-Westphalia" },
+    { code: "RP", name: "Rhineland-Palatinate" },
+    { code: "SL", name: "Saarland" },
+    { code: "SN", name: "Saxony" },
+    { code: "ST", name: "Saxony-Anhalt" },
+    { code: "SH", name: "Schleswig-Holstein" },
+    { code: "TH", name: "Thuringia" },
+  ],
+  IN: [
+    { code: "AP", name: "Andhra Pradesh" },
+    { code: "AR", name: "Arunachal Pradesh" },
+    { code: "AS", name: "Assam" },
+    { code: "BR", name: "Bihar" },
+    { code: "CT", name: "Chhattisgarh" },
+    { code: "GA", name: "Goa" },
+    { code: "GJ", name: "Gujarat" },
+    { code: "HR", name: "Haryana" },
+    { code: "HP", name: "Himachal Pradesh" },
+    { code: "JH", name: "Jharkhand" },
+    { code: "KA", name: "Karnataka" },
+    { code: "KL", name: "Kerala" },
+    { code: "MP", name: "Madhya Pradesh" },
+    { code: "MH", name: "Maharashtra" },
+    { code: "MN", name: "Manipur" },
+    { code: "ML", name: "Meghalaya" },
+    { code: "MZ", name: "Mizoram" },
+    { code: "NL", name: "Nagaland" },
+    { code: "OR", name: "Odisha" },
+    { code: "PB", name: "Punjab" },
+    { code: "RJ", name: "Rajasthan" },
+    { code: "SK", name: "Sikkim" },
+    { code: "TN", name: "Tamil Nadu" },
+    { code: "TG", name: "Telangana" },
+    { code: "TR", name: "Tripura" },
+    { code: "UP", name: "Uttar Pradesh" },
+    { code: "UT", name: "Uttarakhand" },
+    { code: "WB", name: "West Bengal" },
+  ],
+  BR: [
+    { code: "AC", name: "Acre" },
+    { code: "AL", name: "Alagoas" },
+    { code: "AP", name: "Amapá" },
+    { code: "AM", name: "Amazonas" },
+    { code: "BA", name: "Bahia" },
+    { code: "CE", name: "Ceará" },
+    { code: "DF", name: "Distrito Federal" },
+    { code: "ES", name: "Espírito Santo" },
+    { code: "GO", name: "Goiás" },
+    { code: "MA", name: "Maranhão" },
+    { code: "MT", name: "Mato Grosso" },
+    { code: "MS", name: "Mato Grosso do Sul" },
+    { code: "MG", name: "Minas Gerais" },
+    { code: "PA", name: "Pará" },
+    { code: "PB", name: "Paraíba" },
+    { code: "PR", name: "Paraná" },
+    { code: "PE", name: "Pernambuco" },
+    { code: "PI", name: "Piauí" },
+    { code: "RJ", name: "Rio de Janeiro" },
+    { code: "RN", name: "Rio Grande do Norte" },
+    { code: "RS", name: "Rio Grande do Sul" },
+    { code: "RO", name: "Rondônia" },
+    { code: "RR", name: "Roraima" },
+    { code: "SC", name: "Santa Catarina" },
+    { code: "SP", name: "São Paulo" },
+    { code: "SE", name: "Sergipe" },
+    { code: "TO", name: "Tocantins" },
+  ],
+};
 
 // Video Recording Manager Class for Session Recording
 class VideoRecordingManager {
@@ -522,6 +716,428 @@ function prevStep(stepNumber) {
   currentStep = stepNumber;
 }
 
+// Field Step Navigation for Personal Information
+function nextFieldStep() {
+  if (!validateCurrentField()) {
+    return;
+  }
+
+  if (currentFieldStep < totalFieldSteps) {
+    // Slide out current step to the left
+    const currentSubStep = document.getElementById(
+      `sub-step-1-${currentFieldStep}`
+    );
+    currentSubStep.classList.remove("active");
+    currentSubStep.classList.add("slide-out-to-left");
+
+    // Move to next field step
+    currentFieldStep++;
+
+    // Slide in next step from the right
+    setTimeout(() => {
+      const nextSubStep = document.getElementById(
+        `sub-step-1-${currentFieldStep}`
+      );
+      nextSubStep.classList.add("active");
+      nextSubStep.classList.add("slide-in-from-right");
+
+      // Remove animation classes after animation completes
+      setTimeout(() => {
+        currentSubStep.classList.remove("slide-out-to-left");
+        nextSubStep.classList.remove("slide-in-from-right");
+      }, 600);
+    }, 50);
+
+    updateFieldProgress();
+    focusCurrentField();
+  }
+}
+
+function prevFieldStep() {
+  if (currentFieldStep > 1) {
+    // Slide out current step to the right
+    const currentSubStep = document.getElementById(
+      `sub-step-1-${currentFieldStep}`
+    );
+    currentSubStep.classList.remove("active");
+    currentSubStep.classList.add("slide-out-to-right");
+
+    // Move to previous field step
+    currentFieldStep--;
+
+    // Slide in previous step from the left
+    setTimeout(() => {
+      const prevSubStep = document.getElementById(
+        `sub-step-1-${currentFieldStep}`
+      );
+      prevSubStep.classList.add("active");
+      prevSubStep.classList.add("slide-in-from-left");
+
+      // Remove animation classes after animation completes
+      setTimeout(() => {
+        currentSubStep.classList.remove("slide-out-to-right");
+        prevSubStep.classList.remove("slide-in-from-left");
+      }, 600);
+    }, 50);
+
+    updateFieldProgress();
+    focusCurrentField();
+  }
+}
+
+function updateFieldProgress() {
+  // Update progress bar
+  const progressFill = document.getElementById("sub-step-progress-fill");
+  const progressPercent = (currentFieldStep / totalFieldSteps) * 100;
+  if (progressFill) {
+    progressFill.style.width = `${progressPercent}%`;
+  }
+
+  // Update progress text
+  const currentFieldStepElement = document.getElementById("current-field-step");
+  if (currentFieldStepElement) {
+    currentFieldStepElement.textContent = currentFieldStep;
+  }
+}
+
+// Address-specific functions
+function updateStateOptions() {
+  const countrySelect = document.getElementById("country");
+  const stateSelect = document.getElementById("state-select");
+  const stateInput = document.getElementById("state-input");
+  const stateLabel = document.getElementById("state-label");
+  const stateDescription = document.getElementById("state-description");
+  const postalInput = document.getElementById("postal-code");
+  const postalHint = document.getElementById("postal-format-hint");
+  const postalDescription = document.getElementById("postal-description");
+
+  const selectedCountry = countrySelect.value;
+
+  if (!selectedCountry) {
+    // Hide state field if no country selected
+    stateSelect.style.display = "none";
+    stateInput.style.display = "none";
+    return;
+  }
+
+  const country = COUNTRIES[selectedCountry];
+
+  // Update state/province field
+  if (country.hasStates && STATES_PROVINCES[selectedCountry]) {
+    // Show dropdown for countries with predefined states
+    stateSelect.style.display = "block";
+    stateInput.style.display = "none";
+
+    // Populate state dropdown
+    stateSelect.innerHTML =
+      '<option value="">Select your state/province</option>';
+    STATES_PROVINCES[selectedCountry].forEach((state) => {
+      const option = document.createElement("option");
+      option.value = state.code;
+      option.textContent = state.name;
+      stateSelect.appendChild(option);
+    });
+
+    // Update labels based on country
+    switch (selectedCountry) {
+      case "US":
+        stateLabel.textContent = "State";
+        stateDescription.textContent = "Select your state";
+        break;
+      case "CA":
+        stateLabel.textContent = "Province / Territory";
+        stateDescription.textContent = "Select your province or territory";
+        break;
+      case "AU":
+        stateLabel.textContent = "State / Territory";
+        stateDescription.textContent = "Select your state or territory";
+        break;
+      case "DE":
+        stateLabel.textContent = "State (Bundesland)";
+        stateDescription.textContent = "Select your state";
+        break;
+      case "IN":
+        stateLabel.textContent = "State";
+        stateDescription.textContent = "Select your state";
+        break;
+      case "BR":
+        stateLabel.textContent = "State";
+        stateDescription.textContent = "Select your state";
+        break;
+      default:
+        stateLabel.textContent = "State / Province";
+        stateDescription.textContent = "Select your state or province";
+    }
+  } else {
+    // Show text input for countries without predefined states
+    stateSelect.style.display = "none";
+    stateInput.style.display = "block";
+    stateLabel.textContent = "Region";
+    stateDescription.textContent = "Enter your region or area";
+  }
+
+  // Update postal code format hints
+  updatePostalCodeHints(selectedCountry, country);
+}
+
+function updatePostalCodeHints(countryCode, country) {
+  const postalHint = document.getElementById("postal-format-hint");
+  const postalDescription = document.getElementById("postal-description");
+
+  const formatExamples = {
+    BG: "Format: 1234 (e.g., 1000)",
+    US: "Format: 12345 or 12345-6789 (e.g., 90210)",
+    GB: "Format: SW1A 1AA (e.g., M1 1AA)",
+    DE: "Format: 12345 (e.g., 10115)",
+    FR: "Format: 12345 (e.g., 75001)",
+    CA: "Format: A1A 1A1 (e.g., K1A 0A6)",
+    AU: "Format: 1234 (e.g., 2000)",
+    IT: "Format: 12345 (e.g., 00100)",
+    ES: "Format: 12345 (e.g., 28001)",
+    NL: "Format: 1234 AB (e.g., 1012 JS)",
+    IN: "Format: 123456 (e.g., 110001)",
+    BR: "Format: 12345-123 (e.g., 01310-100)",
+    RU: "Format: 123456 (e.g., 101000)",
+    JP: "Format: 123-1234 (e.g., 100-0001)",
+    CN: "Format: 123456 (e.g., 100000)",
+  };
+
+  if (postalHint && formatExamples[countryCode]) {
+    postalHint.textContent = formatExamples[countryCode];
+  }
+
+  // Update postal code description
+  const postalNames = {
+    US: "Enter your ZIP code",
+    GB: "Enter your postcode",
+    CA: "Enter your postal code",
+    AU: "Enter your postcode",
+    IN: "Enter your PIN code",
+  };
+
+  if (postalDescription) {
+    postalDescription.textContent =
+      postalNames[countryCode] || "Enter your postal code";
+  }
+}
+
+function initializeAddressFields() {
+  // Hide state field initially
+  const stateSelect = document.getElementById("state-select");
+  const stateInput = document.getElementById("state-input");
+
+  if (stateSelect) {
+    stateSelect.style.display = "none";
+  }
+
+  if (stateInput) {
+    stateInput.style.display = "none";
+  }
+}
+
+function focusCurrentField() {
+  setTimeout(() => {
+    const currentSubStep = document.getElementById(
+      `sub-step-1-${currentFieldStep}`
+    );
+    if (currentSubStep) {
+      const inputField = currentSubStep.querySelector(
+        "input, textarea, select"
+      );
+      if (inputField) {
+        inputField.focus();
+      }
+    }
+  }, 650); // Wait for slide animation to complete
+}
+
+function validateCurrentField() {
+  const currentSubStep = document.getElementById(
+    `sub-step-1-${currentFieldStep}`
+  );
+  if (!currentSubStep) return false;
+
+  const inputField = currentSubStep.querySelector("input, textarea, select");
+  if (!inputField) return false;
+
+  const value = inputField.value.trim();
+
+  // Check if field is required and empty
+  if (inputField.hasAttribute("required") && !value) {
+    inputField.focus();
+    inputField.style.borderColor = "#ef4444";
+    setTimeout(() => {
+      inputField.style.borderColor = "";
+    }, 3000);
+    return false;
+  }
+
+  // Field-specific validation
+  switch (currentFieldStep) {
+    case 3: // EGN validation
+      if (value && value.length !== 10) {
+        alert("Personal ID Number must be 10 digits.");
+        inputField.focus();
+        return false;
+      }
+      break;
+    case 4: // Phone validation
+      if (value && !/^[+]?[\d\s\-\(\)]+$/.test(value)) {
+        alert("Please enter a valid phone number.");
+        inputField.focus();
+        return false;
+      }
+      break;
+    case 5: // Email validation
+      if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        alert("Please enter a valid email address.");
+        inputField.focus();
+        return false;
+      }
+      break;
+    case 6: // Country validation
+      if (!value) {
+        alert("Please select your country.");
+        inputField.focus();
+        return false;
+      }
+      break;
+    case 7: // State/Province validation
+      const countryValue = document.getElementById("country").value;
+      const country = COUNTRIES[countryValue];
+      if (country && country.hasStates && !value) {
+        alert("Please select your state/province.");
+        inputField.focus();
+        return false;
+      }
+      break;
+    case 8: // City validation
+      if (value && value.length < 2) {
+        alert("Please enter a valid city name.");
+        inputField.focus();
+        return false;
+      }
+      break;
+    case 9: // Postal code validation
+      const selectedCountry = document.getElementById("country").value;
+      if (selectedCountry && COUNTRIES[selectedCountry]) {
+        const postalFormat = COUNTRIES[selectedCountry].postalFormat;
+        if (value && !postalFormat.test(value)) {
+          alert("Please enter a valid postal code for your country.");
+          inputField.focus();
+          return false;
+        }
+      }
+      break;
+    case 10: // Street name validation
+      if (value && value.length < 3) {
+        alert("Please enter a valid street name.");
+        inputField.focus();
+        return false;
+      }
+      break;
+    case 11: // House number validation
+      if (value && !/^[\d\w\-\/\s]+$/.test(value)) {
+        alert("Please enter a valid house number.");
+        inputField.focus();
+        return false;
+      }
+      break;
+    case 12: // Apartment/Suite/Floor (optional - no validation needed)
+      break;
+    case 13: // Income validation
+      if (value && (isNaN(value) || parseFloat(value) < 0)) {
+        alert("Please enter a valid income amount.");
+        inputField.focus();
+        return false;
+      }
+      break;
+    case 14: // Employment validation
+      if (!value) {
+        alert("Please select your employment status.");
+        inputField.focus();
+        return false;
+      }
+      break;
+  }
+
+  return true;
+}
+
+// Initialize field progress on page load
+document.addEventListener("DOMContentLoaded", function () {
+  // Set initial field progress
+  if (document.getElementById("total-field-steps")) {
+    document.getElementById("total-field-steps").textContent = totalFieldSteps;
+  }
+  updateFieldProgress();
+
+  // Focus on first field
+  setTimeout(() => {
+    focusCurrentField();
+  }, 500);
+
+  // Initialize address fields
+  initializeAddressFields();
+
+  // Add keyboard navigation support
+  document.addEventListener("keydown", handleKeyboardNavigation);
+
+  // Add Enter key support for individual field forms
+  const fieldForms = document.querySelectorAll(".single-field-form");
+  fieldForms.forEach((form) => {
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      // Simulate clicking the next button
+      const nextBtn = form.querySelector(
+        ".next-field-btn, .complete-personal-info-btn"
+      );
+      if (nextBtn) {
+        nextBtn.click();
+      }
+    });
+  });
+});
+
+function handleKeyboardNavigation(event) {
+  // Only handle keyboard navigation when in Step 1 (personal info)
+  if (currentStep !== 1) return;
+
+  switch (event.key) {
+    case "Enter":
+      event.preventDefault();
+      if (currentFieldStep < totalFieldSteps) {
+        nextFieldStep();
+      } else {
+        // On last field, proceed to next step
+        nextStep(2);
+      }
+      break;
+    case "Escape":
+      event.preventDefault();
+      if (currentFieldStep > 1) {
+        prevFieldStep();
+      }
+      break;
+    case "ArrowRight":
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+        if (currentFieldStep < totalFieldSteps) {
+          nextFieldStep();
+        }
+      }
+      break;
+    case "ArrowLeft":
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+        if (currentFieldStep > 1) {
+          prevFieldStep();
+        }
+      }
+      break;
+  }
+}
+
 // Validation
 function validateCurrentStep() {
   switch (currentStep) {
@@ -537,12 +1153,40 @@ function validateCurrentStep() {
 }
 
 function validatePersonalInfo() {
-  const form = document.getElementById("personal-info-form");
-  const formData = new FormData(form);
+  // Collect data from all field sub-steps
+  // Helper function to get state value
+  function getStateValue() {
+    const stateSelect = document.getElementById("state-select");
+    const stateInput = document.getElementById("state-input");
 
-  // Basic validation
-  for (let [key, value] of formData.entries()) {
-    if (!value.trim()) {
+    if (stateSelect.style.display !== "none") {
+      return stateSelect.value.trim();
+    } else if (stateInput.style.display !== "none") {
+      return stateInput.value.trim();
+    }
+    return "";
+  }
+
+  const personalInfo = {
+    firstName: document.getElementById("first-name")?.value.trim(),
+    lastName: document.getElementById("last-name")?.value.trim(),
+    egn: document.getElementById("egn")?.value.trim(),
+    phone: document.getElementById("phone")?.value.trim(),
+    email: document.getElementById("email")?.value.trim(),
+    country: document.getElementById("country")?.value.trim(),
+    state: getStateValue(),
+    city: document.getElementById("city")?.value.trim(),
+    postalCode: document.getElementById("postal-code")?.value.trim(),
+    streetName: document.getElementById("street-name")?.value.trim(),
+    houseNumber: document.getElementById("house-number")?.value.trim(),
+    apartment: document.getElementById("apartment")?.value.trim(), // Optional
+    income: document.getElementById("income")?.value.trim(),
+    employment: document.getElementById("employment")?.value.trim(),
+  };
+
+  // Basic validation - check all required fields are filled (apartment is optional)
+  for (let [key, value] of Object.entries(personalInfo)) {
+    if (!value && key !== "apartment") {
       alert(
         t(
           "verification.validation.fill_required",
@@ -554,14 +1198,37 @@ function validatePersonalInfo() {
   }
 
   // EGN validation (basic)
-  const egn = formData.get("egn");
-  if (egn && egn.length !== 10) {
+  if (personalInfo.egn && personalInfo.egn.length !== 10) {
     alert(
       t(
         "verification.validation.egn_invalid",
         "Personal ID Number must be 10 digits."
       )
     );
+    return false;
+  }
+
+  // Email validation
+  if (
+    personalInfo.email &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personalInfo.email)
+  ) {
+    alert("Please enter a valid email address.");
+    return false;
+  }
+
+  // Phone validation
+  if (personalInfo.phone && !/^[+]?[\d\s\-\(\)]+$/.test(personalInfo.phone)) {
+    alert("Please enter a valid phone number.");
+    return false;
+  }
+
+  // Income validation
+  if (
+    personalInfo.income &&
+    (isNaN(personalInfo.income) || parseFloat(personalInfo.income) < 0)
+  ) {
+    alert("Please enter a valid income amount.");
     return false;
   }
 
@@ -1249,14 +1916,42 @@ async function submitApplication() {
       "Submitting application..."
     )}`;
 
-    // Collect personal information
-    const formData = new FormData(
-      document.getElementById("personal-info-form")
-    );
-    const personalInfo = {};
-    for (let [key, value] of formData.entries()) {
-      personalInfo[key] = value;
+    // Collect personal information from individual fields (multi-step form)
+    function getStateValue() {
+      const stateSelect = document.getElementById("state-select");
+      const stateInput = document.getElementById("state-input");
+
+      if (stateSelect && stateSelect.style.display !== "none") {
+        return stateSelect.value.trim();
+      } else if (stateInput && stateInput.style.display !== "none") {
+        return stateInput.value.trim();
+      }
+      return "";
     }
+
+    const personalInfo = {
+      firstName: document.getElementById("first-name")?.value.trim() || "",
+      lastName: document.getElementById("last-name")?.value.trim() || "",
+      egn: document.getElementById("egn")?.value.trim() || "",
+      phone: document.getElementById("phone")?.value.trim() || "",
+      email: document.getElementById("email")?.value.trim() || "",
+      income: document.getElementById("income")?.value.trim() || "",
+      employment: document.getElementById("employment")?.value.trim() || "",
+      // Combine address components into a single address field for server compatibility
+      address: [
+        document.getElementById("street-name")?.value.trim() || "",
+        document.getElementById("house-number")?.value.trim() || "",
+        document.getElementById("apartment")?.value.trim() || "",
+        document.getElementById("city")?.value.trim() || "",
+        getStateValue(),
+        document.getElementById("postal-code")?.value.trim() || "",
+        document.getElementById("country")?.value.trim() || "",
+      ]
+        .filter((component) => component)
+        .join(", "),
+    };
+
+    console.log("📝 Collected personal info:", personalInfo);
 
     // Prepare photos for upload (convert to base64)
     const photoData = {};
@@ -1369,6 +2064,7 @@ function fileToBase64(file) {
 // MongoDB submission function
 async function submitToDatabase(data) {
   try {
+    console.log("📤 Submitting verification data to database...");
     const response = await fetch("/api/submit-verification", {
       method: "POST",
       headers: {
@@ -1378,32 +2074,22 @@ async function submitToDatabase(data) {
     });
 
     if (response.ok) {
+      const result = await response.json();
+      console.log("✅ Database submission successful:", result);
       return true;
     } else {
-      console.error("Database submission failed:", response.statusText);
+      const errorData = await response.text();
+      console.error("❌ Database submission failed:", {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+      });
       return false;
     }
   } catch (error) {
-    console.error("Network error during submission:", error);
-
-    // For development/demo purposes, simulate successful submission
-    console.log("Simulating successful submission with data:", data);
-
-    // Store data locally for demo
-    localStorage.setItem(
-      "verification_data",
-      JSON.stringify({
-        personalInfo: data.personalInfo,
-        photoCount: Object.keys(data.photos).length,
-        historyCount: Object.values(data.photoHistory).reduce(
-          (total, history) => total + history.length,
-          0
-        ),
-        submissionDate: data.submissionDate,
-      })
-    );
-
-    return true;
+    console.error("❌ Network error during submission:", error);
+    // Don't simulate success - let the error propagate properly
+    return false;
   }
 }
 

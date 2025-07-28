@@ -292,10 +292,16 @@ app.post("/api/verify-identity", async (req, res) => {
 // API endpoint to submit verification data
 app.post("/api/submit-verification", async (req, res) => {
   try {
+    console.log("📥 Received verification submission request");
     const { personalInfo, photos, submissionDate, sessionId } = req.body;
 
     // Validate required fields
     if (!personalInfo || !photos || !submissionDate) {
+      console.error("❌ Missing required fields:", { 
+        hasPersonalInfo: !!personalInfo, 
+        hasPhotos: !!photos, 
+        hasSubmissionDate: !!submissionDate 
+      });
       return res.status(400).json({
         success: false,
         error: "Missing required fields",
@@ -315,6 +321,7 @@ app.post("/api/submit-verification", async (req, res) => {
     ];
     for (const field of requiredFields) {
       if (!personalInfo[field]) {
+        console.error(`❌ Missing required personal info field: ${field}`);
         return res.status(400).json({
           success: false,
           error: `Missing required field: ${field}`,
@@ -332,12 +339,15 @@ app.post("/api/submit-verification", async (req, res) => {
     ];
     for (const photoId of requiredPhotos) {
       if (!photos[photoId]) {
+        console.error(`❌ Missing required photo: ${photoId}`);
         return res.status(400).json({
           success: false,
           error: `Missing required photo: ${photoId}`,
         });
       }
     }
+
+    console.log("✅ Validation passed, proceeding with database insertion");
 
     // Create verification document
     const verificationDoc = {
@@ -386,8 +396,13 @@ app.post("/api/submit-verification", async (req, res) => {
     };
 
     // Insert into MongoDB
+    console.log("📝 Attempting to insert verification document into MongoDB...");
     const collection = db.collection(COLLECTION_NAME);
     const result = await collection.insertOne(verificationDoc);
+
+    if (!result.insertedId) {
+      throw new Error("Failed to insert document - no insertedId returned");
+    }
 
     console.log("✅ Verification submitted successfully:", {
       id: result.insertedId,
@@ -403,10 +418,15 @@ app.post("/api/submit-verification", async (req, res) => {
       message: "Verification submitted successfully",
     });
   } catch (error) {
-    console.error("❌ Error submitting verification:", error);
+    console.error("❌ Error submitting verification:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     res.status(500).json({
       success: false,
       error: "Internal server error",
+      details: error.message
     });
   }
 });
