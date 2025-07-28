@@ -347,10 +347,68 @@
 @media (max-width: 768px) {
   .sub-steps-container {
     min-height: 400px;
+    /* Prevent viewport jumping on input focus */
+    position: relative;
+    overflow-x: hidden;
   }
 
   .field-step-content {
-    padding: 0 10px;
+    padding: 0 16px;
+    /* Ensure content stays within viewport */
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Prevent form fields from going off-screen */
+  .personal-info-sub-step {
+    padding: 16px;
+    /* Ensure proper positioning */
+    left: 0;
+    right: 0;
+    width: 100%;
+    box-sizing: border-box;
+    /* Prevent content from extending beyond viewport */
+    overflow-x: hidden;
+  }
+
+  /* Fix for iPhone input focus jumping */
+  .single-field-form {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .single-field-form .form-group {
+    margin-bottom: 24px;
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .single-field-form input,
+  .single-field-form textarea,
+  .single-field-form select {
+    width: 100%;
+    max-width: 100%;
+    padding: 16px 18px;
+    font-size: 16px; /* Prevent iOS zoom on focus */
+    box-sizing: border-box;
+    /* Prevent viewport shift on focus */
+    transform: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  /* Prevent iOS zoom and jumping on input focus */
+  .single-field-form input:focus,
+  .single-field-form textarea:focus,
+  .single-field-form select:focus {
+    /* Disable zoom prevention that might cause jumping */
+    -webkit-user-select: auto;
+    -webkit-transform: none;
+    transform: none !important;
+    /* Smooth focus without jumping */
+    transition: all 0.2s ease;
   }
 
   .field-icon {
@@ -373,16 +431,11 @@
     margin-bottom: 24px;
   }
 
-  .single-field-form input,
-  .single-field-form textarea,
-  .single-field-form select {
-    padding: 14px 16px;
-    font-size: 14px;
-  }
-
   .field-navigation {
     flex-direction: column;
     gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .prev-field-btn,
@@ -391,6 +444,7 @@
     width: 100%;
     padding: 12px 24px;
     font-size: 14px;
+    box-sizing: border-box;
   }
 
   .sub-step-progress {
@@ -402,14 +456,68 @@
   }
 }
 
-@media (max-width: 480px) {
+/* iOS-specific fixes for iPhone */
+@supports (-webkit-touch-callout: none) {
+  /* This targets iOS Safari specifically */
+  .single-field-form input,
+  .single-field-form textarea,
+  .single-field-form select {
+    /* Prevent iOS zoom */
+    font-size: 16px !important;
+    /* Prevent viewport shifting */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  .single-field-form input:focus,
+  .single-field-form textarea:focus,
+  .single-field-form select:focus {
+    /* Prevent iOS focus zoom and jumping */
+    font-size: 16px !important;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    /* Prevent the field from jumping around */
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Fix for Safari mobile viewport issues */
   .verification-steps {
-    padding: 20px;
-    margin: 0 10px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .personal-info-sub-step {
-    padding: 10px;
+    /* Ensure proper positioning on iOS */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .verification-steps {
+    padding: 16px 12px;
+    margin: 0 8px;
+    /* Prevent horizontal scrolling */
+    overflow-x: hidden;
+    width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
+    box-sizing: border-box;
+  }
+
+  .personal-info-sub-step {
+    padding: 12px 8px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    /* Ensure content doesn't overflow */
+    overflow-x: hidden;
+  }
+
+  .field-step-content {
+    padding: 0 4px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .field-step-content h4 {
@@ -423,6 +531,24 @@
 
   .field-icon i {
     font-size: 24px;
+  }
+
+  /* Make sure form inputs don't overflow on small screens */
+  .single-field-form input,
+  .single-field-form textarea,
+  .single-field-form select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    font-size: 16px !important; /* Prevent iOS zoom */
+    padding: 14px 16px;
+    box-sizing: border-box;
+  }
+
+  .field-navigation {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 }
 

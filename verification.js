@@ -248,21 +248,69 @@ class VideoRecordingManager {
       // iOS-compatible constraints
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-      const constraints = {
-        video: {
-          facingMode: facingMode,
-          width: isIOS ? { ideal: 640, max: 1280 } : { ideal: 1280 },
-          height: isIOS ? { ideal: 480, max: 720 } : { ideal: 720 },
-        },
-        audio: true, // Include audio for better verification
-      };
+      let constraints;
+
+      if (isIOS && facingMode === "user") {
+        // Special constraints for iOS front camera to avoid black screen
+        constraints = {
+          video: {
+            facingMode: { exact: "user" }, // Force front camera
+            width: { ideal: 640, max: 1280 },
+            height: { ideal: 480, max: 720 },
+            frameRate: { ideal: 30, max: 30 },
+          },
+          audio: true,
+        };
+      } else if (isIOS) {
+        // Regular iOS constraints for back camera
+        constraints = {
+          video: {
+            facingMode: facingMode,
+            width: { ideal: 640, max: 1280 },
+            height: { ideal: 480, max: 720 },
+            frameRate: { ideal: 30, max: 30 },
+          },
+          audio: true,
+        };
+      } else {
+        // Non-iOS devices
+        constraints = {
+          video: {
+            facingMode: facingMode,
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: true,
+        };
+      }
 
       console.log(
         `📱 Getting ${facingMode} camera stream for ${
           isIOS ? "iOS" : "other"
-        } device`
+        } device with constraints:`,
+        constraints
       );
-      return await navigator.mediaDevices.getUserMedia(constraints);
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // Verify the stream has video tracks and they're active
+      const videoTracks = stream.getVideoTracks();
+      if (videoTracks.length === 0) {
+        throw new Error(`No video tracks found for ${facingMode} camera`);
+      }
+
+      const videoTrack = videoTracks[0];
+      console.log(`📹 ${facingMode} camera track:`, {
+        label: videoTrack.label,
+        kind: videoTrack.kind,
+        enabled: videoTrack.enabled,
+        readyState: videoTrack.readyState,
+        settings: videoTrack.getSettings
+          ? videoTrack.getSettings()
+          : "not available",
+      });
+
+      return stream;
     } catch (error) {
       console.warn(`⚠️ Could not access ${facingMode} camera:`, error);
 
@@ -270,11 +318,41 @@ class VideoRecordingManager {
       if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
         try {
           console.log("🔄 Trying iOS fallback constraints...");
-          const fallbackConstraints = {
-            video: { facingMode: facingMode },
-            audio: true,
-          };
-          return await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+
+          let fallbackConstraints;
+          if (facingMode === "user") {
+            // More permissive front camera constraints
+            fallbackConstraints = {
+              video: {
+                facingMode: "user",
+                width: { min: 320, ideal: 640 },
+                height: { min: 240, ideal: 480 },
+              },
+              audio: true,
+            };
+          } else {
+            fallbackConstraints = {
+              video: { facingMode: facingMode },
+              audio: true,
+            };
+          }
+
+          const fallbackStream = await navigator.mediaDevices.getUserMedia(
+            fallbackConstraints
+          );
+
+          // Log fallback stream details
+          const videoTracks = fallbackStream.getVideoTracks();
+          if (videoTracks.length > 0) {
+            const videoTrack = videoTracks[0];
+            console.log(`📹 ${facingMode} camera fallback track:`, {
+              label: videoTrack.label,
+              enabled: videoTrack.enabled,
+              readyState: videoTrack.readyState,
+            });
+          }
+
+          return fallbackStream;
         } catch (fallbackError) {
           console.warn("⚠️ iOS fallback also failed:", fallbackError);
         }
@@ -302,8 +380,13 @@ class VideoRecordingManager {
 
     this.streams.forEach((streamInfo, index) => {
       try {
+        // Determine the best codec for this camera type and device
+        const mimeType = this.getBestMimeType(streamInfo.type);
+
+        console.log(`🎬 Using codec ${mimeType} for ${streamInfo.type} camera`);
+
         const mediaRecorder = new MediaRecorder(streamInfo.stream, {
-          mimeType: "video/webm;codecs=vp9,opus",
+          mimeType: mimeType,
         });
 
         const chunks = [];
@@ -315,33 +398,170 @@ class VideoRecordingManager {
         };
 
         mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: "video/webm" });
+          const blob = new Blob(chunks, { type: mimeType });
           this.recordedChunks.push({
             type: streamInfo.type,
             blob: blob,
             size: blob.size,
             duration: Date.now() - this.startTime.getTime(),
+            mimeType: mimeType,
           });
           console.log(
             `📹 ${streamInfo.type} camera recording stopped:`,
             blob.size,
-            "bytes"
+            "bytes, codec:",
+            mimeType
           );
         };
 
         mediaRecorder.start(1000); // Record in 1-second chunks
         this.mediaRecorders.push(mediaRecorder);
 
-        console.log(`🎬 Started recording from ${streamInfo.type} camera`);
+        console.log(
+          `🎬 Started recording from ${streamInfo.type} camera with ${mimeType}`
+        );
       } catch (error) {
         console.error(
           `❌ Failed to start recording from ${streamInfo.type} camera:`,
           error
         );
+
+        // Try fallback recording with default codec
+        this.tryFallbackRecording(streamInfo);
       }
     });
 
     return true;
+  }
+
+  getBestMimeType(cameraType) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    // Define codec preferences based on device and camera type
+    const codecPreferences = {
+      ios: {
+        front: [
+          'video/mp4; codecs="avc1.42E01E"', // H.264 Baseline Profile - most compatible with iOS front camera
+          'video/mp4; codecs="avc1.64001E"', // H.264 Main Profile
+          "video/mp4", // Generic MP4
+          'video/webm; codecs="vp8,opus"', // VP8 fallback
+          "video/webm", // Generic WebM
+        ],
+        back: [
+          'video/mp4; codecs="avc1.64001E"', // H.264 Main Profile
+          'video/mp4; codecs="avc1.42E01E"', // H.264 Baseline Profile
+          'video/webm; codecs="vp9,opus"', // VP9 (original codec)
+          "video/mp4", // Generic MP4
+          'video/webm; codecs="vp8,opus"', // VP8 fallback
+          "video/webm", // Generic WebM
+        ],
+      },
+      other: [
+        'video/webm; codecs="vp9,opus"', // VP9 (original - works well on Android/Desktop)
+        'video/webm; codecs="vp8,opus"', // VP8 fallback
+        'video/mp4; codecs="avc1.64001E"', // H.264 Main Profile
+        'video/mp4; codecs="avc1.42E01E"', // H.264 Baseline Profile
+        "video/webm", // Generic WebM
+        "video/mp4", // Generic MP4
+      ],
+    };
+
+    let preferences;
+    if (isIOS) {
+      preferences =
+        codecPreferences.ios[cameraType] || codecPreferences.ios.back;
+    } else {
+      preferences = codecPreferences.other;
+    }
+
+    // Find the first supported codec
+    for (const mimeType of preferences) {
+      if (MediaRecorder.isTypeSupported(mimeType)) {
+        console.log(
+          `✅ Selected codec: ${mimeType} for ${cameraType} camera on ${
+            isIOS ? "iOS" : "other"
+          }`
+        );
+        return mimeType;
+      }
+    }
+
+    // If no preferred codecs are supported, use the first available
+    console.warn(
+      `⚠️ No preferred codecs supported, using default for ${cameraType} camera`
+    );
+    return this.getDefaultMimeType();
+  }
+
+  getDefaultMimeType() {
+    const defaultCodecs = [
+      'video/webm; codecs="vp9,opus"',
+      'video/webm; codecs="vp8,opus"',
+      "video/mp4",
+      "video/webm",
+    ];
+
+    for (const mimeType of defaultCodecs) {
+      if (MediaRecorder.isTypeSupported(mimeType)) {
+        return mimeType;
+      }
+    }
+
+    // Last resort - let MediaRecorder choose
+    return "";
+  }
+
+  tryFallbackRecording(streamInfo) {
+    try {
+      console.log(
+        `🔄 Attempting fallback recording for ${streamInfo.type} camera`
+      );
+
+      const fallbackMimeType = this.getDefaultMimeType();
+      const mediaRecorder = new MediaRecorder(
+        streamInfo.stream,
+        fallbackMimeType ? { mimeType: fallbackMimeType } : {}
+      );
+
+      const chunks = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, {
+          type: fallbackMimeType || "video/webm",
+        });
+        this.recordedChunks.push({
+          type: streamInfo.type,
+          blob: blob,
+          size: blob.size,
+          duration: Date.now() - this.startTime.getTime(),
+          mimeType: fallbackMimeType || "video/webm",
+          fallback: true,
+        });
+        console.log(
+          `📹 ${streamInfo.type} camera fallback recording stopped:`,
+          blob.size,
+          "bytes"
+        );
+      };
+
+      mediaRecorder.start(1000);
+      this.mediaRecorders.push(mediaRecorder);
+
+      console.log(
+        `✅ Fallback recording started for ${streamInfo.type} camera`
+      );
+    } catch (fallbackError) {
+      console.error(
+        `❌ Fallback recording also failed for ${streamInfo.type} camera:`,
+        fallbackError
+      );
+    }
   }
 
   stopRecording() {
@@ -378,15 +598,35 @@ class VideoRecordingManager {
       const uploadPromises = this.recordedChunks.map(
         async (recording, index) => {
           const formData = new FormData();
+
+          // Determine file extension based on mimeType
+          let extension = ".webm"; // default
+          if (recording.mimeType) {
+            if (recording.mimeType.includes("mp4")) {
+              extension = ".mp4";
+            } else if (recording.mimeType.includes("webm")) {
+              extension = ".webm";
+            }
+          }
+
           const filename = `${this.sessionId}_${
             recording.type
-          }_${Date.now()}.webm`;
+          }_${Date.now()}${extension}`;
 
           formData.append("video", recording.blob, filename);
           formData.append("sessionId", this.sessionId);
           formData.append("cameraType", recording.type);
           formData.append("duration", recording.duration);
           formData.append("size", recording.size);
+          formData.append("mimeType", recording.mimeType || "video/webm");
+          formData.append("isFallback", recording.fallback ? "true" : "false");
+
+          console.log(`📤 Uploading ${recording.type} recording:`, {
+            filename,
+            size: recording.size,
+            mimeType: recording.mimeType,
+            fallback: recording.fallback || false,
+          });
 
           const response = await fetch("/api/upload-session-recording", {
             method: "POST",
@@ -405,6 +645,8 @@ class VideoRecordingManager {
             cameraType: recording.type,
             duration: recording.duration,
             originalSize: recording.size,
+            mimeType: recording.mimeType,
+            fallback: recording.fallback || false,
           };
         }
       );
@@ -463,6 +705,53 @@ window.iosDebugInfo = function () {
     videoCount: videos.length,
     recordingActive: window.videoRecordingManager?.isRecording || false,
   };
+};
+
+// Add codec debugging function
+window.checkCodecSupport = function () {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  console.log("🎥 MediaRecorder Codec Support Check:");
+  console.log("- Device:", isIOS ? "iOS" : "Other");
+  console.log("- User Agent:", navigator.userAgent);
+
+  const codecsToTest = [
+    'video/webm; codecs="vp9,opus"',
+    'video/webm; codecs="vp8,opus"',
+    'video/mp4; codecs="avc1.64001E"',
+    'video/mp4; codecs="avc1.42E01E"',
+    'video/mp4; codecs="hev1.1.6.L93.B0"', // H.265/HEVC
+    "video/mp4",
+    "video/webm",
+    "",
+  ];
+
+  const supportResults = {};
+
+  codecsToTest.forEach((codec) => {
+    const isSupported = MediaRecorder.isTypeSupported(codec);
+    supportResults[codec || "default"] = isSupported;
+    console.log(
+      `${isSupported ? "✅" : "❌"} ${codec || "default (browser choice)"}`
+    );
+  });
+
+  // Test what the VideoRecordingManager would choose
+  if (window.videoRecordingManager) {
+    const frontCodec = window.videoRecordingManager.getBestMimeType("front");
+    const backCodec = window.videoRecordingManager.getBestMimeType("back");
+
+    console.log("🎯 Selected Codecs:");
+    console.log(`📱 Front camera: ${frontCodec}`);
+    console.log(`📱 Back camera: ${backCodec}`);
+
+    supportResults.selectedCodecs = {
+      front: frontCodec,
+      back: backCodec,
+    };
+  }
+
+  return supportResults;
 };
 
 // Photo capture sequence configuration
@@ -936,6 +1225,13 @@ function initializeAddressFields() {
 }
 
 function focusCurrentField() {
+  // Check if we're on a mobile device
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
   setTimeout(() => {
     const currentSubStep = document.getElementById(
       `sub-step-1-${currentFieldStep}`
@@ -945,7 +1241,26 @@ function focusCurrentField() {
         "input, textarea, select"
       );
       if (inputField) {
-        inputField.focus();
+        // For iOS devices, use a gentler focus approach to prevent jumping
+        if (isIOS) {
+          // Scroll the element into view smoothly before focusing
+          inputField.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "nearest",
+          });
+
+          // Delay focus slightly to allow scroll to complete
+          setTimeout(() => {
+            inputField.focus({ preventScroll: true });
+          }, 200);
+        } else if (isMobile) {
+          // For other mobile devices, focus without scrolling
+          inputField.focus({ preventScroll: true });
+        } else {
+          // Desktop behavior - normal focus
+          inputField.focus();
+        }
       }
     }
   }, 650); // Wait for slide animation to complete
@@ -2224,3 +2539,152 @@ function playVideoSafely(video) {
 
   return Promise.resolve();
 }
+
+// Add comprehensive diagnostics function
+window.runRecordingDiagnostics = async function () {
+  console.log("🔬 Running Recording Diagnostics...");
+
+  const results = {
+    device: {
+      isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString(),
+    },
+    mediaDevices: {
+      supported: !!navigator.mediaDevices,
+      getUserMediaSupported: !!navigator.mediaDevices?.getUserMedia,
+    },
+    codecSupport: {},
+    cameraAccess: {},
+    recordingTest: {},
+  };
+
+  // Test codec support
+  console.log("📋 Testing codec support...");
+  const codecsToTest = [
+    'video/webm; codecs="vp9,opus"',
+    'video/webm; codecs="vp8,opus"',
+    'video/mp4; codecs="avc1.64001E"',
+    'video/mp4; codecs="avc1.42E01E"',
+    "video/mp4",
+    "video/webm",
+  ];
+
+  codecsToTest.forEach((codec) => {
+    const isSupported = MediaRecorder.isTypeSupported(codec);
+    results.codecSupport[codec] = isSupported;
+    console.log(`${isSupported ? "✅" : "❌"} ${codec}`);
+  });
+
+  // Test camera access
+  console.log("📱 Testing camera access...");
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter(
+      (device) => device.kind === "videoinput"
+    );
+    results.cameraAccess.devicesFound = videoDevices.length;
+    results.cameraAccess.devices = videoDevices.map((device) => ({
+      deviceId: device.deviceId,
+      label: device.label,
+      kind: device.kind,
+    }));
+    console.log(`📹 Found ${videoDevices.length} video devices`);
+  } catch (error) {
+    results.cameraAccess.error = error.message;
+    console.error("❌ Error enumerating devices:", error);
+  }
+
+  // Test front camera stream
+  console.log("📱 Testing front camera...");
+  try {
+    const frontStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user" },
+      audio: false,
+    });
+
+    const videoTrack = frontStream.getVideoTracks()[0];
+    results.cameraAccess.frontCamera = {
+      success: true,
+      label: videoTrack.label,
+      settings: videoTrack.getSettings ? videoTrack.getSettings() : null,
+    };
+
+    console.log("✅ Front camera access successful");
+
+    // Test recording with front camera
+    if (window.videoRecordingManager) {
+      const mimeType = window.videoRecordingManager.getBestMimeType("front");
+      results.recordingTest.frontCameraMimeType = mimeType;
+
+      try {
+        const mediaRecorder = new MediaRecorder(frontStream, { mimeType });
+        results.recordingTest.frontCameraRecordingSupported = true;
+        console.log("✅ Front camera recording supported with:", mimeType);
+        mediaRecorder.stop();
+      } catch (recordError) {
+        results.recordingTest.frontCameraRecordingSupported = false;
+        results.recordingTest.frontCameraRecordingError = recordError.message;
+        console.error("❌ Front camera recording failed:", recordError);
+      }
+    }
+
+    // Clean up
+    frontStream.getTracks().forEach((track) => track.stop());
+  } catch (error) {
+    results.cameraAccess.frontCamera = {
+      success: false,
+      error: error.message,
+    };
+    console.error("❌ Front camera access failed:", error);
+  }
+
+  // Test back camera stream
+  console.log("📱 Testing back camera...");
+  try {
+    const backStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" },
+      audio: false,
+    });
+
+    const videoTrack = backStream.getVideoTracks()[0];
+    results.cameraAccess.backCamera = {
+      success: true,
+      label: videoTrack.label,
+      settings: videoTrack.getSettings ? videoTrack.getSettings() : null,
+    };
+
+    console.log("✅ Back camera access successful");
+
+    // Test recording with back camera
+    if (window.videoRecordingManager) {
+      const mimeType = window.videoRecordingManager.getBestMimeType("back");
+      results.recordingTest.backCameraMimeType = mimeType;
+
+      try {
+        const mediaRecorder = new MediaRecorder(backStream, { mimeType });
+        results.recordingTest.backCameraRecordingSupported = true;
+        console.log("✅ Back camera recording supported with:", mimeType);
+        mediaRecorder.stop();
+      } catch (recordError) {
+        results.recordingTest.backCameraRecordingSupported = false;
+        results.recordingTest.backCameraRecordingError = recordError.message;
+        console.error("❌ Back camera recording failed:", recordError);
+      }
+    }
+
+    // Clean up
+    backStream.getTracks().forEach((track) => track.stop());
+  } catch (error) {
+    results.cameraAccess.backCamera = {
+      success: false,
+      error: error.message,
+    };
+    console.error("❌ Back camera access failed:", error);
+  }
+
+  console.log("🔬 Diagnostics complete!");
+  console.log("📊 Results:", results);
+
+  return results;
+};

@@ -45,7 +45,7 @@ let db;
 
 // AWS configuration - use environment variables for security
 AWS.config.update({
-  region: "eu-north-1", // Hardcode region to avoid environment variable issues
+  region: "eu-west-1", // Using Ireland region which supports Rekognition
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
@@ -53,9 +53,9 @@ AWS.config.update({
 const rekognition = new AWS.Rekognition();
 const s3 = new AWS.S3({
   signatureVersion: "v4",
-  region: "eu-north-1", // Hardcode the correct region
+  region: "eu-west-1", // Using Ireland region for better service availability
   s3ForcePathStyle: false,
-  endpoint: "https://s3.eu-north-1.amazonaws.com",
+  endpoint: "https://s3.eu-west-1.amazonaws.com",
 });
 
 // S3 bucket configuration for session recordings
@@ -68,7 +68,7 @@ const upload = multer({
     fileSize: 100 * 1024 * 1024, // 100MB limit for video files
   },
   fileFilter: (req, file, cb) => {
-    // Accept video files
+    // Accept video files (both webm and mp4)
     if (file.mimetype.startsWith("video/")) {
       cb(null, true);
     } else {
@@ -636,7 +636,8 @@ app.post(
         });
       }
 
-      const { sessionId, cameraType, duration, size } = req.body;
+      const { sessionId, cameraType, duration, size, mimeType, isFallback } =
+        req.body;
 
       if (!sessionId || !cameraType) {
         return res.status(400).json({
@@ -645,12 +646,30 @@ app.post(
         });
       }
 
-      // Generate unique filename
+      // Determine file extension based on mimetype
+      let extension = ".webm"; // default
+      if (mimeType) {
+        if (mimeType.includes("mp4")) {
+          extension = ".mp4";
+        } else if (mimeType.includes("webm")) {
+          extension = ".webm";
+        }
+      } else if (req.file.mimetype) {
+        if (req.file.mimetype.includes("mp4")) {
+          extension = ".mp4";
+        } else if (req.file.mimetype.includes("webm")) {
+          extension = ".webm";
+        }
+      }
+
+      // Generate unique filename with proper extension
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const filename = `${sessionId}/${cameraType}_${timestamp}.webm`;
+      const filename = `${sessionId}/${cameraType}_${timestamp}${extension}`;
 
       console.log(
-        `📹 Uploading session recording: ${filename} (${req.file.size} bytes)`
+        `📹 Uploading session recording: ${filename} (${req.file.size} bytes, ${
+          mimeType || req.file.mimetype
+        }${isFallback === "true" ? ", fallback" : ""})`
       );
 
       // Upload to S3
@@ -658,13 +677,16 @@ app.post(
         Bucket: SESSION_RECORDING_BUCKET,
         Key: filename,
         Body: req.file.buffer,
-        ContentType: req.file.mimetype,
+        ContentType: mimeType || req.file.mimetype,
         Metadata: {
           sessionId: sessionId,
           cameraType: cameraType,
           duration: duration || "0",
           originalSize: size || req.file.size.toString(),
           uploadedAt: new Date().toISOString(),
+          mimeType: mimeType || req.file.mimetype || "unknown",
+          isFallback: isFallback || "false",
+          userAgent: req.headers["user-agent"] || "unknown",
         },
       };
 
@@ -687,6 +709,10 @@ app.post(
                   uploadedAt: new Date(),
                   duration: parseInt(duration) || 0,
                   fileSize: req.file.size,
+                  mimeType: mimeType || req.file.mimetype || "unknown",
+                  isFallback: isFallback === "true",
+                  userAgent: req.headers["user-agent"] || "unknown",
+                  filename: filename,
                 },
               },
             }
@@ -708,6 +734,8 @@ app.post(
         s3Location: s3Result.Location,
         filename: filename,
         size: req.file.size,
+        mimeType: mimeType || req.file.mimetype,
+        isFallback: isFallback === "true",
       });
     } catch (error) {
       console.error("❌ Error uploading session recording:", error);
@@ -744,21 +772,35 @@ app.get("/api/video/:sessionId/:filename", async (req, res) => {
     // Verify the file exists in the correct format
     const key = `${sessionId}/${filename}`;
 
+    // Determine content type based on file extension
+    let contentType = "video/webm"; // default
+    if (filename.toLowerCase().endsWith(".mp4")) {
+      contentType = "video/mp4";
+    } else if (filename.toLowerCase().endsWith(".webm")) {
+      contentType = "video/webm";
+    }
+
+    console.log(`📹 Content type for ${filename}: ${contentType}`);
+
     // Generate signed URL valid for 1 hour
     const signedUrl = s3.getSignedUrl("getObject", {
       Bucket: SESSION_RECORDING_BUCKET,
       Key: key,
       Expires: 3600, // 1 hour
-      ResponseContentType: "video/webm",
+      ResponseContentType: contentType,
     });
 
     res.json({
       success: true,
       url: signedUrl,
       expiresIn: 3600,
+      contentType: contentType,
+      filename: filename,
     });
 
-    console.log(`✅ Signed URL generated successfully for ${key}`);
+    console.log(
+      `✅ Signed URL generated successfully for ${key} (${contentType})`
+    );
   } catch (error) {
     console.error("❌ Error generating signed URL:", error);
     res.status(500).json({
