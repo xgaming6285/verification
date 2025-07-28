@@ -16,6 +16,7 @@ const HTTPS_PORT = process.env.HTTPS_PORT || 3443;
 
 // MongoDB connection string
 const MONGODB_URI =
+  process.env.MONGODB_URI ||
   "mongodb+srv://dani034406:Daniel6285@cluster0.g0vqepz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const DATABASE_NAME = "temporary";
 const COLLECTION_NAME = "verifications";
@@ -32,11 +33,11 @@ app.use(express.static("."));
 let client;
 let db;
 
-// AWS configuration with hardcoded credentials for verification bucket
+// AWS configuration - use environment variables for security
 AWS.config.update({
   region: process.env.AWS_REGION || "us-east-1",
-  accessKeyId: "AKIAWR2VGD2QWZOJIGPD",
-  secretAccessKey: "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",
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
 
 const rekognition = new AWS.Rekognition();
@@ -297,10 +298,10 @@ app.post("/api/submit-verification", async (req, res) => {
 
     // Validate required fields
     if (!personalInfo || !photos || !submissionDate) {
-      console.error("❌ Missing required fields:", { 
-        hasPersonalInfo: !!personalInfo, 
-        hasPhotos: !!photos, 
-        hasSubmissionDate: !!submissionDate 
+      console.error("❌ Missing required fields:", {
+        hasPersonalInfo: !!personalInfo,
+        hasPhotos: !!photos,
+        hasSubmissionDate: !!submissionDate,
       });
       return res.status(400).json({
         success: false,
@@ -396,7 +397,9 @@ app.post("/api/submit-verification", async (req, res) => {
     };
 
     // Insert into MongoDB
-    console.log("📝 Attempting to insert verification document into MongoDB...");
+    console.log(
+      "📝 Attempting to insert verification document into MongoDB..."
+    );
     const collection = db.collection(COLLECTION_NAME);
     const result = await collection.insertOne(verificationDoc);
 
@@ -421,12 +424,12 @@ app.post("/api/submit-verification", async (req, res) => {
     console.error("❌ Error submitting verification:", {
       message: error.message,
       stack: error.stack,
-      name: error.name
+      name: error.name,
     });
     res.status(500).json({
       success: false,
       error: "Internal server error",
-      details: error.message
+      details: error.message,
     });
   }
 });
@@ -739,10 +742,13 @@ async function startServer() {
 
   const localIPs = getLocalIPAddresses();
 
-  // Try to start HTTPS server
-  const certConfig = generateSelfSignedCert();
+  // Skip HTTPS in production (Render handles SSL automatically)
+  const isProduction = process.env.NODE_ENV === "production";
 
-  if (certConfig) {
+  // Try to start HTTPS server (only in development)
+  const certConfig = !isProduction ? generateSelfSignedCert() : null;
+
+  if (certConfig && !isProduction) {
     try {
       const httpsOptions = {
         key: fs.readFileSync(certConfig.keyPath),

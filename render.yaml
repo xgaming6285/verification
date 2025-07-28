@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: creditopro-verification
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: AWS_REGION
+        value: us-east-1
+      # Add these as environment variables in Render dashboard:
+      # - MONGODB_URI (sensitive)
+      # - AWS_ACCESS_KEY_ID (sensitive)
+      # - AWS_SECRET_ACCESS_KEY (sensitive)
+    healthCheckPath: /
+    autoDeploy: true
+    disk:
+      name: verification-disk
+      mountPath: /tmp
+      sizeGB: 1
