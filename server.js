@@ -719,6 +719,41 @@ function generateSessionId() {
   });
 }
 
+// API endpoint to generate signed URLs for video access (more secure)
+app.get("/api/video/:sessionId/:filename", async (req, res) => {
+  try {
+    const { sessionId, filename } = req.params;
+
+    console.log(`📹 Generating signed URL for: ${sessionId}/${filename}`);
+
+    // Verify the file exists in the correct format
+    const key = `${sessionId}/${filename}`;
+
+    // Generate signed URL valid for 1 hour
+    const signedUrl = s3.getSignedUrl("getObject", {
+      Bucket: SESSION_RECORDING_BUCKET,
+      Key: key,
+      Expires: 3600, // 1 hour
+      ResponseContentType: "video/webm",
+    });
+
+    res.json({
+      success: true,
+      url: signedUrl,
+      expiresIn: 3600,
+    });
+
+    console.log(`✅ Signed URL generated successfully for ${key}`);
+  } catch (error) {
+    console.error("❌ Error generating signed URL:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to generate video URL",
+      details: error.message,
+    });
+  }
+});
+
 // Graceful shutdown
 process.on("SIGTERM", async () => {
   console.log("📥 SIGTERM received, shutting down gracefully...");
