@@ -51,7 +51,10 @@ AWS.config.update({
 });
 
 const rekognition = new AWS.Rekognition();
-const s3 = new AWS.S3();
+const s3 = new AWS.S3({
+  signatureVersion: "v4",
+  region: process.env.AWS_REGION || "us-east-1",
+});
 
 // S3 bucket configuration for session recordings
 const SESSION_RECORDING_BUCKET = "verification-form-bucket";
