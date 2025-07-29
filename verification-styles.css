@@ -1,13 +1,28 @@
 /* Verification Page Specific Styles */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+}
+
 .verification-page {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
   min-height: 100vh;
   height: 100vh;
+  width: 100vw;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  margin: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
 .verification-page .container {
@@ -18,10 +33,11 @@
   align-items: center;
   justify-content: center;
   padding: 0;
+  margin: 0;
 }
 
 .verification-steps {
-  background: var(--bg-white);
+  background: transparent;
   border-radius: 0;
   width: 100%;
   height: 100vh;
@@ -32,8 +48,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 20px;
   overflow: hidden;
+  margin-top: -10vh;
 }
 
 .verification-step {
@@ -52,26 +69,7 @@
   display: flex;
 }
 
-/* Step Header */
-.step-header {
-  margin-bottom: 40px;
-  text-align: center;
-}
-
-.step-header h2 {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--text-dark);
-  margin-bottom: 16px;
-}
-
-.step-header p {
-  font-size: 18px;
-  color: var(--text-light);
-  line-height: 1.5;
-  max-width: 400px;
-  margin: 0 auto;
-}
+/* Step Header - Removed for cleaner design */
 
 /* Sub-steps Container - Full Height */
 .sub-steps-container {
@@ -97,7 +95,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: var(--bg-white);
+  background: transparent;
 }
 
 .personal-info-sub-step.active {
@@ -133,13 +131,13 @@
 .field-step-content h4 {
   font-size: 28px;
   font-weight: 700;
-  color: var(--text-dark);
+  color: white;
   margin-bottom: 16px;
 }
 
 .field-step-content p {
   font-size: 16px;
-  color: var(--text-light);
+  color: rgba(255, 255, 255, 0.8);
   margin-bottom: 40px;
   line-height: 1.6;
 }
@@ -349,6 +347,7 @@
     height: 100vh;
     height: calc(var(--vh, 1vh) * 100);
     padding: 20px 16px;
+    margin-top: -8vh;
   }
 
   .verification-step {
@@ -356,23 +355,10 @@
     padding: 0;
   }
 
-  .step-header {
-    margin-bottom: 30px;
-  }
-
-  .step-header h2 {
-    font-size: 28px;
-    margin-bottom: 12px;
-  }
-
-  .step-header p {
-    font-size: 16px;
-    max-width: 320px;
-  }
+  /* Step header removed for cleaner mobile design */
 
   .field-step-content {
     max-width: 320px;
-    padding: 0;
   }
 
   .field-icon {
@@ -2041,16 +2027,10 @@
     padding: 16px 12px;
     height: 100vh;
     height: calc(var(--vh, 1vh) * 100);
+    margin-top: -6vh;
   }
 
-  .step-header h2 {
-    font-size: 24px;
-  }
-
-  .step-header p {
-    font-size: 14px;
-    max-width: 280px;
-  }
+  /* Step header styles removed */
 
   .field-step-content {
     max-width: 280px;
