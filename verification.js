@@ -876,7 +876,103 @@ document.addEventListener("DOMContentLoaded", async function () {
   PHOTO_SEQUENCE.forEach((photo) => {
     photoHistory[photo.id] = [];
   });
+
+  // Initialize phone input event listeners
+  initializePhoneInputListeners();
 });
+
+// Initialize phone input event listeners
+function initializePhoneInputListeners() {
+  const phoneInput = document.getElementById("phone");
+
+  if (phoneInput) {
+    // Prevent typing country codes (+, 00 at start)
+    phoneInput.addEventListener("input", function (e) {
+      let value = e.target.value;
+
+      // Remove any plus signs
+      if (value.includes("+")) {
+        value = value.replace(/\+/g, "");
+        e.target.value = value;
+      }
+
+      // Prevent starting with 00 (international prefix)
+      if (value.startsWith("00")) {
+        value = value.substring(2);
+        e.target.value = value;
+      }
+
+      // Only allow digits, spaces, hyphens, and parentheses
+      value = value.replace(/[^\d\s\-\(\)]/g, "");
+      e.target.value = value;
+    });
+
+    // Prevent pasting country codes
+    phoneInput.addEventListener("paste", function (e) {
+      e.preventDefault();
+      const pastedText = (e.clipboardData || window.clipboardData).getData(
+        "text"
+      );
+
+      // Clean the pasted text
+      let cleanedText = pastedText.replace(/[^\d\s\-\(\)]/g, "");
+
+      // Remove leading country code patterns
+      if (cleanedText.startsWith("00")) {
+        cleanedText = cleanedText.substring(2);
+      }
+
+      // Insert the cleaned text
+      const start = e.target.selectionStart;
+      const end = e.target.selectionEnd;
+      const currentValue = e.target.value;
+      const newValue =
+        currentValue.substring(0, start) +
+        cleanedText +
+        currentValue.substring(end);
+      e.target.value = newValue;
+
+      // Set cursor position
+      const newCursorPos = start + cleanedText.length;
+      e.target.setSelectionRange(newCursorPos, newCursorPos);
+    });
+
+    // Additional keydown prevention for country code patterns
+    phoneInput.addEventListener("keydown", function (e) {
+      const value = e.target.value;
+      const key = e.key;
+
+      // Prevent typing + at any position
+      if (key === "+") {
+        e.preventDefault();
+        return;
+      }
+
+      // Prevent typing 00 at the beginning
+      if (key === "0" && value === "0" && e.target.selectionStart === 1) {
+        e.preventDefault();
+        return;
+      }
+    });
+  }
+}
+
+// Get complete phone number with country code
+function getCompletePhoneNumber() {
+  const countryCodeSelect = document.getElementById("phone-country-code");
+  const phoneInput = document.getElementById("phone");
+
+  if (countryCodeSelect && phoneInput) {
+    const countryCode = countryCodeSelect.value;
+    const phoneNumber = phoneInput.value.trim();
+
+    if (countryCode && phoneNumber) {
+      return countryCode + phoneNumber.replace(/\s/g, "");
+    }
+  }
+
+  return null;
+}
 
 // Handle iOS-specific video and camera issues
 function handleIOSCameraDisplay() {
@@ -1273,11 +1369,51 @@ function validateCurrentField() {
       }
       break;
     case 4: // Phone validation
-      if (value && !/^[+]?[\d\s\-\(\)]+$/.test(value)) {
-        alert("Please enter a valid phone number.");
-        inputField.focus();
+      const countryCodeSelect = document.getElementById("phone-country-code");
+      const phoneInput = document.getElementById("phone");
+      const countryCode = countryCodeSelect.value;
+      const phoneNumber = phoneInput.value.trim();
+
+      // Check if country code is selected
+      if (!countryCode) {
+        alert("Please select a country code.");
+        countryCodeSelect.focus();
         return false;
       }
+
+      // Check if phone number is provided
+      if (!phoneNumber) {
+        alert("Please enter your phone number.");
+        phoneInput.focus();
+        return false;
+      }
+
+      // Validate phone number format (digits, spaces, hyphens, parentheses only)
+      if (!/^[\d\s\-\(\)]+$/.test(phoneNumber)) {
+        alert(
+          "Please enter a valid phone number using only digits, spaces, hyphens, and parentheses."
+        );
+        phoneInput.focus();
+        return false;
+      }
+
+      // Check if user accidentally included country code in phone number
+      if (phoneNumber.startsWith("+") || phoneNumber.startsWith("00")) {
+        alert(
+          "Please enter your phone number without the country code. The country code is selected separately."
+        );
+        phoneInput.focus();
+        return false;
+      }
+
+      // Additional validation for minimum length
+      const digitsOnly = phoneNumber.replace(/\D/g, "");
+      if (digitsOnly.length < 6) {
+        alert("Please enter a valid phone number with at least 6 digits.");
+        phoneInput.focus();
+        return false;
+      }
+
       break;
     case 5: // Email validation
       if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
@@ -2092,6 +2228,13 @@ function displayPhotoSummary() {
 // Submit Application with MongoDB integration
 async function submitApplication() {
   const submitBtn = document.querySelector(".submit-application-btn");
+  const progressContainer = document.querySelector(
+    ".upload-progress-container"
+  );
+  const progressFill = document.querySelector(".upload-progress-fill");
+  const statusText = document.querySelector(".upload-status");
+  const percentageText = document.querySelector(".upload-percentage");
+  const timeEstimate = document.querySelector(".time-remaining");
 
   // Check if verification has passed
   if (!verificationPassed) {
@@ -2102,15 +2245,37 @@ async function submitApplication() {
   }
 
   const originalText = submitBtn.innerHTML;
+  const startTime = Date.now();
 
-  // Show loading state
-  submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t(
-    "verification.uploading",
-    "Submitting..."
-  )}`;
-  submitBtn.disabled = true;
+  // Hide submit button and show progress
+  submitBtn.style.display = "none";
+  progressContainer.style.display = "block";
+
+  // Progress simulation function
+  function updateProgress(percentage, status, timeRemaining = null) {
+    progressFill.style.width = `${percentage}%`;
+    statusText.textContent = status;
+    percentageText.textContent = `${percentage}%`;
+
+    if (timeRemaining) {
+      timeEstimate.textContent = timeRemaining;
+    } else {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const estimated = Math.max(
+        0,
+        Math.floor(((100 - percentage) * elapsed) / percentage)
+      );
+      if (estimated > 0) {
+        timeEstimate.textContent = `${estimated}s remaining`;
+      }
+    }
+  }
 
   try {
+    // Initial progress
+    updateProgress(5, "Preparing upload...", "Estimating time...");
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
     // Stop session recording and upload videos first
     let sessionRecordingData = [];
     if (
@@ -2118,15 +2283,16 @@ async function submitApplication() {
       window.videoRecordingManager.isRecording
     ) {
       console.log("🎬 Finalizing session recording...");
-      submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Finalizing session recording...`;
+      updateProgress(15, "Finalizing session recording...");
 
       window.videoRecordingManager.stopRecording();
 
       // Wait a moment for recording to finalize
       await new Promise((resolve) => setTimeout(resolve, 2000));
+      updateProgress(25, "Processing video data...");
 
       // Upload session recordings to S3
-      submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Uploading session recording...`;
+      updateProgress(35, "Uploading session recording...");
       const uploadResults =
         await window.videoRecordingManager.uploadRecordings();
 
@@ -2135,6 +2301,8 @@ async function submitApplication() {
           "📹 Session recordings uploaded successfully:",
           uploadResults
         );
+        updateProgress(60, "Session recording uploaded successfully");
+
         // Store the recording data to include in submission
         sessionRecordingData = uploadResults.map((result) => ({
           cameraType: result.cameraType || "unknown",
@@ -2145,15 +2313,14 @@ async function submitApplication() {
           duration: 0, // Will be updated by S3 upload endpoint
         }));
       }
+    } else {
+      updateProgress(60, "Preparing application data...");
     }
 
-    // Update button for application submission
-    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t(
-      "verification.uploading",
-      "Submitting application..."
-    )}`;
-
     // Collect personal information from individual fields (multi-step form)
+    updateProgress(65, "Collecting application data...");
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
     function getStateValue() {
       const stateSelect = document.getElementById("state-select");
       const stateInput = document.getElementById("state-input");
@@ -2166,11 +2333,28 @@ async function submitApplication() {
       return "";
     }
 
+    // Get complete phone number with country code
+    function getCompletePhoneNumber() {
+      const countryCodeSelect = document.getElementById("phone-country-code");
+      const phoneInput = document.getElementById("phone");
+
+      if (countryCodeSelect && phoneInput) {
+        const countryCode = countryCodeSelect.value;
+        const phoneNumber = phoneInput.value.trim();
+
+        if (countryCode && phoneNumber) {
+          return countryCode + phoneNumber.replace(/\s/g, "");
+        }
+      }
+
+      return document.getElementById("phone")?.value.trim() || "";
+    }
+
     const personalInfo = {
       firstName: document.getElementById("first-name")?.value.trim() || "",
       lastName: document.getElementById("last-name")?.value.trim() || "",
       egn: document.getElementById("egn")?.value.trim() || "",
-      phone: document.getElementById("phone")?.value.trim() || "",
+      phone: getCompletePhoneNumber(),
       email: document.getElementById("email")?.value.trim() || "",
       income: document.getElementById("income")?.value.trim() || "",
       employment: document.getElementById("employment")?.value.trim() || "",
@@ -2191,11 +2375,22 @@ async function submitApplication() {
     console.log("📝 Collected personal info:", personalInfo);
 
     // Prepare photos for upload (convert to base64)
+    updateProgress(70, "Processing photos...");
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
     const photoData = {};
     const historyData = {};
 
+    const photoCount = Object.keys(capturedPhotos).length;
+    let processedPhotos = 0;
+
     for (const [photoId, file] of Object.entries(capturedPhotos)) {
       photoData[photoId] = await fileToBase64(file);
+      processedPhotos++;
+      updateProgress(
+        70 + (processedPhotos / photoCount) * 10,
+        `Processing photo ${processedPhotos}/${photoCount}...`
+      );
     }
 
     // Include photo history
@@ -2241,10 +2436,15 @@ async function submitApplication() {
     });
 
     // Submit to MongoDB
+    updateProgress(85, "Submitting application...");
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
     const success = await submitToDatabase(submissionData);
 
     if (success) {
       console.log("✅ Verification submitted successfully");
+      updateProgress(95, "Finalizing submission...");
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       // Debug: Check what was actually stored
       if (sessionRecordingData.length > 0) {
@@ -2264,8 +2464,12 @@ async function submitApplication() {
         window.videoRecordingManager.cleanup();
       }
 
-      // Hide submit button and show back to home button
-      submitBtn.style.display = "none";
+      // Complete progress
+      updateProgress(100, "Application submitted successfully!", "Complete");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Hide progress and show success
+      progressContainer.style.display = "none";
       document.querySelector(".back-home-btn").style.display = "inline-flex";
 
       // Show success message
@@ -2275,16 +2479,19 @@ async function submitApplication() {
     }
   } catch (error) {
     console.error("Submission error:", error);
+
+    // Hide progress and show error
+    progressContainer.style.display = "none";
+    submitBtn.style.display = "inline-flex";
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
+
     alert(
       t(
         "verification.validation.submission_error",
         "There was an error submitting your application. Please try again."
       )
     );
-
-    // Reset button
-    submitBtn.innerHTML = originalText;
-    submitBtn.disabled = false;
   }
 }
 

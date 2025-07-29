@@ -199,6 +199,103 @@ body {
   font-style: italic;
 }
 
+/* Phone input container styling */
+.phone-input-container {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  width: 100%;
+}
+
+.phone-country-code-select {
+  min-width: 200px;
+  max-width: 220px;
+  flex-shrink: 0;
+  padding: 20px 16px;
+  border: 2px solid var(--border-light);
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-dark);
+  background: var(--bg-white);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  text-align: left;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%23666' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 32px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.phone-country-code-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  transform: translateY(-2px);
+}
+
+.phone-country-code-select:hover {
+  border-color: var(--primary-color);
+}
+
+.phone-number-input {
+  flex: 1;
+  padding: 20px 24px;
+  border: 2px solid var(--border-light);
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-dark);
+  background: var(--bg-white);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.phone-number-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  transform: translateY(-2px);
+}
+
+.phone-number-input:hover {
+  border-color: var(--primary-color);
+}
+
+.phone-number-input::placeholder {
+  color: var(--text-light);
+  font-weight: 400;
+}
+
+/* Override the default width for elements in phone container */
+.phone-input-container .phone-country-code-select,
+.phone-input-container .phone-number-input {
+  width: auto;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 480px) {
+  .phone-input-container {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .phone-country-code-select {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .phone-number-input {
+    width: 100%;
+  }
+}
+
 .format-hint {
   display: block;
   margin-top: 8px;
@@ -918,8 +1015,8 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 400px;
-  height: 260px;
+  width: 520px;
+  height: 340px;
   border: 4px solid var(--primary-color);
   border-radius: 20px;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
@@ -943,10 +1040,10 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 250px;
-  height: 350px;
+  width: 320px;
+  height: 420px;
   border: 3px solid var(--primary-color);
-  border-radius: 125px;
+  border-radius: 160px;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
 }
 
@@ -976,10 +1073,10 @@ body {
   top: 20%;
   left: 50%;
   transform: translateX(-50%);
-  width: 200px;
-  height: 250px;
+  width: 260px;
+  height: 320px;
   border: 3px solid var(--primary-color);
-  border-radius: 100px;
+  border-radius: 130px;
 }
 
 .face-area::before {
@@ -999,8 +1096,8 @@ body {
   bottom: 15%;
   left: 50%;
   transform: translateX(-50%);
-  width: 280px;
-  height: 180px;
+  width: 360px;
+  height: 235px;
   border: 3px solid var(--warning-color, #f59e0b);
   border-radius: 12px;
 }
@@ -1433,6 +1530,95 @@ body {
 .contact-info i {
   color: var(--primary-color);
   width: 16px;
+}
+
+/* Upload Progress Styles */
+.upload-progress-container {
+  background: var(--bg-lighter);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 30px 0;
+  text-align: center;
+}
+
+.upload-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.upload-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), #1d4ed8);
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.upload-progress-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-image: linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.2) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 16px 16px;
+  animation: move 1s linear infinite;
+}
+
+@keyframes move {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 16px 16px;
+  }
+}
+
+.upload-status-text {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.upload-status {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+.upload-percentage {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.upload-time-estimate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.upload-time-estimate i {
+  color: var(--primary-color);
 }
 
 .final-actions {
@@ -1917,6 +2103,7 @@ body {
   .final-actions {
     flex-direction: column;
     align-items: center;
+    margin-top: 30px;
   }
 
   .submit-application-btn,
@@ -1925,6 +2112,24 @@ body {
     width: 100%;
     max-width: 300px;
     justify-content: center;
+    padding: 18px 24px;
+    font-size: 16px;
+  }
+
+  /* Upload progress mobile styles */
+  .upload-progress-container {
+    margin: 20px 0;
+    padding: 20px;
+  }
+
+  .upload-status-text {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .upload-time-estimate {
+    font-size: 13px;
   }
 
   /* Verification results mobile */
@@ -2150,14 +2355,14 @@ body {
 
   /* Camera guides for small screens */
   .id-guide {
-    width: 280px;
-    height: 180px;
+    width: 360px;
+    height: 235px;
   }
 
   .face-guide {
-    width: 180px;
-    height: 250px;
-    border-radius: 90px;
+    width: 240px;
+    height: 320px;
+    border-radius: 120px;
   }
 
   /* Camera button positioning for small screens */
