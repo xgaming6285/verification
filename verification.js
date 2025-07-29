@@ -1169,6 +1169,8 @@ function nextFieldStep() {
   }
 
   if (currentFieldStep < totalFieldSteps) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
     // Slide out current step to the left
     const currentSubStep = document.getElementById(
       `sub-step-1-${currentFieldStep}`
@@ -1184,6 +1186,13 @@ function nextFieldStep() {
       const nextSubStep = document.getElementById(
         `sub-step-1-${currentFieldStep}`
       );
+
+      // For iOS, ensure the next step is visible before showing
+      if (isIOS) {
+        nextSubStep.style.display = "block";
+        nextSubStep.style.visibility = "visible";
+      }
+
       nextSubStep.classList.add("active");
       nextSubStep.classList.add("slide-in-from-right");
 
@@ -1191,6 +1200,12 @@ function nextFieldStep() {
       setTimeout(() => {
         currentSubStep.classList.remove("slide-out-to-left");
         nextSubStep.classList.remove("slide-in-from-right");
+
+        // For iOS, hide the previous step completely after animation
+        if (isIOS) {
+          currentSubStep.style.display = "none";
+          currentSubStep.style.visibility = "hidden";
+        }
       }, 600);
     }, 50);
 
@@ -1201,6 +1216,8 @@ function nextFieldStep() {
 
 function prevFieldStep() {
   if (currentFieldStep > 1) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
     // Slide out current step to the right
     const currentSubStep = document.getElementById(
       `sub-step-1-${currentFieldStep}`
@@ -1216,6 +1233,13 @@ function prevFieldStep() {
       const prevSubStep = document.getElementById(
         `sub-step-1-${currentFieldStep}`
       );
+
+      // For iOS, ensure the previous step is visible before showing
+      if (isIOS) {
+        prevSubStep.style.display = "block";
+        prevSubStep.style.visibility = "visible";
+      }
+
       prevSubStep.classList.add("active");
       prevSubStep.classList.add("slide-in-from-left");
 
@@ -1223,6 +1247,12 @@ function prevFieldStep() {
       setTimeout(() => {
         currentSubStep.classList.remove("slide-out-to-right");
         prevSubStep.classList.remove("slide-in-from-left");
+
+        // For iOS, hide the next step completely after animation
+        if (isIOS) {
+          currentSubStep.style.display = "none";
+          currentSubStep.style.visibility = "hidden";
+        }
       }, 600);
     }, 50);
 
@@ -1384,10 +1414,26 @@ function focusCurrentField() {
       `sub-step-1-${currentFieldStep}`
     );
     if (currentSubStep) {
-      const inputField = currentSubStep.querySelector(
-        "input, textarea, select"
-      );
+      // Prioritize input and textarea elements over select elements to prevent iOS confusion
+      let inputField = currentSubStep.querySelector("input");
+      if (!inputField) {
+        inputField = currentSubStep.querySelector("textarea");
+      }
+      if (!inputField) {
+        inputField = currentSubStep.querySelector("select");
+      }
+
       if (inputField) {
+        // Debug logging for iOS
+        if (isIOS) {
+          console.log(`📱 iOS Focus Debug - Step ${currentFieldStep}:`, {
+            element: inputField.tagName,
+            id: inputField.id,
+            type: inputField.type || "select",
+            fieldType: inputField.getAttribute("data-field-type"),
+          });
+        }
+
         // For iOS devices, use a gentler focus approach to prevent jumping
         if (isIOS) {
           // Scroll the element into view smoothly before focusing
@@ -1411,6 +1457,96 @@ function focusCurrentField() {
       }
     }
   }, 650); // Wait for slide animation to complete
+}
+
+// iOS Safari Form Protection
+function protectFormFieldsFromIOSSafari() {
+  console.log("📱 Setting up iOS Safari form protection...");
+
+  // Hide all sub-steps except the first one
+  for (let i = 2; i <= 14; i++) {
+    const subStep = document.getElementById(`sub-step-1-${i}`);
+    if (subStep) {
+      subStep.style.display = "none";
+      subStep.style.visibility = "hidden";
+    }
+  }
+
+  // Ensure only the first step is visible and active
+  const firstStep = document.getElementById("sub-step-1-1");
+  if (firstStep) {
+    firstStep.style.display = "block";
+    firstStep.style.visibility = "visible";
+    firstStep.classList.add("active");
+  }
+
+  // Add event listener to prevent unwanted select field activation
+  document.addEventListener(
+    "focusin",
+    function (event) {
+      const target = event.target;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+      if (isIOS && target.tagName === "SELECT") {
+        const targetId = target.id;
+        const currentStepElement = document.getElementById(
+          `sub-step-1-${currentFieldStep}`
+        );
+        const targetInCurrentStep =
+          currentStepElement && currentStepElement.contains(target);
+
+        if (!targetInCurrentStep) {
+          console.log(
+            `📱 iOS: Preventing focus on select element '${targetId}' - not in current step ${currentFieldStep}`
+          );
+          event.preventDefault();
+          event.stopPropagation();
+
+          // Focus on the correct field instead
+          const correctField =
+            currentStepElement?.querySelector("input, textarea");
+          if (correctField) {
+            setTimeout(() => {
+              correctField.focus();
+            }, 10);
+          }
+
+          return false;
+        }
+      }
+    },
+    true
+  );
+
+  // Add click protection for iOS
+  document.addEventListener(
+    "click",
+    function (event) {
+      const target = event.target;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+      if (isIOS && target.tagName === "SELECT") {
+        const targetId = target.id;
+        const currentStepElement = document.getElementById(
+          `sub-step-1-${currentFieldStep}`
+        );
+        const targetInCurrentStep =
+          currentStepElement && currentStepElement.contains(target);
+
+        if (!targetInCurrentStep) {
+          console.log(
+            `📱 iOS: Preventing click on select element '${targetId}' - not in current step ${currentFieldStep}`
+          );
+          event.preventDefault();
+          event.stopPropagation();
+          return false;
+        }
+      }
+    },
+    true
+  );
+
+  console.log("📱 iOS Safari form protection active");
 }
 
 function validateCurrentField() {
@@ -1568,8 +1704,48 @@ function validateCurrentField() {
 
 // Initialize app-like verification experience on page load
 document.addEventListener("DOMContentLoaded", function () {
-  // Focus on first field
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  // For iOS devices, completely disable auto-focus to prevent Safari interference
+  if (isIOS) {
+    console.log(
+      "📱 iOS detected: Disabling auto-focus to prevent Safari form interference"
+    );
+
+    // Ensure we're starting at the first field step
+    if (currentFieldStep !== 1) {
+      console.log(`📱 Resetting field step from ${currentFieldStep} to 1`);
+      currentFieldStep = 1;
+    }
+
+    // Add iOS-specific form field protection
+    protectFormFieldsFromIOSSafari();
+
+    return; // Skip auto-focus entirely on iOS
+  }
+
+  // For non-iOS devices, keep the original behavior
   setTimeout(() => {
+    // Ensure we're always starting at the first field step
+    if (currentFieldStep !== 1) {
+      console.log(`Resetting field step from ${currentFieldStep} to 1`);
+      currentFieldStep = 1;
+    }
+
+    const activeElement = document.activeElement;
+    const userAlreadyInteracting =
+      activeElement &&
+      (activeElement.tagName === "INPUT" ||
+        activeElement.tagName === "TEXTAREA" ||
+        activeElement.tagName === "SELECT");
+
+    if (userAlreadyInteracting) {
+      console.log(
+        "Skipping auto-focus as user is already interacting with form"
+      );
+      return;
+    }
+
     focusCurrentField();
   }, 500);
 

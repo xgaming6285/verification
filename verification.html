@@ -101,6 +101,9 @@
                         id="first-name"
                         name="firstName"
                         placeholder="Enter your first name"
+                        autocomplete="given-name"
+                        inputmode="text"
+                        data-field-type="name"
                         required
                       />
                     </div>
@@ -139,6 +142,7 @@
                         id="last-name"
                         name="lastName"
                         placeholder="Enter your last name"
+                        autocomplete="family-name"
                         required
                       />
                     </div>
@@ -534,6 +538,7 @@
                           name="phone"
                           placeholder="Phone number (without country code)"
                           class="phone-number-input"
+                          autocomplete="tel"
                           required
                           pattern="[0-9\s\-\(\)]+"
                           title="Please enter only digits, spaces, hyphens, and parentheses"
@@ -583,6 +588,7 @@
                         id="email"
                         name="email"
                         placeholder="Enter your email address"
+                        autocomplete="email"
                         required
                       />
                     </div>
@@ -1013,7 +1019,13 @@
                   <p>Select your current employment situation</p>
                   <form class="single-field-form">
                     <div class="form-group">
-                      <select id="employment" name="employment" required>
+                      <select
+                        id="employment"
+                        name="employment"
+                        autocomplete="off"
+                        data-field-type="select"
+                        required
+                      >
                         <option
                           value=""
                           data-translate="verification.step1.employment_options.select"
