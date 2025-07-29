@@ -208,6 +208,7 @@ class VideoRecordingManager {
     this.isRecording = false;
     this.mediaRecorders = [];
     this.recordedChunks = [];
+    this.videoChunks = new Map(); // Store chunks per camera type
     this.sessionId = null;
     this.startTime = null;
     this.streams = [];
@@ -385,32 +386,35 @@ class VideoRecordingManager {
 
         console.log(`🎬 Using codec ${mimeType} for ${streamInfo.type} camera`);
 
-        const mediaRecorder = new MediaRecorder(streamInfo.stream, {
+        // Enhanced MediaRecorder options for better compression
+        const recordingOptions = {
           mimeType: mimeType,
-        });
+          videoBitsPerSecond: this.getOptimalBitrate(streamInfo.type),
+          audioBitsPerSecond: 128000, // 128 kbps for good audio quality
+        };
+
+        const mediaRecorder = new MediaRecorder(
+          streamInfo.stream,
+          recordingOptions
+        );
 
         const chunks = [];
 
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
             chunks.push(event.data);
+
+            // Store chunks for later combination by camera type
+            if (!this.videoChunks.has(streamInfo.type)) {
+              this.videoChunks.set(streamInfo.type, []);
+            }
+            this.videoChunks.get(streamInfo.type).push(event.data);
           }
         };
 
         mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: mimeType });
-          this.recordedChunks.push({
-            type: streamInfo.type,
-            blob: blob,
-            size: blob.size,
-            duration: Date.now() - this.startTime.getTime(),
-            mimeType: mimeType,
-          });
           console.log(
-            `📹 ${streamInfo.type} camera recording stopped:`,
-            blob.size,
-            "bytes, codec:",
-            mimeType
+            `📹 ${streamInfo.type} camera recording stopped, chunks collected for combination`
           );
         };
 
@@ -528,25 +532,18 @@ class VideoRecordingManager {
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunks.push(event.data);
+
+          // Store chunks for later combination by camera type (fallback)
+          if (!this.videoChunks.has(streamInfo.type)) {
+            this.videoChunks.set(streamInfo.type, []);
+          }
+          this.videoChunks.get(streamInfo.type).push(event.data);
         }
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, {
-          type: fallbackMimeType || "video/webm",
-        });
-        this.recordedChunks.push({
-          type: streamInfo.type,
-          blob: blob,
-          size: blob.size,
-          duration: Date.now() - this.startTime.getTime(),
-          mimeType: fallbackMimeType || "video/webm",
-          fallback: true,
-        });
         console.log(
-          `📹 ${streamInfo.type} camera fallback recording stopped:`,
-          blob.size,
-          "bytes"
+          `📹 ${streamInfo.type} camera fallback recording stopped, chunks collected for combination`
         );
       };
 
@@ -562,6 +559,55 @@ class VideoRecordingManager {
         fallbackError
       );
     }
+  }
+
+  getOptimalBitrate(cameraType) {
+    // Dynamic bitrate based on device capabilities and camera type
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isMobile =
+      /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+
+    // Base bitrates for different scenarios (in bps)
+    const baseBitrates = {
+      desktop: {
+        front: 2500000, // 2.5 Mbps for front camera (lower motion)
+        back: 3500000, // 3.5 Mbps for back camera (potential document scanning)
+      },
+      mobile: {
+        front: 1500000, // 1.5 Mbps for mobile front camera
+        back: 2000000, // 2 Mbps for mobile back camera
+      },
+      ios: {
+        front: 2000000, // 2 Mbps for iOS front camera (good quality/efficiency balance)
+        back: 2500000, // 2.5 Mbps for iOS back camera
+      },
+    };
+
+    let deviceType = "desktop";
+    if (isIOS) deviceType = "ios";
+    else if (isMobile) deviceType = "mobile";
+
+    return (
+      baseBitrates[deviceType][cameraType] || baseBitrates[deviceType].front
+    );
+  }
+
+  combineVideoChunks(cameraType, mimeType) {
+    const chunks = this.videoChunks.get(cameraType);
+    if (!chunks || chunks.length === 0) {
+      return null;
+    }
+
+    // Combine all chunks into a single blob
+    const combinedBlob = new Blob(chunks, { type: mimeType });
+
+    console.log(
+      `🎬 Combined ${chunks.length} chunks for ${cameraType} camera into ${combinedBlob.size} bytes (${mimeType})`
+    );
+
+    return combinedBlob;
   }
 
   stopRecording() {
@@ -587,72 +633,43 @@ class VideoRecordingManager {
   }
 
   async uploadRecordings() {
-    if (this.recordedChunks.length === 0) {
-      console.warn("⚠️ No recordings to upload");
-      return [];
-    }
-
-    console.log("☁️ Uploading session recordings to S3...");
+    console.log("☁️ Combining and uploading session recordings...");
 
     try {
-      const uploadPromises = this.recordedChunks.map(
-        async (recording, index) => {
-          const formData = new FormData();
+      const results = [];
 
-          // Determine file extension based on mimeType
-          let extension = ".webm"; // default
-          if (recording.mimeType) {
-            if (recording.mimeType.includes("mp4")) {
-              extension = ".mp4";
-            } else if (recording.mimeType.includes("webm")) {
-              extension = ".webm";
-            }
-          }
+      // Process each camera type
+      for (const [cameraType, chunks] of this.videoChunks.entries()) {
+        if (chunks.length === 0) continue;
 
-          const filename = `${this.sessionId}_${
-            recording.type
-          }_${Date.now()}${extension}`;
+        // Determine the best mime type for this camera
+        const mimeType = this.getBestMimeType(cameraType);
 
-          formData.append("video", recording.blob, filename);
-          formData.append("sessionId", this.sessionId);
-          formData.append("cameraType", recording.type);
-          formData.append("duration", recording.duration);
-          formData.append("size", recording.size);
-          formData.append("mimeType", recording.mimeType || "video/webm");
-          formData.append("isFallback", recording.fallback ? "true" : "false");
+        // Combine all chunks for this camera into one video
+        const combinedVideo = this.combineVideoChunks(cameraType, mimeType);
 
-          console.log(`📤 Uploading ${recording.type} recording:`, {
-            filename,
-            size: recording.size,
-            mimeType: recording.mimeType,
-            fallback: recording.fallback || false,
-          });
+        if (!combinedVideo) continue;
 
-          const response = await fetch("/api/upload-session-recording", {
-            method: "POST",
-            body: formData,
-          });
+        // Upload the combined video
+        const uploadResult = await this.uploadCombinedVideo(
+          combinedVideo,
+          cameraType,
+          mimeType
+        );
 
-          if (!response.ok) {
-            throw new Error(`Failed to upload ${recording.type} recording`);
-          }
-
-          const result = await response.json();
-
-          // Return enhanced result with recording metadata
-          return {
-            ...result,
-            cameraType: recording.type,
-            duration: recording.duration,
-            originalSize: recording.size,
-            mimeType: recording.mimeType,
-            fallback: recording.fallback || false,
-          };
+        if (uploadResult) {
+          results.push(uploadResult);
         }
-      );
+      }
 
-      const results = await Promise.all(uploadPromises);
-      console.log("✅ All session recordings uploaded successfully:", results);
+      if (results.length === 0) {
+        console.warn("⚠️ No recordings were uploaded");
+        return [];
+      }
+
+      console.log(
+        `✅ All session recordings uploaded: ${results.length} videos`
+      );
       return results;
     } catch (error) {
       console.error("❌ Failed to upload session recordings:", error);
@@ -660,9 +677,67 @@ class VideoRecordingManager {
     }
   }
 
+  async uploadCombinedVideo(videoBlob, cameraType, mimeType) {
+    try {
+      const formData = new FormData();
+
+      // Determine file extension based on mimeType
+      let extension = ".webm";
+      if (mimeType && mimeType.includes("mp4")) {
+        extension = ".mp4";
+      }
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const filename = `${this.sessionId}_${cameraType}_combined_${timestamp}${extension}`;
+
+      formData.append("video", videoBlob, filename);
+      formData.append("sessionId", this.sessionId);
+      formData.append("cameraType", cameraType);
+      formData.append("size", videoBlob.size.toString());
+      formData.append("mimeType", mimeType);
+      formData.append(
+        "duration",
+        (Date.now() - (this.startTime?.getTime() || 0)).toString()
+      );
+
+      console.log(
+        `📤 Uploading combined ${cameraType} video: ${filename} (${videoBlob.size} bytes)`
+      );
+
+      const response = await fetch("/api/upload-session-recording", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to upload ${cameraType} recording`);
+      }
+
+      const result = await response.json();
+
+      console.log(
+        `✅ Combined ${cameraType} video uploaded successfully to ${result.s3Location}`
+      );
+
+      return {
+        cameraType: cameraType,
+        s3Location: result.s3Location,
+        filename: result.filename,
+        size: videoBlob.size,
+        mimeType: mimeType,
+        uploadedAt: new Date(),
+        duration: Date.now() - (this.startTime?.getTime() || Date.now()),
+      };
+    } catch (error) {
+      console.error(`❌ Failed to upload combined ${cameraType} video:`, error);
+      return null;
+    }
+  }
+
   cleanup() {
     this.stopRecording();
     this.recordedChunks = [];
+    this.videoChunks.clear();
     this.mediaRecorders = [];
     this.streams = [];
   }
@@ -1970,11 +2045,8 @@ async function startIdentityVerification() {
   // Hide the capture interface
   document.getElementById("current-capture-section").style.display = "none";
 
-  // Show verification in progress
+  // Show combined verification and upload progress
   showVerificationInProgress();
-
-  // Add delay to let users see the verification progress
-  await new Promise((resolve) => setTimeout(resolve, 2000));
 
   try {
     // Get the required images
@@ -1989,40 +2061,36 @@ async function startIdentityVerification() {
     const idFrontBase64 = await fileToBase64(idFrontImage);
     const selfieOnlyBase64 = await fileToBase64(selfieOnlyImage);
 
-    console.log("🔍 Starting identity verification...");
+    console.log("🔍 Starting identity verification and processing...");
 
-    // Call verification API
-    const response = await fetch("/api/verify-identity", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        idFrontImage: idFrontBase64,
-        selfieOnlyImage: selfieOnlyBase64,
-      }),
+    // Start both AWS Rekognition and video upload in parallel
+    const [verificationResult, sessionRecordingData] = await Promise.all([
+      performAWSVerification(idFrontBase64, selfieOnlyBase64),
+      handleVideoUploadInBackground(),
+    ]);
+
+    console.log("✅ Verification and processing complete:", {
+      verified: verificationResult.verified,
+      recordingCount: sessionRecordingData.length,
     });
 
-    const result = await response.json();
-    console.log("✅ Verification result:", result);
-
-    // Add delay to show the verification result
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    if (result.success) {
-      if (result.verified) {
-        // Verification passed
+    if (verificationResult.success) {
+      if (verificationResult.verified) {
+        // Verification passed - proceed to automatic submission
         verificationPassed = true;
         console.log("✅ Identity verification PASSED");
-        showVerificationSuccess(result);
+        await handleVerificationSuccess(
+          verificationResult,
+          sessionRecordingData
+        );
       } else {
-        // Verification failed
+        // Verification failed - show retry option
         verificationPassed = false;
         console.log("❌ Identity verification FAILED");
-        showVerificationFailed(result);
+        await handleVerificationFailed(verificationResult);
       }
     } else {
-      throw new Error(result.error || "Verification failed");
+      throw new Error(verificationResult.error || "Verification failed");
     }
   } catch (error) {
     console.error("Identity verification error:", error);
@@ -2032,7 +2100,80 @@ async function startIdentityVerification() {
   }
 }
 
-// Show verification in progress UI
+// Perform AWS Rekognition verification
+async function performAWSVerification(idFrontBase64, selfieOnlyBase64) {
+  updateVerificationProgress(20, "Analyzing identity documents...");
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  updateVerificationProgress(40, "Comparing facial features...");
+
+  // Call verification API
+  const response = await fetch("/api/verify-identity", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      idFrontImage: idFrontBase64,
+      selfieOnlyImage: selfieOnlyBase64,
+    }),
+  });
+
+  const result = await response.json();
+
+  updateVerificationProgress(70, "Finalizing identity verification...");
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  return result;
+}
+
+// Handle video upload in background during verification
+async function handleVideoUploadInBackground() {
+  let sessionRecordingData = [];
+
+  // Stop recording first
+  if (
+    window.videoRecordingManager &&
+    window.videoRecordingManager.isRecording
+  ) {
+    console.log("🎬 Stopping recording for processing...");
+    window.videoRecordingManager.stopRecording();
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  // Upload recordings if they exist
+  if (window.videoRecordingManager) {
+    console.log("📹 Processing session data in background...");
+
+    try {
+      const uploadResults =
+        await window.videoRecordingManager.uploadRecordings();
+
+      if (uploadResults && Array.isArray(uploadResults)) {
+        console.log(
+          "📹 Session data processed successfully:",
+          uploadResults.length
+        );
+
+        sessionRecordingData = uploadResults.map((result) => ({
+          cameraType: result.cameraType || "unknown",
+          s3Location: result.s3Location,
+          s3Key: result.filename,
+          fileSize: result.size,
+          uploadedAt: new Date(),
+          duration: 0,
+        }));
+      }
+    } catch (error) {
+      console.warn("⚠️ Session data processing failed:", error);
+      // Continue without recordings - don't fail the verification
+    }
+  }
+
+  return sessionRecordingData;
+}
+
+// Show verification in progress UI with combined progress
 function showVerificationInProgress() {
   // Go directly to step 3 (completion) and show processing state
   nextStep(3);
@@ -2043,25 +2184,23 @@ function showVerificationInProgress() {
   completeContent.innerHTML = `
     <div class="verification-progress">
       <div class="verification-icon">
-        <i class="fas fa-shield-check"></i>
+        <i class="fas fa-shield-alt rotating"></i>
       </div>
       <h3>Verifying Your Identity</h3>
-      <p>Please wait while we verify your identity using AWS Rekognition...</p>
-      <div class="loading-spinner">
-        <i class="fas fa-spinner fa-spin"></i>
-      </div>
-      <div class="verification-steps">
-        <div class="verification-step-item">
-          <i class="fas fa-eye"></i>
-          <span>Analyzing facial features</span>
+      <p>Please wait while we verify your identity documents and selfie...</p>
+      
+      <!-- Verification Progress Container -->
+      <div class="verification-progress-container" style="display: block; margin-top: 30px;">
+        <div class="verification-progress-bar">
+          <div class="verification-progress-fill"></div>
         </div>
-        <div class="verification-step-item">
-          <i class="fas fa-search"></i>
-          <span>Comparing with ID photo</span>
+        <div class="verification-status-text">
+          <span class="verification-status">Initializing verification...</span>
+          <span class="verification-percentage">0%</span>
         </div>
-        <div class="verification-step-item">
-          <i class="fas fa-check"></i>
-          <span>Validating identity match</span>
+        <div class="verification-time-estimate">
+          <i class="fas fa-clock"></i>
+          <span class="verification-time-remaining">Processing...</span>
         </div>
       </div>
     </div>
@@ -2069,77 +2208,148 @@ function showVerificationInProgress() {
 
   // Store original content for later restoration if needed
   completeContent.setAttribute("data-original-content", originalHTML);
+
+  // Start the progress animation
+  updateVerificationProgress(5, "Preparing identity verification...");
 }
 
-// Show verification success
-function showVerificationSuccess(result) {
+// Update verification progress (user thinks it's just verification)
+function updateVerificationProgress(percentage, status, timeRemaining = null) {
+  const progressFill = document.querySelector(".verification-progress-fill");
+  const statusText = document.querySelector(".verification-status");
+  const percentageText = document.querySelector(".verification-percentage");
+  const timeEstimate = document.querySelector(".verification-time-remaining");
+
+  if (progressFill) progressFill.style.width = `${percentage}%`;
+  if (statusText) statusText.textContent = status;
+  if (percentageText) percentageText.textContent = `${percentage}%`;
+
+  if (timeRemaining) {
+    if (timeEstimate) timeEstimate.textContent = timeRemaining;
+  } else {
+    // Show generic processing message
+    if (timeEstimate) {
+      if (percentage < 30) {
+        timeEstimate.textContent = "Analyzing documents...";
+      } else if (percentage < 70) {
+        timeEstimate.textContent = "Comparing features...";
+      } else {
+        timeEstimate.textContent = "Finalizing verification...";
+      }
+    }
+  }
+}
+
+// Handle verification success - auto-submit with pre-processed data
+async function handleVerificationSuccess(result, sessionRecordingData) {
   const completeContent = document.querySelector(".complete-content");
 
-  // Show success message first
+  // Show success message and complete progress
+  updateVerificationProgress(
+    100,
+    "Identity verification completed!",
+    "Verified"
+  );
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  // Show verification success
   completeContent.innerHTML = `
     <div class="verification-result success">
       <div class="result-icon">
         <i class="fas fa-check-circle"></i>
       </div>
-      <h3>Identity Verification Successful!</h3>
-      <p>Your identity has been verified with ${result.similarity.toFixed(
-        1
-      )}% similarity.</p>
-      <div class="verification-details">
-        <div class="detail-item">
-          <span class="label">Similarity:</span>
-          <span class="value">${result.similarity.toFixed(1)}%</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">Confidence:</span>
-          <span class="value">${result.confidence.toFixed(1)}%</span>
-        </div>
+      <h3>Identity Verified Successfully!</h3>
+      <p>Your identity has been verified. Submitting your application...</p>
+      <div class="verification-details" style="margin-top: 15px; padding: 15px; background: #f0f9ff; border-radius: 8px;">
+        <p><strong>Verification Result:</strong> Identity Verified</p>
+        <p><strong>Similarity Score:</strong> ${(
+          result.similarity || 0
+        ).toFixed(1)}%</p>
       </div>
     </div>
   `;
 
-  // After 3 seconds, show the original completion content
-  setTimeout(() => {
-    const originalContent = completeContent.getAttribute(
-      "data-original-content"
-    );
-    if (originalContent) {
-      completeContent.innerHTML = originalContent;
-    }
+  // Wait a moment to show the result, then proceed with quick submission
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    // Update verification status
-    verificationPassed = true;
-
-    // Update submit button state
-    updateSubmitButtonState();
-  }, 3000);
+  // Submit application with pre-processed data (much faster now)
+  await quickSubmitApplication(result, sessionRecordingData);
 }
 
-// Show verification failed
-function showVerificationFailed(result) {
+// Quick submission since video upload is already complete
+async function quickSubmitApplication(
+  verificationResult,
+  sessionRecordingData
+) {
   const completeContent = document.querySelector(".complete-content");
+
+  // Show quick submission progress
+  completeContent.innerHTML = `
+    <div class="verification-result processing">
+      <div class="result-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h3>Submitting Application</h3>
+      <p>Finalizing your application submission...</p>
+      
+      <div class="quick-progress" style="margin-top: 20px;">
+        <div class="quick-progress-bar">
+          <div class="quick-progress-fill"></div>
+        </div>
+        <div class="quick-status">Processing application data...</div>
+      </div>
+    </div>
+  `;
+
+  const quickProgressFill = document.querySelector(".quick-progress-fill");
+  const quickStatus = document.querySelector(".quick-status");
+
+  try {
+    // Quick progress updates since heavy lifting is done
+    quickProgressFill.style.width = "30%";
+    quickStatus.textContent = "Collecting application data...";
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    quickProgressFill.style.width = "60%";
+    quickStatus.textContent = "Preparing submission...";
+    await submitVerifiedApplication(sessionRecordingData, verificationResult);
+
+    quickProgressFill.style.width = "100%";
+    quickStatus.textContent = "Application submitted successfully!";
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    // Show final success
+    showFinalSuccess(verificationResult);
+  } catch (error) {
+    console.error("Quick submission error:", error);
+    showSubmissionError(error.message);
+  }
+}
+
+// Handle verification failed - stop recording and show retry option
+async function handleVerificationFailed(result) {
+  const completeContent = document.querySelector(".complete-content");
+
+  // Stop recording immediately after verification failure
+  if (
+    window.videoRecordingManager &&
+    window.videoRecordingManager.isRecording
+  ) {
+    console.log("🎬 Stopping recording after failed verification...");
+    window.videoRecordingManager.stopRecording();
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for recording to finalize
+  }
+
+  // Submit failed verification to database first
+  await submitFailedVerification(result);
 
   completeContent.innerHTML = `
     <div class="verification-result failed">
       <div class="result-icon">
         <i class="fas fa-times-circle"></i>
       </div>
-      <h3>Identity Verification Failed</h3>
-      <p>We were unable to verify your identity. The photos may not match or the quality might be insufficient.</p>
-      <div class="verification-details">
-        <div class="detail-item">
-          <span class="label">Similarity:</span>
-          <span class="value">${
-            result.similarity ? result.similarity.toFixed(1) + "%" : "N/A"
-          }</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">Confidence:</span>
-          <span class="value">${
-            result.confidence ? result.confidence.toFixed(1) + "%" : "N/A"
-          }</span>
-        </div>
-      </div>
+      <h3>Identity Not Verified</h3>
+      <p>Your selfie does not match your ID photo. Please try again with clearer photos.</p>
       <div class="retry-options">
         <button type="button" class="retry-btn" onclick="retryVerification()">
           <i class="fas fa-redo"></i>
@@ -2173,6 +2383,17 @@ function showVerificationError(errorMessage) {
 
 // Retry verification function
 function retryVerification() {
+  // Mark this as a retry attempt
+  localStorage.setItem("kyc_retry_attempt", "true");
+
+  // Reset verification state
+  isVerificationInProgress = false;
+  verificationPassed = false;
+
+  // Clear previous photos to force new capture
+  capturedPhotos = {};
+  photoHistory = {};
+
   // Go back to step 2 (photo capture)
   currentStep = 2;
   currentPhotoStep = 1;
@@ -2181,6 +2402,15 @@ function retryVerification() {
   updateCaptureInstructions();
   updateProgressIndicator();
   showCaptureInterface();
+
+  // Restart recording for retry
+  if (window.videoRecordingManager) {
+    console.log("🎥 Restarting recording for retry attempt");
+    const recordingStarted = window.videoRecordingManager.startRecording();
+    if (!recordingStarted) {
+      console.warn("⚠️ Failed to restart recording for retry");
+    }
+  }
 }
 
 function stopCamera() {
@@ -2197,28 +2427,8 @@ function stopCamera() {
 
 // Complete page initialization
 function initializeCompletePage() {
-  updateSubmitButtonState();
-}
-
-// Update submit button state based on verification
-function updateSubmitButtonState() {
-  const submitBtn = document.querySelector(".submit-application-btn");
-
-  if (!verificationPassed) {
-    submitBtn.disabled = true;
-    submitBtn.classList.add("disabled");
-    submitBtn.innerHTML = `
-      <i class="fas fa-lock"></i>
-      <span>Identity Verification Required</span>
-    `;
-  } else {
-    submitBtn.disabled = false;
-    submitBtn.classList.remove("disabled");
-    submitBtn.innerHTML = `
-      <span data-translate="verification.step3.submit">Submit Application</span>
-      <i class="fas fa-paper-plane"></i>
-    `;
-  }
+  // Page is now automatically handled after verification
+  console.log("📄 Verification page initialized - auto-submission enabled");
 }
 
 function displayPhotoSummary() {
@@ -2288,11 +2498,11 @@ async function submitApplication() {
       window.videoRecordingManager.stopRecording();
 
       // Wait a moment for recording to finalize
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       updateProgress(25, "Processing video data...");
 
-      // Upload session recordings to S3
-      updateProgress(35, "Uploading session recording...");
+      // Combine and upload session recordings
+      updateProgress(35, "Combining and uploading recordings...");
       const uploadResults =
         await window.videoRecordingManager.uploadRecordings();
 
@@ -2301,7 +2511,7 @@ async function submitApplication() {
           "📹 Session recordings uploaded successfully:",
           uploadResults
         );
-        updateProgress(60, "Session recording uploaded successfully");
+        updateProgress(60, "Session recordings uploaded successfully");
 
         // Store the recording data to include in submission
         sessionRecordingData = uploadResults.map((result) => ({
@@ -2368,41 +2578,61 @@ async function submitApplication() {
         document.getElementById("postal-code")?.value.trim() || "",
         document.getElementById("country")?.value.trim() || "",
       ]
-        .filter((component) => component)
+        .filter((part) => part)
         .join(", "),
+      // Also store individual address components
+      streetName: document.getElementById("street-name")?.value.trim() || "",
+      houseNumber: document.getElementById("house-number")?.value.trim() || "",
+      apartment: document.getElementById("apartment")?.value.trim() || "",
+      city: document.getElementById("city")?.value.trim() || "",
+      state: getStateValue(),
+      postalCode: document.getElementById("postal-code")?.value.trim() || "",
+      country: document.getElementById("country")?.value.trim() || "",
     };
 
-    console.log("📝 Collected personal info:", personalInfo);
+    console.log("✅ Personal information collected:", personalInfo);
 
-    // Prepare photos for upload (convert to base64)
-    updateProgress(70, "Processing photos...");
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // Collect photo data with proper metadata
+    updateProgress(75, "Processing photos...");
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     const photoData = {};
-    const historyData = {};
-
-    const photoCount = Object.keys(capturedPhotos).length;
-    let processedPhotos = 0;
-
-    for (const [photoId, file] of Object.entries(capturedPhotos)) {
-      photoData[photoId] = await fileToBase64(file);
-      processedPhotos++;
-      updateProgress(
-        70 + (processedPhotos / photoCount) * 10,
-        `Processing photo ${processedPhotos}/${photoCount}...`
-      );
+    for (const [photoType, file] of Object.entries(capturedPhotos)) {
+      if (file) {
+        try {
+          const base64Data = await fileToBase64(file);
+          photoData[photoType] = {
+            data: base64Data,
+            filename: file.name || `${photoType}.jpg`,
+            size: file.size,
+            type: file.type || "image/jpeg",
+            capturedAt: new Date().toISOString(),
+          };
+        } catch (error) {
+          console.warn(`Failed to process ${photoType}:`, error);
+        }
+      }
     }
 
-    // Include photo history
-    for (const [photoId, history] of Object.entries(photoHistory)) {
-      if (history.length > 0) {
-        historyData[photoId] = await Promise.all(
-          history.map(async (item) => ({
-            data: await fileToBase64(item.file),
-            timestamp: item.timestamp,
-            version: item.version,
-          }))
-        );
+    console.log(
+      "✅ Photo data collected:",
+      Object.keys(photoData).map((key) => ({
+        type: key,
+        size: photoData[key].size,
+        filename: photoData[key].filename,
+      }))
+    );
+
+    // Collect photo history data
+    const historyData = {};
+    for (const [photoType, versions] of Object.entries(photoHistory)) {
+      if (Array.isArray(versions) && versions.length > 0) {
+        historyData[photoType] = versions.map((file, index) => ({
+          filename: file.name || `${photoType}_v${index + 1}.jpg`,
+          size: file.size,
+          type: file.type || "image/jpeg",
+          capturedAt: new Date().toISOString(),
+        }));
       }
     }
 
@@ -2471,9 +2701,6 @@ async function submitApplication() {
       // Hide progress and show success
       progressContainer.style.display = "none";
       document.querySelector(".back-home-btn").style.display = "inline-flex";
-
-      // Show success message
-      showSuccessMessage();
     } else {
       throw new Error("Database submission failed");
     }
@@ -2537,26 +2764,269 @@ async function submitToDatabase(data) {
   }
 }
 
-function showSuccessMessage() {
-  // Update the page content to show success state
+// Submit failed verification to database
+async function submitFailedVerification(verificationResult) {
+  try {
+    console.log("📝 Submitting failed verification to database...");
+
+    // Collect personal information
+    const personalInfo = collectPersonalInfo();
+    const photoData = await collectPhotoData();
+
+    const isRetry = localStorage.getItem("kyc_retry_attempt") === "true";
+
+    const failedVerificationData = {
+      personalInfo: personalInfo,
+      photos: photoData,
+      verificationStatus: "failed",
+      verificationResult: verificationResult,
+      submissionDate: new Date().toISOString(),
+      sessionId: localStorage.getItem("kyc_session_id") || generateSessionId(),
+      metadata: {
+        userAgent: navigator.userAgent,
+        screenResolution: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language,
+        status: "verification_failed",
+        submittedAt: new Date().toISOString(),
+        failureReason: verificationResult.message || "Face verification failed",
+        similarity: verificationResult.similarity || 0,
+        confidence: verificationResult.confidence || 0,
+        isRetry: isRetry,
+      },
+    };
+
+    const success = await submitToDatabase(failedVerificationData);
+    if (success) {
+      console.log("✅ Failed verification submitted to database");
+      // Don't clear retry flag yet - keep it for potential next retry
+    }
+  } catch (error) {
+    console.error("❌ Error submitting failed verification:", error);
+  }
+}
+
+// Submit verified application to database
+async function submitVerifiedApplication(
+  sessionRecordingData,
+  verificationResult
+) {
+  const personalInfo = collectPersonalInfo();
+  const photoData = await collectPhotoData();
+  const historyData = collectPhotoHistory();
+
+  const isRetry = localStorage.getItem("kyc_retry_attempt") === "true";
+
+  const submissionData = {
+    personalInfo: personalInfo,
+    photos: photoData,
+    photoHistory: historyData,
+    verificationStatus: "passed",
+    verificationResult: verificationResult,
+    submissionDate: new Date().toISOString(),
+    sessionId: localStorage.getItem("kyc_session_id") || generateSessionId(),
+    metadata: {
+      userAgent: navigator.userAgent,
+      screenResolution: `${screen.width}x${screen.height}`,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      language: navigator.language,
+      sessionRecorded: sessionRecordingData.length > 0,
+      status: "completed",
+      submittedAt: new Date().toISOString(),
+      sessionRecordings: sessionRecordingData,
+      similarity: verificationResult.similarity || 0,
+      confidence: verificationResult.confidence || 0,
+      isRetry: isRetry,
+    },
+  };
+
+  console.log("📝 Submitting verified application:", {
+    sessionId: submissionData.sessionId,
+    recordingCount: sessionRecordingData.length,
+    isRetry: isRetry,
+  });
+
+  const success = await submitToDatabase(submissionData);
+  if (!success) {
+    throw new Error("Database submission failed");
+  }
+
+  // Clear retry flag after successful submission
+  localStorage.removeItem("kyc_retry_attempt");
+
+  // Cleanup recording resources
+  if (window.videoRecordingManager) {
+    window.videoRecordingManager.cleanup();
+  }
+}
+
+// Helper functions for data collection
+function collectPersonalInfo() {
+  function getStateValue() {
+    const stateSelect = document.getElementById("state-select");
+    const stateInput = document.getElementById("state-input");
+
+    if (stateSelect && stateSelect.style.display !== "none") {
+      return stateSelect.value.trim();
+    } else if (stateInput && stateInput.style.display !== "none") {
+      return stateInput.value.trim();
+    }
+    return "";
+  }
+
+  function getCompletePhoneNumber() {
+    const countryCodeSelect = document.getElementById("phone-country-code");
+    const phoneInput = document.getElementById("phone");
+
+    if (countryCodeSelect && phoneInput) {
+      const countryCode = countryCodeSelect.value;
+      const phoneNumber = phoneInput.value.trim();
+
+      if (countryCode && phoneNumber) {
+        return countryCode + phoneNumber.replace(/\s/g, "");
+      }
+    }
+
+    return document.getElementById("phone")?.value.trim() || "";
+  }
+
+  return {
+    firstName: document.getElementById("first-name")?.value.trim() || "",
+    lastName: document.getElementById("last-name")?.value.trim() || "",
+    egn: document.getElementById("egn")?.value.trim() || "",
+    phone: getCompletePhoneNumber(),
+    email: document.getElementById("email")?.value.trim() || "",
+    income: document.getElementById("income")?.value.trim() || "",
+    employment: document.getElementById("employment")?.value.trim() || "",
+    address: [
+      document.getElementById("street-name")?.value.trim() || "",
+      document.getElementById("house-number")?.value.trim() || "",
+      document.getElementById("apartment")?.value.trim() || "",
+      document.getElementById("city")?.value.trim() || "",
+      getStateValue(),
+      document.getElementById("postal-code")?.value.trim() || "",
+      document.getElementById("country")?.value.trim() || "",
+    ]
+      .filter((part) => part)
+      .join(", "),
+    streetName: document.getElementById("street-name")?.value.trim() || "",
+    houseNumber: document.getElementById("house-number")?.value.trim() || "",
+    apartment: document.getElementById("apartment")?.value.trim() || "",
+    city: document.getElementById("city")?.value.trim() || "",
+    state: getStateValue(),
+    postalCode: document.getElementById("postal-code")?.value.trim() || "",
+    country: document.getElementById("country")?.value.trim() || "",
+  };
+}
+
+async function collectPhotoData() {
+  const photoData = {};
+
+  for (const [photoType, file] of Object.entries(capturedPhotos)) {
+    if (file) {
+      try {
+        const base64Data = await fileToBase64(file);
+        photoData[photoType] = {
+          data: base64Data,
+          filename: file.name || `${photoType}.jpg`,
+          size: file.size,
+          type: file.type || "image/jpeg",
+          capturedAt: new Date().toISOString(),
+        };
+      } catch (error) {
+        console.warn(`Failed to process ${photoType}:`, error);
+      }
+    }
+  }
+
+  return photoData;
+}
+
+function collectPhotoHistory() {
+  const historyData = {};
+
+  for (const [photoType, versions] of Object.entries(photoHistory)) {
+    if (Array.isArray(versions) && versions.length > 0) {
+      historyData[photoType] = versions.map((file, index) => ({
+        filename: file.name || `${photoType}_v${index + 1}.jpg`,
+        size: file.size,
+        type: file.type || "image/jpeg",
+        capturedAt: new Date().toISOString(),
+      }));
+    }
+  }
+
+  return historyData;
+}
+
+// Show final success after submission (enhanced with verification details)
+function showFinalSuccess(verificationResult) {
   const completeContent = document.querySelector(".complete-content");
-  const successMessage = document.createElement("div");
-  successMessage.className = "success-banner";
-  successMessage.innerHTML = `
-        <div class="success-icon-large">
+
+  completeContent.innerHTML = `
+    <div class="verification-result success final">
+      <div class="result-icon">
             <i class="fas fa-check-circle"></i>
         </div>
-        <h2>${t(
-          "verification.step3.success_title",
-          "Application Submitted Successfully!"
-        )}</h2>
-        <p>${t(
-          "verification.step3.success_message",
-          "Thank you for your trust! You will receive a response within 15-30 minutes."
-        )}</p>
-    `;
+      <h3 style="text-align: center;">Application Submitted Successfully!</h3>
+      <p style="text-align: center;">Your identity verification has been completed and your application has been submitted.</p>
+      
+      <div class="verification-summary" style="margin-top: 25px; padding: 20px; background: #f8f9fa; border-radius: 12px; text-align: center;">
+        <h4 style="margin-bottom: 15px; color: #28a745;">
+          <i class="fas fa-shield-check"></i> Verification Summary
+        </h4>
+        
+        <div class="summary-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+          <div class="summary-item">
+            <strong>Status:</strong><br>
+            <span style="color: #28a745;">✓ Identity Verified</span>
+          </div>
+          <div class="summary-item">
+            <strong>Match Score:</strong><br>
+            <span style="color: #28a745;">${(
+              verificationResult.similarity || 0
+            ).toFixed(1)}%</span>
+          </div>
+        </div>
+        
+        <div class="timeline-info" style="padding-top: 15px; border-top: 1px solid #dee2e6;">
+          <p style="color: #666; margin: 0;">
+            <i class="fas fa-clock"></i> 
+            <strong>Response Time:</strong> You will receive a response within 15-30 minutes.
+          </p>
+        </div>
+      </div>
+      
+      <div class="final-actions" style="margin-top: 25px; text-align: center;">
+        <button type="button" class="back-home-btn" onclick="window.location.href='index.html'" 
+                style="background: #007bff; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px;">
+          <i class="fas fa-home"></i>
+          <span>Return to Home</span>
+        </button>
+      </div>
+    </div>
+  `;
+}
 
-  completeContent.insertBefore(successMessage, completeContent.firstChild);
+// Show submission error
+function showSubmissionError(errorMessage) {
+  const completeContent = document.querySelector(".complete-content");
+
+  completeContent.innerHTML = `
+    <div class="verification-result error">
+      <div class="result-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h3>Submission Error</h3>
+      <p>There was an error submitting your application: ${errorMessage}</p>
+      <div class="retry-options">
+        <button type="button" class="retry-btn" onclick="location.reload()">
+          <i class="fas fa-redo"></i>
+          Try Again
+        </button>
+      </div>
+    </div>
+  `;
 }
 
 function generateSessionId() {

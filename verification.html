@@ -1203,10 +1203,18 @@
               <div class="complete-icon">
                 <i class="fas fa-check-circle"></i>
               </div>
-              <h3 data-translate="verification.step3.title">All Set!</h3>
-              <p data-translate="verification.step3.description">
-                Your verification photos have been captured successfully. Ready
-                to submit your application.
+              <h3
+                data-translate="verification.step3.title"
+                style="text-align: center"
+              >
+                Application Submitted Successfully!
+              </h3>
+              <p
+                data-translate="verification.step3.description"
+                style="text-align: center"
+              >
+                Your verification has been completed. Please wait while we
+                process your application.
               </p>
 
               <!-- Upload Progress Container -->
@@ -1225,26 +1233,17 @@
               </div>
 
               <div class="final-actions">
-                <button
-                  type="button"
-                  class="submit-application-btn"
-                  onclick="submitApplication()"
-                >
-                  <span data-translate="verification.step3.submit"
-                    >Submit Application</span
-                  >
-                  <i class="fas fa-paper-plane"></i>
-                </button>
+                <!-- Manual submit button removed - now auto-submitting after verification -->
                 <button
                   type="button"
                   class="back-home-btn"
                   onclick="window.location.href='index.html'"
                   style="display: none"
                 >
+                  <i class="fas fa-home"></i>
                   <span data-translate="verification.step3.back_home"
                     >Back to Home</span
                   >
-                  <i class="fas fa-home"></i>
                 </button>
               </div>
             </div>

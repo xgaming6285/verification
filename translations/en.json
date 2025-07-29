@@ -278,8 +278,8 @@
       "continue": "Continue"
     },
     "step3": {
-      "title": "All Set!",
-      "description": "Your verification photos have been captured successfully. We're now processing your application.",
+      "title": "Application Submitted Successfully!",
+      "description": "Your verification has been completed and your application has been submitted.",
       "summary_title": "Captured Photos:",
       "next_steps": "What happens next:",
       "step_list": {

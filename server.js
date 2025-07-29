@@ -204,6 +204,15 @@ function base64ToBuffer(base64String) {
   return Buffer.from(base64Data, "base64");
 }
 
+// Helper function to generate unique session ID
+function generateUniqueId() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    var r = (Math.random() * 16) | 0,
+      v = c == "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 // API endpoint for AWS Rekognition face verification
 app.post("/api/verify-identity", async (req, res) => {
   try {
@@ -305,117 +314,159 @@ app.post("/api/verify-identity", async (req, res) => {
   }
 });
 
-// API endpoint to submit verification data
+// API endpoint to submit verification data to MongoDB
 app.post("/api/submit-verification", async (req, res) => {
   try {
     console.log("📥 Received verification submission request");
-    const { personalInfo, photos, submissionDate, sessionId } = req.body;
 
-    // Validate required fields
-    if (!personalInfo || !photos || !submissionDate) {
-      console.error("❌ Missing required fields:", {
-        hasPersonalInfo: !!personalInfo,
-        hasPhotos: !!photos,
-        hasSubmissionDate: !!submissionDate,
-      });
+    // Extract data from request
+    const { personalInfo, photos, photoHistory, metadata } = req.body;
+
+    // Validate required data
+    if (!personalInfo) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields",
+        error: "Personal information is required",
       });
     }
 
-    // Validate personal info
-    const requiredFields = [
-      "firstName",
-      "lastName",
-      "egn",
-      "phone",
-      "email",
-      "address",
-      "income",
-      "employment",
-    ];
-    for (const field of requiredFields) {
-      if (!personalInfo[field]) {
-        console.error(`❌ Missing required personal info field: ${field}`);
-        return res.status(400).json({
-          success: false,
-          error: `Missing required field: ${field}`,
-        });
-      }
+    if (!photos) {
+      return res.status(400).json({
+        success: false,
+        error: "Photos are required",
+      });
     }
 
-    // Validate photos
-    const requiredPhotos = [
-      "idFront",
-      "idBack",
-      "selfieWithIdFront",
-      "selfieWithIdBack",
-      "selfieOnly",
-    ];
-    for (const photoId of requiredPhotos) {
-      if (!photos[photoId]) {
-        console.error(`❌ Missing required photo: ${photoId}`);
-        return res.status(400).json({
-          success: false,
-          error: `Missing required photo: ${photoId}`,
-        });
-      }
-    }
+    // Generate session ID if not provided
+    const sessionId = req.body.sessionId || generateUniqueId();
+    const submissionDate = new Date().toISOString();
 
-    console.log("✅ Validation passed, proceeding with database insertion");
+    // Get verification status from metadata
+    const verificationStatus =
+      req.body.verificationStatus || metadata?.status || "pending";
+    const isRetry = metadata?.isRetry || false;
+
+    console.log(
+      `📝 Processing ${verificationStatus} verification for session: ${sessionId}`
+    );
 
     // Create verification document
     const verificationDoc = {
-      sessionId: sessionId || generateSessionId(),
+      sessionId: sessionId,
       personalInfo: {
-        firstName: personalInfo.firstName,
-        lastName: personalInfo.lastName,
-        egn: personalInfo.egn,
-        phone: personalInfo.phone,
-        email: personalInfo.email,
-        address: personalInfo.address,
-        income: parseInt(personalInfo.income),
-        employment: personalInfo.employment,
+        firstName: personalInfo.firstName || "",
+        lastName: personalInfo.lastName || "",
+        egn: personalInfo.egn || "",
+        phone: personalInfo.phone || "",
+        email: personalInfo.email || "",
+        income: personalInfo.income || "",
+        employment: personalInfo.employment || "",
+        address: personalInfo.address || "",
+        streetName: personalInfo.streetName || "",
+        houseNumber: personalInfo.houseNumber || "",
+        apartment: personalInfo.apartment || "",
+        city: personalInfo.city || "",
+        state: personalInfo.state || "",
+        postalCode: personalInfo.postalCode || "",
+        country: personalInfo.country || "",
       },
-      photos: {
-        idFront: {
-          data: photos.idFront,
-          capturedAt: new Date().toISOString(),
-        },
-        idBack: {
-          data: photos.idBack,
-          capturedAt: new Date().toISOString(),
-        },
-        selfieWithIdFront: {
-          data: photos.selfieWithIdFront,
-          capturedAt: new Date().toISOString(),
-        },
-        selfieWithIdBack: {
-          data: photos.selfieWithIdBack,
-          capturedAt: new Date().toISOString(),
-        },
-        selfieOnly: {
-          data: photos.selfieOnly,
-          capturedAt: new Date().toISOString(),
-        },
-      },
+      photos: {},
+      photoHistory: photoHistory || {},
+      verificationStatus: verificationStatus,
+      verificationResult: req.body.verificationResult || {},
       metadata: {
         submissionDate: submissionDate,
         ipAddress: req.ip,
         userAgent: req.get("User-Agent"),
-        status: "pending",
+        status:
+          verificationStatus === "passed" ? "completed" : "verification_failed",
         createdAt: new Date(),
         sessionRecordings: [], // Initialize empty array for recordings
+        isRetry: isRetry,
         ...req.body.metadata, // Include any additional metadata from frontend
       },
     };
 
-    // Insert into MongoDB
-    console.log(
-      "📝 Attempting to insert verification document into MongoDB..."
-    );
+    // Process photos
+    if (photos) {
+      for (const [photoType, photoData] of Object.entries(photos)) {
+        verificationDoc.photos[photoType] = {
+          data: photoData.data || "",
+          filename: photoData.filename || `${photoType}.jpg`,
+          size: photoData.size || 0,
+          type: photoData.type || "image/jpeg",
+          capturedAt: photoData.capturedAt || new Date().toISOString(),
+        };
+      }
+    }
+
     const collection = db.collection(COLLECTION_NAME);
+
+    // Handle retry logic for failed verifications
+    if (isRetry && personalInfo.email) {
+      console.log(`🔄 Processing retry for email: ${personalInfo.email}`);
+
+      // Check for existing failed verification
+      const existingFailedVerification = await collection.findOne({
+        "personalInfo.email": personalInfo.email,
+        verificationStatus: "failed",
+      });
+
+      if (existingFailedVerification) {
+        console.log(
+          `📝 Found existing failed verification: ${existingFailedVerification.sessionId}`
+        );
+
+        if (verificationStatus === "passed") {
+          // Replace failed verification with passed one
+          console.log(
+            "✅ Replacing failed verification with passed verification"
+          );
+
+          const updateResult = await collection.replaceOne(
+            { _id: existingFailedVerification._id },
+            verificationDoc
+          );
+
+          if (updateResult.modifiedCount > 0) {
+            console.log(
+              "✅ Successfully replaced failed verification with passed verification"
+            );
+            return res.json({
+              success: true,
+              id: existingFailedVerification._id,
+              sessionId: verificationDoc.sessionId,
+              message: "Verification updated successfully - passed on retry",
+              action: "replaced_failed_with_passed",
+            });
+          }
+        } else if (verificationStatus === "failed") {
+          // Update the existing failed verification
+          console.log(
+            "📝 Updating existing failed verification with new attempt"
+          );
+
+          const updateResult = await collection.replaceOne(
+            { _id: existingFailedVerification._id },
+            verificationDoc
+          );
+
+          if (updateResult.modifiedCount > 0) {
+            console.log("📝 Updated existing failed verification");
+            return res.json({
+              success: true,
+              id: existingFailedVerification._id,
+              sessionId: verificationDoc.sessionId,
+              message: "Failed verification updated",
+              action: "updated_failed_verification",
+            });
+          }
+        }
+      }
+    }
+
+    // Insert new verification document
+    console.log("📝 Inserting new verification document into MongoDB...");
     const result = await collection.insertOne(verificationDoc);
 
     if (!result.insertedId) {
@@ -426,6 +477,7 @@ app.post("/api/submit-verification", async (req, res) => {
       id: result.insertedId,
       sessionId: verificationDoc.sessionId,
       email: personalInfo.email,
+      status: verificationStatus,
       timestamp: new Date().toISOString(),
     });
 
@@ -433,7 +485,8 @@ app.post("/api/submit-verification", async (req, res) => {
       success: true,
       id: result.insertedId,
       sessionId: verificationDoc.sessionId,
-      message: "Verification submitted successfully",
+      message: `Verification submitted successfully - ${verificationStatus}`,
+      action: "new_verification",
     });
   } catch (error) {
     console.error("❌ Error submitting verification:", {
@@ -687,6 +740,7 @@ app.post(
           mimeType: mimeType || req.file.mimetype || "unknown",
           isFallback: isFallback || "false",
           userAgent: req.headers["user-agent"] || "unknown",
+          videoCombined: "true", // Indicates this is a combined video from chunks
         },
       };
 
@@ -713,6 +767,7 @@ app.post(
                   isFallback: isFallback === "true",
                   userAgent: req.headers["user-agent"] || "unknown",
                   filename: filename,
+                  videoCombined: true, // Indicates this is a combined video from chunks
                 },
               },
             }
