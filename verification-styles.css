@@ -1020,6 +1020,8 @@ body {
   white-space: nowrap;
 }
 
+/* Rotation Controls removed - no longer needed */
+
 #capture-video {
   position: absolute;
   top: 0;
@@ -1029,6 +1031,20 @@ body {
   object-fit: cover;
   z-index: 10000;
   background-color: #000;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* iOS-specific video orientation fixes */
+#capture-video.ios-orientation-fixed {
+  transform-origin: center center;
+  /* Force proper scaling to prevent zoom artifacts */
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  /* Improve video rendering on iOS */
+  will-change: transform;
+  /* Prevent iOS zoom issues */
+  object-fit: cover !important;
+  object-position: center !important;
 }
 
 .camera-placeholder {

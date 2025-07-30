@@ -16,6 +16,8 @@ let tapTimer = null;
 let tripleTapTimeout = 1000; // 1 second window for triple tap
 let cameraAreaTouchHandler = null;
 
+// Camera rotation variables removed - rotation functionality no longer needed
+
 // Country and address data
 const COUNTRIES = {
   BG: { name: "Bulgaria", hasStates: false, postalFormat: /^\d{4}$/ },
@@ -1994,6 +1996,19 @@ function startCameraCapture() {
     return;
   }
 
+  // For iOS devices, add small delay to ensure proper cleanup between captures
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS) {
+    console.log("📱 iOS device: Adding initialization delay");
+    setTimeout(() => {
+      initializeCameraCapture();
+    }, 300); // 300ms delay for iOS
+  } else {
+    initializeCameraCapture();
+  }
+}
+
+function initializeCameraCapture() {
   const currentPhoto = PHOTO_SEQUENCE[currentPhotoStep - 1];
   const cameraArea = document.getElementById("camera-capture-area");
   const video = document.getElementById("capture-video");
@@ -2026,12 +2041,48 @@ function startCameraCapture() {
 
   // Camera constraints based on current photo with iOS compatibility
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const constraints = {
-    video: {
+
+  // Clear any existing video transforms to prevent zoom issues
+  if (video) {
+    video.style.webkitTransform = "translateZ(0)";
+    video.style.transform = "translateZ(0)";
+  }
+
+  // Different constraints for front vs back ID to fix rotation issues
+  let videoConstraints;
+
+  if (isIOS && currentPhoto.guide === "id-guide") {
+    // Use more conservative constraints for iOS ID capture to prevent zoom/rotation issues
+    videoConstraints = {
+      facingMode: { exact: currentPhoto.camera },
+      width: { ideal: 1920, max: 1920 },
+      height: { ideal: 1080, max: 1080 },
+      aspectRatio: { ideal: 16 / 9 },
+      // Remove resizeMode as it causes zoom issues
+    };
+
+    console.log(
+      `📱 Using iOS ID-optimized constraints for ${currentPhoto.name}`
+    );
+  } else if (isIOS) {
+    // Standard iOS constraints for face capture
+    videoConstraints = {
       facingMode: currentPhoto.camera,
-      width: isIOS ? { ideal: 640, max: 1920 } : { ideal: 1920 },
-      height: isIOS ? { ideal: 480, max: 1080 } : { ideal: 1080 },
-    },
+      width: { ideal: 1280, max: 1920 },
+      height: { ideal: 720, max: 1080 },
+      aspectRatio: { ideal: 16 / 9 },
+    };
+  } else {
+    // Standard Android/desktop constraints
+    videoConstraints = {
+      facingMode: currentPhoto.camera,
+      width: { ideal: 1920 },
+      height: { ideal: 1080 },
+    };
+  }
+
+  const constraints = {
+    video: videoConstraints,
   };
 
   console.log(
@@ -2049,6 +2100,14 @@ function startCameraCapture() {
       // Apply comprehensive iOS setup
       setupVideoElementForIOS(video);
 
+      // Apply iOS-specific fixes for ID capture (without rotation)
+      if (isIOS && currentPhoto.guide === "id-guide") {
+        // Apply basic iOS setup without rotation artifacts
+        video.style.webkitTransform = "translateZ(0)";
+        video.style.transform = "translateZ(0)";
+        console.log("📱 Applied iOS ID capture fix without rotation");
+      }
+
       video.style.display = "block";
       placeholder.style.display = "none";
       overlay.style.display = "block";
@@ -2057,6 +2116,8 @@ function startCameraCapture() {
       if (tapInstructionOverlay) {
         tapInstructionOverlay.style.display = "block";
       }
+
+      // Rotation controls removed - no longer needed
 
       // Initialize triple-tap functionality instead of showing button
       initializeTripleTap();
@@ -2135,6 +2196,13 @@ function closeCameraCapture() {
     tapInstructionOverlay.style.display = "none";
   }
 
+  // Rotation controls removed - no longer needed
+
+  // Remove iOS-specific classes
+  if (video) {
+    video.classList.remove("ios-orientation-fixed");
+  }
+
   // Remove triple-tap listeners and reset state
   removeTripleTapListeners();
 
@@ -2154,11 +2222,9 @@ function captureCurrentPhoto() {
   const context = canvas.getContext("2d");
   const currentPhoto = PHOTO_SEQUENCE[currentPhotoStep - 1];
 
-  // Set canvas dimensions to video dimensions
+  // Standard capture without rotation (rotation functionality removed)
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-
-  // Draw video frame to canvas
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
   // Convert to blob
@@ -2734,14 +2800,33 @@ function retryVerification() {
 
 function stopCamera() {
   if (currentStream) {
-    currentStream.getTracks().forEach((track) => track.stop());
+    // Enhanced cleanup for better stream reset between captures
+    currentStream.getTracks().forEach((track) => {
+      track.stop();
+      console.log(`📹 Stopped ${track.kind} track: ${track.label}`);
+    });
     currentStream = null;
   }
 
   const video = document.getElementById("capture-video");
-  if (video.srcObject) {
-    video.srcObject = null;
+  if (video) {
+    if (video.srcObject) {
+      video.srcObject = null;
+    }
+
+    // Clear any iOS-specific styling and transformations
+    video.classList.remove("ios-orientation-fixed");
+    video.style.transform = "";
+    video.style.webkitTransform = "";
+
+    // Force video element reset for iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      video.load(); // Force reload to clear any cached state
+    }
   }
+
+  console.log("📹 Camera stream and video element fully reset");
 }
 
 // Complete page initialization
@@ -3391,6 +3476,74 @@ function setupVideoElementForIOS(video) {
     );
   }
 }
+
+// iOS-specific orientation fix for ID capture
+function applyIOSOrientationFix(video) {
+  if (!video) return;
+
+  const currentPhoto = PHOTO_SEQUENCE[currentPhotoStep - 1];
+  console.log(`📱 Applying iOS orientation fix for ${currentPhoto.name}`);
+
+  // Reset any existing transforms
+  const baseTransform = "translateZ(0)";
+  video.style.webkitTransform = baseTransform;
+  video.style.transform = baseTransform;
+
+  // Different object-fit handling for better consistency
+  video.style.objectFit = "cover";
+  video.style.objectPosition = "center";
+
+  // Prevent initial zoom artifacts on iOS
+  video.style.webkitTransformStyle = "preserve-3d";
+  video.style.transformStyle = "preserve-3d";
+  video.style.willChange = "transform";
+
+  // Add CSS class for iOS-specific styling
+  video.classList.add("ios-orientation-fixed");
+
+  // Ensure proper video element setup for consistent behavior
+  video.style.width = "100vw";
+  video.style.height = "100vh";
+
+  // Wait for video metadata to be loaded for proper sizing
+  video.addEventListener("loadedmetadata", function () {
+    console.log(`📱 Video metadata loaded for ${currentPhoto.name}:`, {
+      videoWidth: video.videoWidth,
+      videoHeight: video.videoHeight,
+      photoId: currentPhoto.id,
+    });
+
+    // iOS zoom fix: Force a rotation cycle to reset any zoom artifacts
+    setTimeout(() => {
+      forceIOSVideoReset(video);
+    }, 100);
+  });
+}
+
+// Force iOS video reset to fix zoom artifacts
+function forceIOSVideoReset(video) {
+  if (!video) return;
+
+  console.log("📱 Forcing iOS video reset to fix zoom artifacts");
+
+  // Temporarily apply a minimal rotation to force re-render
+  const baseTransform = "translateZ(0)";
+  video.style.webkitTransform = baseTransform + " rotate(0.01deg)";
+  video.style.transform = baseTransform + " rotate(0.01deg)";
+
+  // Reset to normal after a brief moment
+  setTimeout(() => {
+    video.style.webkitTransform = baseTransform;
+    video.style.transform = baseTransform;
+    console.log(
+      "📱 iOS video reset completed - zoom artifacts should be cleared"
+    );
+  }, 50);
+}
+
+// Video rotation function removed - no longer needed
+
+// Rotation control functions removed - no longer needed
 
 // Enhanced video play function for iOS compatibility
 function playVideoSafely(video) {
