@@ -1162,16 +1162,16 @@
 
           <!-- Full Screen Camera -->
           <div class="camera-capture-area" id="camera-capture-area">
-            <div class="camera-header">
-              <div class="camera-step-info">
-                <h5 id="camera-step-title">Capture ID Front</h5>
-                <p id="camera-step-description">
-                  Position your ID card in the guide
-                </p>
+            <!-- Simple arrow close button -->
+            <button class="camera-close-arrow" onclick="closeCameraCapture()">
+              <i class="fas fa-arrow-left"></i>
+            </button>
+
+            <!-- Tap instruction overlay -->
+            <div class="tap-instruction-overlay" id="tap-instruction-overlay">
+              <div class="tap-instruction-text">
+                <span>Tap 3 times anywhere to capture</span>
               </div>
-              <button class="camera-close-btn" onclick="closeCameraCapture()">
-                <i class="fas fa-times"></i>
-              </button>
             </div>
 
             <video
@@ -1197,16 +1197,27 @@
               <!-- Guide overlays will be dynamically inserted here -->
             </div>
 
-            <!-- Capture button positioned over the camera view -->
+            <!-- Capture button hidden - replaced with triple-tap functionality -->
             <button
               type="button"
               class="capture-photo-btn hidden"
               id="capture-photo-btn"
               onclick="captureCurrentPhoto()"
+              style="display: none !important"
             >
               <i class="fas fa-camera"></i>
               <span>Capture Photo</span>
             </button>
+
+            <!-- Triple-tap indicator -->
+            <div
+              class="triple-tap-indicator"
+              id="triple-tap-indicator"
+              style="display: none"
+            >
+              <div class="tap-count" id="tap-count">0</div>
+              <div class="tap-instruction">Tap 3 times to capture</div>
+            </div>
           </div>
 
           <!-- Step 3: Complete -->

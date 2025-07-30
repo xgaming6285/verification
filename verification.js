@@ -10,6 +10,12 @@ let translationManager = null;
 let isVerificationInProgress = false;
 let verificationPassed = false;
 
+// Triple-tap capture variables
+let tapCount = 0;
+let tapTimer = null;
+let tripleTapTimeout = 1000; // 1 second window for triple tap
+let cameraAreaTouchHandler = null;
+
 // Country and address data
 const COUNTRIES = {
   BG: { name: "Bulgaria", hasStates: false, postalFormat: /^\d{4}$/ },
@@ -255,7 +261,7 @@ class VideoRecordingManager {
         // Special constraints for iOS front camera to avoid black screen
         constraints = {
           video: {
-            facingMode: { exact: "user" }, // Force front camera
+            facingMode: { ideal: "user" }, // Force front camera
             width: { ideal: 640, max: 1280 },
             height: { ideal: 480, max: 720 },
             frameRate: { ideal: 30, max: 30 },
@@ -374,23 +380,20 @@ class VideoRecordingManager {
 
     this.isRecording = true;
     this.startTime = new Date();
-    this.recordedChunks = [];
+    this.videoChunks.clear();
     this.mediaRecorders = [];
 
     console.log("🔴 Starting session recording...");
 
-    this.streams.forEach((streamInfo, index) => {
+    this.streams.forEach((streamInfo) => {
       try {
-        // Determine the best codec for this camera type and device
         const mimeType = this.getBestMimeType(streamInfo.type);
-
         console.log(`🎬 Using codec ${mimeType} for ${streamInfo.type} camera`);
 
-        // Enhanced MediaRecorder options for better compression
         const recordingOptions = {
           mimeType: mimeType,
           videoBitsPerSecond: this.getOptimalBitrate(streamInfo.type),
-          audioBitsPerSecond: 128000, // 128 kbps for good audio quality
+          audioBitsPerSecond: 128000,
         };
 
         const mediaRecorder = new MediaRecorder(
@@ -398,23 +401,26 @@ class VideoRecordingManager {
           recordingOptions
         );
 
-        const chunks = [];
+        if (!this.videoChunks.has(streamInfo.type)) {
+          this.videoChunks.set(streamInfo.type, []);
+        }
 
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
-            chunks.push(event.data);
-
-            // Store chunks for later combination by camera type
-            if (!this.videoChunks.has(streamInfo.type)) {
-              this.videoChunks.set(streamInfo.type, []);
-            }
             this.videoChunks.get(streamInfo.type).push(event.data);
           }
         };
 
         mediaRecorder.onstop = () => {
           console.log(
-            `📹 ${streamInfo.type} camera recording stopped, chunks collected for combination`
+            `📹 ${streamInfo.type} camera recording stopped, chunks collected.`
+          );
+        };
+
+        mediaRecorder.onerror = (event) => {
+          console.error(
+            `❌ MediaRecorder error for ${streamInfo.type}:`,
+            event.error
           );
         };
 
@@ -429,8 +435,6 @@ class VideoRecordingManager {
           `❌ Failed to start recording from ${streamInfo.type} camera:`,
           error
         );
-
-        // Try fallback recording with default codec
         this.tryFallbackRecording(streamInfo);
       }
     });
@@ -441,32 +445,32 @@ class VideoRecordingManager {
   getBestMimeType(cameraType) {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-    // Define codec preferences based on device and camera type
+    // Prioritize H.264 for iOS, as it's more reliable, especially for front camera.
     const codecPreferences = {
       ios: {
         front: [
-          'video/mp4; codecs="avc1.42E01E"', // H.264 Baseline Profile - most compatible with iOS front camera
-          'video/mp4; codecs="avc1.64001E"', // H.264 Main Profile
-          "video/mp4", // Generic MP4
-          'video/webm; codecs="vp8,opus"', // VP8 fallback
-          "video/webm", // Generic WebM
+          'video/mp4; codecs="avc1.42E01E"', // H.264 Baseline (most compatible)
+          'video/mp4; codecs="avc1.64001E"', // H.264 Main
+          "video/mp4",
+          'video/webm; codecs="vp8,opus"',
+          "video/webm",
         ],
         back: [
-          'video/mp4; codecs="avc1.64001E"', // H.264 Main Profile
-          'video/mp4; codecs="avc1.42E01E"', // H.264 Baseline Profile
-          'video/webm; codecs="vp9,opus"', // VP9 (original codec)
-          "video/mp4", // Generic MP4
-          'video/webm; codecs="vp8,opus"', // VP8 fallback
-          "video/webm", // Generic WebM
+          'video/mp4; codecs="avc1.64001E"', // H.264 Main
+          'video/mp4; codecs="avc1.42E01E"', // H.264 Baseline
+          'video/webm; codecs="vp9,opus"',
+          "video/mp4",
+          'video/webm; codecs="vp8,opus"',
+          "video/webm",
         ],
       },
       other: [
-        'video/webm; codecs="vp9,opus"', // VP9 (original - works well on Android/Desktop)
-        'video/webm; codecs="vp8,opus"', // VP8 fallback
-        'video/mp4; codecs="avc1.64001E"', // H.264 Main Profile
-        'video/mp4; codecs="avc1.42E01E"', // H.264 Baseline Profile
-        "video/webm", // Generic WebM
-        "video/mp4", // Generic MP4
+        'video/webm; codecs="vp9,opus"',
+        'video/webm; codecs="vp8,opus"',
+        'video/mp4; codecs="avc1.64001E"',
+        'video/mp4; codecs="avc1.42E01E"',
+        "video/webm",
+        "video/mp4",
       ],
     };
 
@@ -499,8 +503,7 @@ class VideoRecordingManager {
 
   getDefaultMimeType() {
     const defaultCodecs = [
-      'video/webm; codecs="vp9,opus"',
-      'video/webm; codecs="vp8,opus"',
+      'video/webm; codecs="vp8,opus"', // VP8 is broadly supported
       "video/mp4",
       "video/webm",
     ];
@@ -527,23 +530,26 @@ class VideoRecordingManager {
         fallbackMimeType ? { mimeType: fallbackMimeType } : {}
       );
 
-      const chunks = [];
+      if (!this.videoChunks.has(streamInfo.type)) {
+        this.videoChunks.set(streamInfo.type, []);
+      }
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          chunks.push(event.data);
-
-          // Store chunks for later combination by camera type (fallback)
-          if (!this.videoChunks.has(streamInfo.type)) {
-            this.videoChunks.set(streamInfo.type, []);
-          }
           this.videoChunks.get(streamInfo.type).push(event.data);
         }
       };
 
       mediaRecorder.onstop = () => {
         console.log(
-          `📹 ${streamInfo.type} camera fallback recording stopped, chunks collected for combination`
+          `📹 ${streamInfo.type} camera fallback recording stopped, chunks collected.`
+        );
+      };
+
+      mediaRecorder.onerror = (event) => {
+        console.error(
+          `❌ Fallback MediaRecorder error for ${streamInfo.type}:`,
+          event.error
         );
       };
 
@@ -551,7 +557,9 @@ class VideoRecordingManager {
       this.mediaRecorders.push(mediaRecorder);
 
       console.log(
-        `✅ Fallback recording started for ${streamInfo.type} camera`
+        `✅ Fallback recording started for ${streamInfo.type} camera with ${
+          fallbackMimeType || "default codec"
+        }`
       );
     } catch (fallbackError) {
       console.error(
@@ -562,26 +570,24 @@ class VideoRecordingManager {
   }
 
   getOptimalBitrate(cameraType) {
-    // Dynamic bitrate based on device capabilities and camera type
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isMobile =
       /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent
       );
 
-    // Base bitrates for different scenarios (in bps)
     const baseBitrates = {
       desktop: {
-        front: 2500000, // 2.5 Mbps for front camera (lower motion)
-        back: 3500000, // 3.5 Mbps for back camera (potential document scanning)
+        front: 2000000, // 2.0 Mbps
+        back: 3000000, // 3.0 Mbps
       },
       mobile: {
-        front: 1500000, // 1.5 Mbps for mobile front camera
-        back: 2000000, // 2 Mbps for mobile back camera
+        front: 1000000, // 1.0 Mbps
+        back: 1500000, // 1.5 Mbps
       },
       ios: {
-        front: 2000000, // 2 Mbps for iOS front camera (good quality/efficiency balance)
-        back: 2500000, // 2.5 Mbps for iOS back camera
+        front: 1500000, // 1.5 Mbps for iOS front camera
+        back: 2000000, // 2.0 Mbps for iOS back camera
       },
     };
 
@@ -619,15 +625,18 @@ class VideoRecordingManager {
     console.log("⏹️ Stopping session recording...");
 
     this.mediaRecorders.forEach((recorder) => {
-      if (recorder.state !== "inactive") {
+      if (recorder.state === "recording") {
         recorder.stop();
       }
     });
 
-    // Stop all streams
-    this.streams.forEach((streamInfo) => {
-      streamInfo.stream.getTracks().forEach((track) => track.stop());
-    });
+    // A short delay to ensure ondataavailable is triggered before stopping tracks.
+    setTimeout(() => {
+      this.streams.forEach((streamInfo) => {
+        streamInfo.stream.getTracks().forEach((track) => track.stop());
+      });
+      console.log("🔌 All camera tracks stopped.");
+    }, 500);
 
     return true;
   }
@@ -1979,19 +1988,19 @@ function navigateToPhoto(photoStep) {
 }
 
 function startCameraCapture() {
+  // Prevent camera capture if verification is already in progress
+  if (isVerificationInProgress) {
+    console.log("Verification in progress, ignoring camera capture request");
+    return;
+  }
+
   const currentPhoto = PHOTO_SEQUENCE[currentPhotoStep - 1];
   const cameraArea = document.getElementById("camera-capture-area");
   const video = document.getElementById("capture-video");
   const placeholder = document.getElementById("camera-placeholder");
   const overlay = document.getElementById("camera-overlay");
-  const stepTitle = document.getElementById("camera-step-title");
-  const stepDescription = document.getElementById("camera-step-description");
-
-  // Update camera header
-  stepTitle.textContent = currentPhoto.name;
-  stepDescription.textContent = t(
-    currentPhoto.textKey,
-    `Position your ${currentPhoto.name.toLowerCase()}`
+  const tapInstructionOverlay = document.getElementById(
+    "tap-instruction-overlay"
   );
 
   // Show full-screen camera
@@ -2044,17 +2053,18 @@ function startCameraCapture() {
       placeholder.style.display = "none";
       overlay.style.display = "block";
 
-      // Update button visibility
-      const captureBtn = document.getElementById("capture-photo-btn");
-      captureBtn.classList.remove("hidden");
-      captureBtn.style.display = "flex";
+      // Show tap instruction overlay (static, no auto-hide)
+      if (tapInstructionOverlay) {
+        tapInstructionOverlay.style.display = "block";
+      }
+
+      // Initialize triple-tap functionality instead of showing button
+      initializeTripleTap();
 
       // Debug log
-      console.log("Capture button should be visible now:", {
+      console.log("Triple-tap capture initialized:", {
         photoType: currentPhoto.name,
         guide: currentPhoto.guide,
-        buttonVisible: !captureBtn.classList.contains("hidden"),
-        buttonDisplay: captureBtn.style.display,
         isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
         videoReady: video.readyState >= 2,
       });
@@ -2082,7 +2092,7 @@ function createGuideOverlay(guideType) {
 
   switch (guideType) {
     case "id-guide":
-      overlay.innerHTML = '<div class="id-guide"></div>';
+      // No guide for ID captures - users position freely
       break;
     case "face-guide":
       overlay.innerHTML = '<div class="face-guide"></div>';
@@ -2117,16 +2127,28 @@ function closeCameraCapture() {
   placeholder.style.display = "flex";
   overlay.style.display = "none";
 
-  // Hide capture button
-  const captureBtn = document.getElementById("capture-photo-btn");
-  captureBtn.classList.add("hidden");
-  captureBtn.style.display = "none";
+  // Hide tap instruction overlay
+  const tapInstructionOverlay = document.getElementById(
+    "tap-instruction-overlay"
+  );
+  if (tapInstructionOverlay) {
+    tapInstructionOverlay.style.display = "none";
+  }
+
+  // Remove triple-tap listeners and reset state
+  removeTripleTapListeners();
 
   // Stop camera
   stopCamera();
 }
 
 function captureCurrentPhoto() {
+  // Prevent multiple captures during verification
+  if (isVerificationInProgress) {
+    console.log("Verification in progress, ignoring capture request");
+    return;
+  }
+
   const video = document.getElementById("capture-video");
   const canvas = document.getElementById("capture-canvas");
   const context = canvas.getContext("2d");
@@ -2160,7 +2182,7 @@ function captureCurrentPhoto() {
       // Store as current photo
       capturedPhotos[currentPhoto.id] = file;
 
-      // Close camera
+      // Close camera immediately
       closeCameraCapture();
 
       // Update progress
@@ -2172,16 +2194,137 @@ function captureCurrentPhoto() {
         updateCaptureInstructions();
         updateProgressIndicator();
       } else {
-        // All photos captured, proceed to verification with proper delay
-        console.log("All photos captured, proceeding to verification...");
-        setTimeout(() => {
-          proceedToVerification();
-        }, 1500); // Longer delay to show completion feedback
+        // All photos captured, proceed to verification IMMEDIATELY
+        console.log(
+          "All photos captured, proceeding to verification immediately..."
+        );
+        // Hide the entire capture interface immediately to prevent any interaction
+        const captureSection = document.getElementById(
+          "current-capture-section"
+        );
+        if (captureSection) {
+          captureSection.style.display = "none";
+        }
+        // Proceed to verification without delay
+        proceedToVerification();
       }
     },
     "image/jpeg",
     0.9
   );
+}
+
+// Triple-tap detection functions
+function initializeTripleTap() {
+  const cameraArea = document.getElementById("camera-capture-area");
+  const tapIndicator = document.getElementById("triple-tap-indicator");
+  const tapCountElement = document.getElementById("tap-count");
+
+  if (!cameraArea) return;
+
+  // Remove any existing event listeners
+  removeTripleTapListeners();
+
+  // Create the touch/click handler
+  cameraAreaTouchHandler = function (event) {
+    // Check if the clicked element is the close button or any of its children
+    const closeButton = event.target.closest(".camera-close-arrow");
+    if (closeButton) {
+      console.log("Close button clicked, ignoring for triple-tap");
+      return; // Don't count this as a tap for capture
+    }
+
+    // Prevent default behavior and stop propagation
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Don't capture if verification is in progress
+    if (isVerificationInProgress) {
+      console.log("Verification in progress, ignoring tap");
+      return;
+    }
+
+    // Increment tap count
+    tapCount++;
+    console.log(`Tap detected: ${tapCount}/3`);
+
+    // Update visual indicator
+    if (tapCountElement) {
+      tapCountElement.textContent = tapCount;
+    }
+
+    // Show indicator if hidden
+    if (tapIndicator && tapIndicator.style.display === "none") {
+      tapIndicator.style.display = "block";
+      // Add fade-in animation
+      tapIndicator.style.opacity = "0";
+      setTimeout(() => {
+        tapIndicator.style.transition = "opacity 0.3s ease";
+        tapIndicator.style.opacity = "1";
+      }, 10);
+    }
+
+    // Clear existing timer
+    if (tapTimer) {
+      clearTimeout(tapTimer);
+    }
+
+    // Check if we have 3 taps
+    if (tapCount >= 3) {
+      console.log("Triple tap detected! Capturing photo...");
+      resetTapCounter();
+      captureCurrentPhoto();
+      return;
+    }
+
+    // Set timer to reset tap count
+    tapTimer = setTimeout(() => {
+      resetTapCounter();
+    }, tripleTapTimeout);
+  };
+
+  // Add event listeners for both touch and mouse events
+  cameraArea.addEventListener("touchstart", cameraAreaTouchHandler, {
+    passive: false,
+  });
+  cameraArea.addEventListener("click", cameraAreaTouchHandler);
+
+  console.log("Triple-tap functionality initialized");
+}
+
+function resetTapCounter() {
+  tapCount = 0;
+  if (tapTimer) {
+    clearTimeout(tapTimer);
+    tapTimer = null;
+  }
+
+  // Update visual indicator
+  const tapCountElement = document.getElementById("tap-count");
+  const tapIndicator = document.getElementById("triple-tap-indicator");
+
+  if (tapCountElement) {
+    tapCountElement.textContent = "0";
+  }
+
+  // Hide indicator with fade-out
+  if (tapIndicator && tapIndicator.style.display !== "none") {
+    tapIndicator.style.transition = "opacity 0.3s ease";
+    tapIndicator.style.opacity = "0";
+    setTimeout(() => {
+      tapIndicator.style.display = "none";
+    }, 300);
+  }
+}
+
+function removeTripleTapListeners() {
+  const cameraArea = document.getElementById("camera-capture-area");
+  if (cameraArea && cameraAreaTouchHandler) {
+    cameraArea.removeEventListener("touchstart", cameraAreaTouchHandler);
+    cameraArea.removeEventListener("click", cameraAreaTouchHandler);
+  }
+  cameraAreaTouchHandler = null;
+  resetTapCounter();
 }
 
 function retakePhoto(photoId) {
@@ -2436,7 +2579,7 @@ async function handleVerificationSuccess(result, sessionRecordingData) {
       </div>
       <h3>Identity Verified Successfully!</h3>
       <p>Your identity has been verified. Submitting your application...</p>
-      <div class="verification-details" style="margin-top: 15px; padding: 15px; background: #f0f9ff; border-radius: 8px;">
+      <div class="verification-details" style="margin-top: 15px;">
         <p><strong>Verification Result:</strong> Identity Verified</p>
         <p><strong>Similarity Score:</strong> ${(
           result.similarity || 0
@@ -3135,47 +3278,17 @@ function collectPhotoHistory() {
   return historyData;
 }
 
-// Show final success after submission (enhanced with verification details)
+// Show final success after submission (simplified)
 function showFinalSuccess(verificationResult) {
   const completeContent = document.querySelector(".complete-content");
 
   completeContent.innerHTML = `
-    <div class="verification-result success final">
-      <div class="result-icon">
-            <i class="fas fa-check-circle"></i>
-        </div>
-      <h3 style="text-align: center;">Application Submitted Successfully!</h3>
-      <p style="text-align: center;">Your identity verification has been completed and your application has been submitted.</p>
+    <div class="verification-result success final" style="text-align: center;">
+      <h3 style="text-align: center; margin-top: 50px; font-size: 2rem; color: #28a745;">Application Submitted Successfully!</h3>
       
-      <div class="verification-summary" style="margin-top: 25px; padding: 20px; background: #f8f9fa; border-radius: 12px; text-align: center;">
-        <h4 style="margin-bottom: 15px; color: #28a745;">
-          <i class="fas fa-shield-check"></i> Verification Summary
-        </h4>
-        
-        <div class="summary-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-          <div class="summary-item">
-            <strong>Status:</strong><br>
-            <span style="color: #28a745;">✓ Identity Verified</span>
-          </div>
-          <div class="summary-item">
-            <strong>Match Score:</strong><br>
-            <span style="color: #28a745;">${(
-              verificationResult.similarity || 0
-            ).toFixed(1)}%</span>
-          </div>
-        </div>
-        
-        <div class="timeline-info" style="padding-top: 15px; border-top: 1px solid #dee2e6;">
-          <p style="color: #666; margin: 0;">
-            <i class="fas fa-clock"></i> 
-            <strong>Response Time:</strong> You will receive a response within 15-30 minutes.
-          </p>
-        </div>
-      </div>
-      
-      <div class="final-actions" style="margin-top: 25px; text-align: center;">
+      <div class="final-actions" style="margin-top: 40px; text-align: center;">
         <button type="button" class="back-home-btn" onclick="window.location.href='index.html'" 
-                style="background: #007bff; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px;">
+                style="background: #007bff; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; font-weight: 500;">
           <i class="fas fa-home"></i>
           <span>Return to Home</span>
         </button>

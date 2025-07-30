@@ -596,6 +596,27 @@ body {
   }
 }
 
+/* Android-specific fixes - Hide navbar on Android devices */
+@media screen and (max-width: 768px) {
+  /* Target Android devices by excluding iOS Safari */
+  @supports not (-webkit-touch-callout: none) {
+    .navbar {
+      display: none !important;
+    }
+
+    /* Adjust body padding since navbar is hidden */
+    body {
+      padding-top: 0 !important;
+    }
+
+    /* Ensure verification page takes full height */
+    .verification-page {
+      padding-top: 0 !important;
+      height: 100vh !important;
+    }
+  }
+}
+
 @media (max-width: 480px) {
   .verification-steps {
     padding: 16px 12px;
@@ -921,69 +942,109 @@ body {
   background: #000;
   z-index: 9999;
   display: none;
-  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Android-specific camera fixes */
+@supports not (-webkit-touch-callout: none) {
+  .camera-capture-area {
+    height: 100dvh; /* Use dynamic viewport height on Android */
+  }
+
+  #capture-video {
+    height: 100dvh;
+  }
 }
 
 .camera-capture-area.active {
-  display: flex;
+  display: block;
 }
 
-.camera-header {
+/* Simple arrow close button - positioned with safe area */
+.camera-close-arrow {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10002;
-  background: rgba(0, 0, 0, 0.8);
+  top: max(15px, env(safe-area-inset-top, 0px) + 10px);
+  left: max(15px, env(safe-area-inset-left, 0px) + 10px);
+  z-index: 10003;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 2px solid rgba(255, 255, 255, 0.4);
   color: white;
-  padding: 15px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.camera-step-info h5 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.camera-step-info p {
-  margin: 0;
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-.camera-close-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 5px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  transition: background 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
-.camera-close-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+.camera-close-arrow:hover {
+  background: rgba(0, 0, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+}
+
+.camera-close-arrow:active {
+  transform: scale(0.95);
+  background: rgba(0, 0, 0, 0.95);
+}
+
+/* Tap instruction overlay */
+.tap-instruction-overlay {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top, 0px) + 5px);
+  right: max(10px, env(safe-area-inset-right, 0px) + 5px);
+  z-index: 10003;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 4px 6px;
+  color: white;
+  box-shadow: none;
+}
+
+.tap-instruction-text {
+  display: flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 0 6px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
 }
 
 #capture-video {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   object-fit: cover;
+  z-index: 10000;
+  background-color: #000;
 }
 
 .camera-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   color: white;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 15px;
-  flex: 1;
   justify-content: center;
+  z-index: 10001;
 }
 
 .camera-placeholder i {
@@ -1009,35 +1070,12 @@ body {
   z-index: 10001;
 }
 
-/* ID Card Guide */
-.id-guide {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 520px;
-  height: 340px;
-  border: 4px solid var(--primary-color);
-  border-radius: 20px;
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
-}
+/* ID guides removed - users can position freely */
 
-.id-guide::before {
-  content: "Position ID here";
-  position: absolute;
-  top: -40px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-}
-
-/* Face Guide */
+/* Face Guide - moved even higher */
 .face-guide {
   position: absolute;
-  top: 50%;
+  top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 320px;
@@ -1048,15 +1086,8 @@ body {
 }
 
 .face-guide::before {
-  content: "Position your face here";
-  position: absolute;
-  top: -40px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  content: "";
+  display: none;
 }
 
 /* Face with ID Guide */
@@ -1070,48 +1101,34 @@ body {
 
 .face-area {
   position: absolute;
-  top: 20%;
+  top: 5%;
   left: 50%;
   transform: translateX(-50%);
-  width: 260px;
-  height: 320px;
+  width: 350px;
+  height: 420px;
   border: 3px solid var(--primary-color);
-  border-radius: 130px;
+  border-radius: 175px;
 }
 
 .face-area::before {
-  content: "Your face";
-  position: absolute;
-  top: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: white;
-  font-size: 14px;
-  font-weight: 600;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  content: "";
+  display: none;
 }
 
 .id-area {
   position: absolute;
-  bottom: 15%;
+  bottom: 5%;
   left: 50%;
   transform: translateX(-50%);
-  width: 360px;
-  height: 235px;
+  width: 380px;
+  height: 240px;
   border: 3px solid var(--warning-color, #f59e0b);
   border-radius: 12px;
 }
 
 .id-area::before {
-  content: "Hold ID here";
-  position: absolute;
-  top: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: white;
-  font-size: 14px;
-  font-weight: 600;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  content: "";
+  display: none;
 }
 
 .face-with-id-guide {
@@ -1132,47 +1149,89 @@ body {
   gap: 15px;
 }
 
-/* Photo-specific capture button positioning */
+/* Photo-specific capture button positioning - moved even higher */
 .camera-capture-area.id-capture .capture-photo-btn {
-  bottom: 100px;
+  bottom: 160px;
 }
 
 .camera-capture-area.face-capture .capture-photo-btn {
-  bottom: 60px;
+  bottom: 150px;
 }
 
 .camera-capture-area.face-with-id-capture .capture-photo-btn {
-  bottom: 80px;
+  bottom: 155px;
 }
 
 .capture-photo-btn {
-  background: var(--primary-color);
+  background: rgba(37, 99, 235, 0.25);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   color: white;
-  border: none;
   padding: 15px 30px;
   border-radius: 50px;
   font-size: 18px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4), inset 0 -2px 0 rgba(0, 0, 0, 0.1);
   position: absolute;
-  bottom: 60px;
+  bottom: 140px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10003;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .capture-photo-btn.hidden {
   display: none !important;
 }
 
+/* Triple-tap indicator styles */
+.triple-tap-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 20px;
+  color: white;
+  text-align: center;
+  z-index: 10004;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.tap-count {
+  font-size: 48px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #3b82f6;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.tap-instruction {
+  font-size: 14px;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
 .capture-photo-btn:hover {
-  background: #1d4ed8;
+  background: rgba(29, 78, 216, 0.4);
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
   transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6),
+    inset 0 2px 0 rgba(255, 255, 255, 0.5), inset 0 -2px 0 rgba(0, 0, 0, 0.15),
+    0 0 20px rgba(37, 99, 235, 0.4);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .camera-start-btn,
@@ -2085,16 +2144,7 @@ body {
     bottom: 65px;
   }
 
-  /* Visual guides mobile adjustments */
-  .id-guide {
-    width: 340px;
-    height: 220px;
-  }
-
-  .id-guide::before {
-    font-size: 14px;
-    top: -35px;
-  }
+  /* Visual guides mobile adjustments - ID guides removed */
 
   .face-guide {
     width: 220px;
@@ -2103,29 +2153,28 @@ body {
   }
 
   .face-guide::before {
-    font-size: 14px;
-    top: -35px;
+    display: none;
   }
 
   .face-area {
-    width: 180px;
-    height: 220px;
-    border-radius: 90px;
+    top: 8%;
+    width: 220px;
+    height: 270px;
+    border-radius: 110px;
   }
 
   .face-area::before {
-    font-size: 12px;
-    top: -25px;
+    display: none;
   }
 
   .id-area {
-    width: 250px;
-    height: 150px;
+    bottom: 12%;
+    width: min(70vw, 280px);
+    height: min(20vh, 160px);
   }
 
   .id-area::before {
-    font-size: 12px;
-    top: -25px;
+    display: none;
   }
 
   /* Photo navigation mobile */
@@ -2298,9 +2347,9 @@ body {
   }
 
   .face-area {
-    width: 150px;
-    height: 180px;
-    border-radius: 75px;
+    width: 190px;
+    height: 230px;
+    border-radius: 95px;
     top: 15%;
   }
 
@@ -2450,6 +2499,13 @@ body {
     border-radius: 120px;
   }
 
+  /* Adjust ID area positioning for small screens */
+  .id-area {
+    bottom: 18% !important;
+    width: min(65vw, 260px) !important;
+    height: min(18vh, 140px) !important;
+  }
+
   /* Camera button positioning for small screens */
   .capture-photo-btn {
     bottom: 50px !important;
@@ -2511,41 +2567,49 @@ body {
     bottom: max(80px, env(safe-area-inset-bottom, 0px) + 60px);
   }
 
-  /* Mobile adjustments with safe area */
+  /* Mobile adjustments with safe area - moved even higher with glassmorphism */
   @media (max-width: 768px) {
     .capture-photo-btn {
-      bottom: max(40px, env(safe-area-inset-bottom, 0px) + 20px);
+      bottom: max(110px, env(safe-area-inset-bottom, 0px) + 90px);
+      background: rgba(37, 99, 235, 0.25);
+      backdrop-filter: blur(25px) saturate(180%);
+      -webkit-backdrop-filter: blur(25px) saturate(180%);
+      border: 2px solid rgba(255, 255, 255, 0.3);
     }
 
     .camera-capture-area.id-capture .capture-photo-btn {
-      bottom: max(80px, env(safe-area-inset-bottom, 0px) + 60px);
+      bottom: max(140px, env(safe-area-inset-bottom, 0px) + 120px);
     }
 
     .camera-capture-area.face-capture .capture-photo-btn {
-      bottom: max(50px, env(safe-area-inset-bottom, 0px) + 30px);
+      bottom: max(130px, env(safe-area-inset-bottom, 0px) + 110px);
     }
 
     .camera-capture-area.face-with-id-capture .capture-photo-btn {
-      bottom: max(65px, env(safe-area-inset-bottom, 0px) + 45px);
+      bottom: max(135px, env(safe-area-inset-bottom, 0px) + 115px);
     }
   }
 
-  /* Landscape mode with safe area */
+  /* Landscape mode with safe area - moved even higher with glassmorphism */
   @media (max-width: 768px) and (orientation: landscape) {
     .capture-photo-btn {
-      bottom: max(25px, env(safe-area-inset-bottom, 0px) + 15px);
+      bottom: max(70px, env(safe-area-inset-bottom, 0px) + 60px);
+      background: rgba(37, 99, 235, 0.25);
+      backdrop-filter: blur(25px) saturate(180%);
+      -webkit-backdrop-filter: blur(25px) saturate(180%);
+      border: 2px solid rgba(255, 255, 255, 0.3);
     }
 
     .camera-capture-area.id-capture .capture-photo-btn {
-      bottom: max(45px, env(safe-area-inset-bottom, 0px) + 25px);
+      bottom: max(90px, env(safe-area-inset-bottom, 0px) + 70px);
     }
 
     .camera-capture-area.face-capture .capture-photo-btn {
-      bottom: max(30px, env(safe-area-inset-bottom, 0px) + 20px);
+      bottom: max(80px, env(safe-area-inset-bottom, 0px) + 70px);
     }
 
     .camera-capture-area.face-with-id-capture .capture-photo-btn {
-      bottom: max(40px, env(safe-area-inset-bottom, 0px) + 25px);
+      bottom: max(85px, env(safe-area-inset-bottom, 0px) + 70px);
     }
   }
 }
