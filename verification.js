@@ -260,24 +260,20 @@ class VideoRecordingManager {
       let constraints;
 
       if (isIOS && facingMode === "user") {
-        // Special constraints for iOS front camera to avoid black screen
+        // Keep front camera working exactly as it is (user said it's perfect)
         constraints = {
           video: {
             facingMode: { ideal: "user" }, // Force front camera
-            width: { ideal: 640, max: 1280 },
-            height: { ideal: 480, max: 720 },
-            frameRate: { ideal: 30, max: 30 },
+            // Remove resolution constraints to match what's working
           },
           audio: true,
         };
       } else if (isIOS) {
-        // Regular iOS constraints for back camera
+        // Regular iOS constraints for back camera - use same minimal approach as front camera
         constraints = {
           video: {
             facingMode: facingMode,
-            width: { ideal: 640, max: 1280 },
-            height: { ideal: 480, max: 720 },
-            frameRate: { ideal: 30, max: 30 },
+            // Remove resolution constraints to match working front camera
           },
           audio: true,
         };
@@ -324,27 +320,18 @@ class VideoRecordingManager {
       console.warn(`⚠️ Could not access ${facingMode} camera:`, error);
 
       // iOS fallback with simpler constraints
+      const isAndroid = /Android/i.test(navigator.userAgent);
+
       if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
         try {
           console.log("🔄 Trying iOS fallback constraints...");
 
           let fallbackConstraints;
-          if (facingMode === "user") {
-            // More permissive front camera constraints
-            fallbackConstraints = {
-              video: {
-                facingMode: "user",
-                width: { min: 320, ideal: 640 },
-                height: { min: 240, ideal: 480 },
-              },
-              audio: true,
-            };
-          } else {
-            fallbackConstraints = {
-              video: { facingMode: facingMode },
-              audio: true,
-            };
-          }
+          // Use minimal constraints for all iOS fallback scenarios
+          fallbackConstraints = {
+            video: { facingMode: facingMode },
+            audio: true,
+          };
 
           const fallbackStream = await navigator.mediaDevices.getUserMedia(
             fallbackConstraints
@@ -364,6 +351,34 @@ class VideoRecordingManager {
           return fallbackStream;
         } catch (fallbackError) {
           console.warn("⚠️ iOS fallback also failed:", fallbackError);
+        }
+      } else if (isAndroid) {
+        try {
+          console.log("🔄 Trying Android fallback constraints...");
+
+          const fallbackConstraints = {
+            video: { facingMode: facingMode },
+            audio: true,
+          };
+
+          const fallbackStream = await navigator.mediaDevices.getUserMedia(
+            fallbackConstraints
+          );
+
+          // Log fallback stream details
+          const videoTracks = fallbackStream.getVideoTracks();
+          if (videoTracks.length > 0) {
+            const videoTrack = videoTracks[0];
+            console.log(`🤖 ${facingMode} camera fallback track:`, {
+              label: videoTrack.label,
+              enabled: videoTrack.enabled,
+              readyState: videoTrack.readyState,
+            });
+          }
+
+          return fallbackStream;
+        } catch (fallbackError) {
+          console.warn("⚠️ Android fallback also failed:", fallbackError);
         }
       }
 
@@ -1112,6 +1127,8 @@ function handleIOSCameraDisplay() {
       .camera-capture-area video {
         object-fit: cover !important;
         -webkit-object-fit: cover !important;
+        width: 100vw !important;
+        height: 100vh !important;
       }
     `;
     document.head.appendChild(style);
@@ -1998,11 +2015,18 @@ function startCameraCapture() {
 
   // For iOS devices, add small delay to ensure proper cleanup between captures
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isAndroid = /Android/i.test(navigator.userAgent);
+
   if (isIOS) {
     console.log("📱 iOS device: Adding initialization delay");
     setTimeout(() => {
       initializeCameraCapture();
     }, 300); // 300ms delay for iOS
+  } else if (isAndroid) {
+    console.log("🤖 Android device: Adding initialization delay");
+    setTimeout(() => {
+      initializeCameraCapture();
+    }, 200); // 200ms delay for Android to allow camera cleanup
   } else {
     initializeCameraCapture();
   }
@@ -2052,17 +2076,14 @@ function initializeCameraCapture() {
   let videoConstraints;
 
   if (isIOS && currentPhoto.guide === "id-guide") {
-    // Use more conservative constraints for iOS ID capture to prevent zoom/rotation issues
+    // Use same minimal constraints as front camera that works perfectly
     videoConstraints = {
-      facingMode: { exact: currentPhoto.camera },
-      width: { ideal: 1920, max: 1920 },
-      height: { ideal: 1080, max: 1080 },
-      aspectRatio: { ideal: 16 / 9 },
-      // Remove resizeMode as it causes zoom issues
+      facingMode: currentPhoto.camera,
+      // Remove all resolution constraints - let iOS choose naturally like front camera
     };
 
     console.log(
-      `📱 Using iOS ID-optimized constraints for ${currentPhoto.name}`
+      `📱 Using same minimal constraints as front camera for ${currentPhoto.name} - no zoom`
     );
   } else if (isIOS) {
     // Standard iOS constraints for face capture
@@ -2073,12 +2094,24 @@ function initializeCameraCapture() {
       aspectRatio: { ideal: 16 / 9 },
     };
   } else {
-    // Standard Android/desktop constraints
-    videoConstraints = {
-      facingMode: currentPhoto.camera,
-      width: { ideal: 1920 },
-      height: { ideal: 1080 },
-    };
+    // Standard Android/desktop constraints - use more conservative settings for initial attempt
+    const isAndroid = /Android/i.test(navigator.userAgent);
+
+    if (isAndroid) {
+      // More conservative Android constraints to improve first-attempt success
+      videoConstraints = {
+        facingMode: currentPhoto.camera,
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      };
+    } else {
+      // Desktop constraints
+      videoConstraints = {
+        facingMode: currentPhoto.camera,
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+      };
+    }
   }
 
   const constraints = {
@@ -2088,7 +2121,8 @@ function initializeCameraCapture() {
   console.log(
     `📱 Starting camera capture for ${currentPhoto.name} on ${
       isIOS ? "iOS" : "other"
-    } device`
+    } device with constraints:`,
+    constraints
   );
 
   navigator.mediaDevices
@@ -2105,7 +2139,30 @@ function initializeCameraCapture() {
         // Apply basic iOS setup without rotation artifacts
         video.style.webkitTransform = "translateZ(0)";
         video.style.transform = "translateZ(0)";
-        console.log("📱 Applied iOS ID capture fix without rotation");
+
+        // Ensure proper sizing for full viewport coverage
+        video.style.width = "100vw";
+        video.style.height = "100vh";
+        video.style.objectFit = "cover";
+        video.style.objectPosition = "center";
+
+        // Apply iOS orientation fix class for additional CSS fixes
+        video.classList.add("ios-orientation-fixed");
+
+        console.log(
+          "📱 Applied iOS ID capture fix without rotation for",
+          currentPhoto.name
+        );
+
+        // Log actual video track settings for debugging
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack && videoTrack.getSettings) {
+          const settings = videoTrack.getSettings();
+          console.log("📱 Actual video track settings:", settings);
+          console.log(
+            `📱 Resolution: ${settings.width}x${settings.height}, FacingMode: ${settings.facingMode}`
+          );
+        }
       }
 
       video.style.display = "block";
@@ -2137,13 +2194,126 @@ function initializeCameraCapture() {
     })
     .catch(function (error) {
       console.error("Error accessing camera:", error);
-      alert(
-        t(
-          "verification.validation.camera_error",
-          "Cannot access camera. Please check camera permissions."
-        )
-      );
-      closeCameraCapture();
+
+      // Try fallback constraints for iOS ID capture (similar to video recording fallback)
+      const isAndroid = /Android/i.test(navigator.userAgent);
+
+      if (isIOS && currentPhoto.guide === "id-guide") {
+        console.log("🔄 Trying iOS ID capture fallback constraints...");
+
+        const fallbackConstraints = {
+          video: {
+            facingMode: currentPhoto.camera,
+            // Use same minimal constraints as working front camera
+          },
+        };
+
+        navigator.mediaDevices
+          .getUserMedia(fallbackConstraints)
+          .then(function (stream) {
+            console.log("✅ iOS ID capture fallback successful");
+            currentStream = stream;
+            video.srcObject = stream;
+            setupVideoElementForIOS(video);
+
+            // Apply iOS-specific fixes
+            video.style.webkitTransform = "translateZ(0)";
+            video.style.transform = "translateZ(0)";
+
+            // Apply iOS orientation fix class for additional CSS fixes
+            video.classList.add("ios-orientation-fixed");
+
+            // Log fallback success
+            const videoTrack = stream.getVideoTracks()[0];
+            if (videoTrack && videoTrack.getSettings) {
+              const settings = videoTrack.getSettings();
+              console.log("📱 Fallback video track settings:", settings);
+            }
+
+            video.style.display = "block";
+            placeholder.style.display = "none";
+            overlay.style.display = "block";
+
+            if (tapInstructionOverlay) {
+              tapInstructionOverlay.style.display = "block";
+            }
+
+            initializeTripleTap();
+            playVideoSafely(video);
+          })
+          .catch(function (fallbackError) {
+            console.error(
+              "❌ iOS ID capture fallback also failed:",
+              fallbackError
+            );
+            alert(
+              t(
+                "verification.validation.camera_error",
+                "Cannot access camera. Please check camera permissions."
+              )
+            );
+            closeCameraCapture();
+          });
+      } else if (isAndroid) {
+        console.log("🔄 Trying Android camera fallback constraints...");
+
+        const fallbackConstraints = {
+          video: {
+            facingMode: currentPhoto.camera,
+            // Minimal constraints for Android fallback
+          },
+        };
+
+        navigator.mediaDevices
+          .getUserMedia(fallbackConstraints)
+          .then(function (stream) {
+            console.log("✅ Android camera fallback successful");
+            currentStream = stream;
+            video.srcObject = stream;
+
+            // Log fallback success
+            const videoTrack = stream.getVideoTracks()[0];
+            if (videoTrack && videoTrack.getSettings) {
+              const settings = videoTrack.getSettings();
+              console.log(
+                "🤖 Android fallback video track settings:",
+                settings
+              );
+            }
+
+            video.style.display = "block";
+            placeholder.style.display = "none";
+            overlay.style.display = "block";
+
+            if (tapInstructionOverlay) {
+              tapInstructionOverlay.style.display = "block";
+            }
+
+            initializeTripleTap();
+            playVideoSafely(video);
+          })
+          .catch(function (fallbackError) {
+            console.error(
+              "❌ Android camera fallback also failed:",
+              fallbackError
+            );
+            alert(
+              t(
+                "verification.validation.camera_error",
+                "Cannot access camera. Please check camera permissions."
+              )
+            );
+            closeCameraCapture();
+          });
+      } else {
+        alert(
+          t(
+            "verification.validation.camera_error",
+            "Cannot access camera. Please check camera permissions."
+          )
+        );
+        closeCameraCapture();
+      }
     });
 }
 
@@ -3489,7 +3659,7 @@ function applyIOSOrientationFix(video) {
   video.style.webkitTransform = baseTransform;
   video.style.transform = baseTransform;
 
-  // Different object-fit handling for better consistency
+  // Use cover with high resolution constraints to fill screen without zoom artifacts
   video.style.objectFit = "cover";
   video.style.objectPosition = "center";
 

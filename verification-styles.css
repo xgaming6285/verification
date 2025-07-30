@@ -1042,7 +1042,7 @@ body {
   transform-style: preserve-3d;
   /* Improve video rendering on iOS */
   will-change: transform;
-  /* Prevent iOS zoom issues */
+  /* Prevent iOS zoom issues by using cover with high resolution constraints */
   object-fit: cover !important;
   object-position: center !important;
 }
