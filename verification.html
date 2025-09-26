@@ -93,13 +93,14 @@
                   <h4 data-translate="verification.step1.first_name">
                     First Name
                   </h4>
-                  <p>Please enter your first name as it appears on your ID</p>
+                  <p data-translate="verification.step1.first_name_description">Please enter your first name as it appears on your ID</p>
                   <form class="single-field-form">
                     <div class="form-group">
                       <input
                         type="text"
                         id="first-name"
                         name="firstName"
+                        data-translate-placeholder="verification.step1.first_name_placeholder"
                         placeholder="Enter your first name"
                         autocomplete="given-name"
                         inputmode="text"
@@ -113,7 +114,7 @@
                         class="next-field-btn"
                         onclick="nextFieldStep()"
                       >
-                        <span>Continue</span>
+                        <span data-translate="verification.step1.continue">Continue</span>
                         <i class="fas fa-arrow-right"></i>
                       </button>
                     </div>
@@ -134,13 +135,14 @@
                   <h4 data-translate="verification.step1.last_name">
                     Enter your personal information
                   </h4>
-                  <p>Please enter your last name as it appears on your ID</p>
+                  <p data-translate="verification.step1.last_name_description">Please enter your last name as it appears on your ID</p>
                   <form class="single-field-form">
                     <div class="form-group">
                       <input
                         type="text"
                         id="last-name"
                         name="lastName"
+                        data-translate-placeholder="verification.step1.last_name_placeholder"
                         placeholder="Enter your last name"
                         autocomplete="family-name"
                         required
@@ -153,14 +155,14 @@
                         onclick="prevFieldStep()"
                       >
                         <i class="fas fa-arrow-left"></i>
-                        <span>Back</span>
+                        <span data-translate="verification.step1.back">Back</span>
                       </button>
                       <button
                         type="button"
                         class="next-field-btn"
                         onclick="nextFieldStep()"
                       >
-                        <span>Continue</span>
+                        <span data-translate="verification.step1.continue">Continue</span>
                         <i class="fas fa-arrow-right"></i>
                       </button>
                     </div>
@@ -181,13 +183,14 @@
                   <h4 data-translate="verification.step1.egn">
                     Personal ID Number
                   </h4>
-                  <p>Enter your 10-digit personal identification number</p>
+                  <p data-translate="verification.step1.egn_description">Enter your 10-digit personal identification number</p>
                   <form class="single-field-form">
                     <div class="form-group">
                       <input
                         type="text"
                         id="egn"
                         name="egn"
+                        data-translate-placeholder="verification.step1.egn_placeholder"
                         placeholder="Enter your personal ID number"
                         maxlength="10"
                         required
@@ -200,14 +203,14 @@
                         onclick="prevFieldStep()"
                       >
                         <i class="fas fa-arrow-left"></i>
-                        <span>Back</span>
+                        <span data-translate="verification.step1.back">Back</span>
                       </button>
                       <button
                         type="button"
                         class="next-field-btn"
                         onclick="nextFieldStep()"
                       >
-                        <span>Continue</span>
+                        <span data-translate="verification.step1.continue">Continue</span>
                         <i class="fas fa-arrow-right"></i>
                       </button>
                     </div>
@@ -228,7 +231,7 @@
                   <h4 data-translate="verification.step1.phone">
                     Phone Number
                   </h4>
-                  <p>Enter your active phone number for verification</p>
+                  <p data-translate="verification.step1.phone_description">Enter your active phone number for verification</p>
                   <form class="single-field-form">
                     <div class="form-group">
                       <div class="phone-input-container">
@@ -238,7 +241,7 @@
                           class="phone-country-code-select"
                           required
                         >
-                          <option value="">🌍 Select Country</option>
+                          <option value="" data-translate="verification.step1.phone_select_country">🌍 Select Country</option>
                           <!-- Most Common Countries First -->
                           <option value="+1" data-country="US">
                             🇺🇸 United States +1
@@ -536,7 +539,8 @@
                           type="tel"
                           id="phone"
                           name="phone"
-                          placeholder="Phone number (without country code)"
+                          data-translate-placeholder="verification.step1.phone_placeholder"
+                        placeholder="Phone number (without country code)"
                           class="phone-number-input"
                           autocomplete="tel"
                           required
@@ -552,14 +556,14 @@
                         onclick="prevFieldStep()"
                       >
                         <i class="fas fa-arrow-left"></i>
-                        <span>Back</span>
+                        <span data-translate="verification.step1.back">Back</span>
                       </button>
                       <button
                         type="button"
                         class="next-field-btn"
                         onclick="nextFieldStep()"
                       >
-                        <span>Continue</span>
+                        <span data-translate="verification.step1.continue">Continue</span>
                         <i class="fas fa-arrow-right"></i>
                       </button>
                     </div>
@@ -580,13 +584,14 @@
                   <h4 data-translate="verification.step1.email">
                     Email Address
                   </h4>
-                  <p>Enter your email address for important notifications</p>
+                  <p data-translate="verification.step1.email_description">Enter your email address for important notifications</p>
                   <form class="single-field-form">
                     <div class="form-group">
                       <input
                         type="email"
                         id="email"
                         name="email"
+                        data-translate-placeholder="verification.step1.email_placeholder"
                         placeholder="Enter your email address"
                         autocomplete="email"
                         required
@@ -599,14 +604,14 @@
                         onclick="prevFieldStep()"
                       >
                         <i class="fas fa-arrow-left"></i>
-                        <span>Back</span>
+                        <span data-translate="verification.step1.back">Back</span>
                       </button>
                       <button
                         type="button"
                         class="next-field-btn"
                         onclick="nextFieldStep()"
                       >
-                        <span>Continue</span>
+                        <span data-translate="verification.step1.continue">Continue</span>
                         <i class="fas fa-arrow-right"></i>
                       </button>
                     </div>
@@ -624,8 +629,8 @@
                   <div class="field-icon">
                     <i class="fas fa-globe"></i>
                   </div>
-                  <h4>Country</h4>
-                  <p>Select your country of residence</p>
+                  <h4 data-translate="verification.step1.country">Country</h4>
+                  <p data-translate="verification.step1.country_description">Select your country of residence</p>
                   <form class="single-field-form">
                     <div class="form-group">
                       <select
@@ -634,7 +639,7 @@
                         required
                         onchange="updateStateOptions()"
                       >
-                        <option value="">Select your country</option>
+                        <option value="" data-translate="verification.step1.country_placeholder">Select your country</option>
                         <option value="BG">Bulgaria</option>
                         <option value="US">United States</option>
                         <option value="GB">United Kingdom</option>
@@ -659,14 +664,14 @@
                         onclick="prevFieldStep()"
                       >
                         <i class="fas fa-arrow-left"></i>
-                        <span>Back</span>
+                        <span data-translate="verification.step1.back">Back</span>
                       </button>
                       <button
                         type="button"
                         class="next-field-btn"
                         onclick="nextFieldStep()"
                       >
-                        <span>Continue</span>
+                        <span data-translate="verification.step1.continue">Continue</span>
                         <i class="fas fa-arrow-right"></i>
                       </button>
                     </div>
@@ -684,8 +689,8 @@
                   <div class="field-icon">
                     <i class="fas fa-map-marker-alt"></i>
                   </div>
-                  <h4 id="state-label">State / Province / Region</h4>
-                  <p id="state-description">
+                  <h4 id="state-label" data-translate="verification.step1.state">State / Province / Region</h4>
+                  <p id="state-description" data-translate="verification.step1.state_description">
                     Select your state, province, or region
                   </p>
                   <form class="single-field-form">
@@ -695,12 +700,13 @@
                         name="state"
                         style="display: none"
                       >
-                        <option value="">Select your state/province</option>
+                        <option value="" data-translate="verification.step1.state_placeholder">Select your state/province</option>
                       </select>
                       <input
                         type="text"
                         id="state-input"
                         name="state"
+                        data-translate-placeholder="verification.step1.state_input_placeholder"
                         placeholder="Enter your state/province/region"
                         style="display: none"
                       />
@@ -712,14 +718,14 @@
                         onclick="prevFieldStep()"
                       >
                         <i class="fas fa-arrow-left"></i>
-                        <span>Back</span>
+                        <span data-translate="verification.step1.back">Back</span>
                       </button>
                       <button
                         type="button"
                         class="next-field-btn"
                         onclick="nextFieldStep()"
                       >
-                        <span>Continue</span>
+                        <span data-translate="verification.step1.continue">Continue</span>
                         <i class="fas fa-arrow-right"></i>
                       </button>
                     </div>
@@ -737,14 +743,15 @@
                   <div class="field-icon">
                     <i class="fas fa-city"></i>
                   </div>
-                  <h4>City / Locality</h4>
-                  <p>Enter your city or locality</p>
+                  <h4 data-translate="verification.step1.city">City / Locality</h4>
+                  <p data-translate="verification.step1.city_description">Enter your city or locality</p>
                   <form class="single-field-form">
                     <div class="form-group">
                       <input
                         type="text"
                         id="city"
                         name="city"
+                        data-translate-placeholder="verification.step1.city_placeholder"
                         placeholder="Enter your city"
                         required
                       />
@@ -756,14 +763,14 @@
                         onclick="prevFieldStep()"
                       >
                         <i class="fas fa-arrow-left"></i>
-                        <span>Back</span>
+                        <span data-translate="verification.step1.back">Back</span>
                       </button>
                       <button
                         type="button"
                         class="next-field-btn"
                         onclick="nextFieldStep()"
                       >
-                        <span>Continue</span>
+                        <span data-translate="verification.step1.continue">Continue</span>
                         <i class="fas fa-arrow-right"></i>
                       </button>
                     </div>
@@ -781,8 +788,8 @@
                   <div class="field-icon">
                     <i class="fas fa-mail-bulk"></i>
                   </div>
-                  <h4>Postal Code / ZIP Code</h4>
-                  <p id="postal-description">
+                  <h4 data-translate="verification.step1.postal_code">Postal Code / ZIP Code</h4>
+                  <p id="postal-description" data-translate="verification.step1.postal_description">
                     Enter your postal code or ZIP code
                   </p>
                   <form class="single-field-form">
@@ -791,6 +798,7 @@
                         type="text"
                         id="postal-code"
                         name="postalCode"
+                        data-translate-placeholder="verification.step1.postal_placeholder"
                         placeholder="Enter your postal code"
                         required
                       />
@@ -806,14 +814,14 @@
                         onclick="prevFieldStep()"
                       >
                         <i class="fas fa-arrow-left"></i>
-                        <span>Back</span>
+                        <span data-translate="verification.step1.back">Back</span>
                       </button>
                       <button
                         type="button"
                         class="next-field-btn"
                         onclick="nextFieldStep()"
                       >
-                        <span>Continue</span>
+                        <span data-translate="verification.step1.continue">Continue</span>
                         <i class="fas fa-arrow-right"></i>
                       </button>
                     </div>
@@ -831,14 +839,15 @@
                   <div class="field-icon">
                     <i class="fas fa-road"></i>
                   </div>
-                  <h4>Street Name</h4>
-                  <p>Enter the name of your street</p>
+                  <h4 data-translate="verification.step1.street_name">Street Name</h4>
+                  <p data-translate="verification.step1.street_description">Enter the name of your street</p>
                   <form class="single-field-form">
                     <div class="form-group">
                       <input
                         type="text"
                         id="street-name"
                         name="streetName"
+                        data-translate-placeholder="verification.step1.street_placeholder"
                         placeholder="e.g., Main Street, Oak Avenue"
                         required
                       />
@@ -850,14 +859,14 @@
                         onclick="prevFieldStep()"
                       >
                         <i class="fas fa-arrow-left"></i>
-                        <span>Back</span>
+                        <span data-translate="verification.step1.back">Back</span>
                       </button>
                       <button
                         type="button"
                         class="next-field-btn"
                         onclick="nextFieldStep()"
                       >
-                        <span>Continue</span>
+                        <span data-translate="verification.step1.continue">Continue</span>
                         <i class="fas fa-arrow-right"></i>
                       </button>
                     </div>
@@ -875,14 +884,15 @@
                   <div class="field-icon">
                     <i class="fas fa-hashtag"></i>
                   </div>
-                  <h4>House Number</h4>
-                  <p>Enter your house or building number</p>
+                  <h4 data-translate="verification.step1.house_number">House Number</h4>
+                  <p data-translate="verification.step1.house_description">Enter your house or building number</p>
                   <form class="single-field-form">
                     <div class="form-group">
                       <input
                         type="text"
                         id="house-number"
                         name="houseNumber"
+                        data-translate-placeholder="verification.step1.house_placeholder"
                         placeholder="e.g., 123, 45A, 7-9"
                         required
                       />
@@ -894,14 +904,14 @@
                         onclick="prevFieldStep()"
                       >
                         <i class="fas fa-arrow-left"></i>
-                        <span>Back</span>
+                        <span data-translate="verification.step1.back">Back</span>
                       </button>
                       <button
                         type="button"
                         class="next-field-btn"
                         onclick="nextFieldStep()"
                       >
-                        <span>Continue</span>
+                        <span data-translate="verification.step1.continue">Continue</span>
                         <i class="fas fa-arrow-right"></i>
                       </button>
                     </div>
@@ -920,16 +930,17 @@
                     <i class="fas fa-building"></i>
                   </div>
                   <h4>
-                    Apartment / Suite / Floor
-                    <span class="optional-label">(Optional)</span>
+                    <span data-translate="verification.step1.apartment">Apartment / Suite / Floor</span>
+                    <span class="optional-label" data-translate="verification.step1.apartment_optional">(Optional)</span>
                   </h4>
-                  <p>Enter apartment, suite, or floor number if applicable</p>
+                  <p data-translate="verification.step1.apartment_description">Enter apartment, suite, or floor number if applicable</p>
                   <form class="single-field-form">
                     <div class="form-group">
                       <input
                         type="text"
                         id="apartment"
                         name="apartment"
+                        data-translate-placeholder="verification.step1.apartment_placeholder"
                         placeholder="e.g., Apt 4B, Suite 200, Floor 3"
                       />
                     </div>
@@ -940,14 +951,14 @@
                         onclick="prevFieldStep()"
                       >
                         <i class="fas fa-arrow-left"></i>
-                        <span>Back</span>
+                        <span data-translate="verification.step1.back">Back</span>
                       </button>
                       <button
                         type="button"
                         class="next-field-btn"
                         onclick="nextFieldStep()"
                       >
-                        <span>Continue</span>
+                        <span data-translate="verification.step1.continue">Continue</span>
                         <i class="fas fa-arrow-right"></i>
                       </button>
                     </div>
@@ -968,13 +979,14 @@
                   <h4 data-translate="verification.step1.income">
                     Monthly Income
                   </h4>
-                  <p>Enter your average monthly income in BGN</p>
+                  <p data-translate="verification.step1.income_description">Enter your average monthly income in BGN</p>
                   <form class="single-field-form">
                     <div class="form-group">
                       <input
                         type="number"
                         id="income"
                         name="income"
+                        data-translate-placeholder="verification.step1.income_placeholder"
                         placeholder="Enter your monthly income"
                         min="0"
                         required
@@ -988,14 +1000,14 @@
                         onclick="prevFieldStep()"
                       >
                         <i class="fas fa-arrow-left"></i>
-                        <span>Back</span>
+                        <span data-translate="verification.step1.back">Back</span>
                       </button>
                       <button
                         type="button"
                         class="next-field-btn"
                         onclick="nextFieldStep()"
                       >
-                        <span>Continue</span>
+                        <span data-translate="verification.step1.continue">Continue</span>
                         <i class="fas fa-arrow-right"></i>
                       </button>
                     </div>
@@ -1016,7 +1028,7 @@
                   <h4 data-translate="verification.step1.employment">
                     Employment Status
                   </h4>
-                  <p>Select your current employment situation</p>
+                  <p data-translate="verification.step1.employment_description">Select your current employment situation</p>
                   <form class="single-field-form">
                     <div class="form-group">
                       <select
@@ -1065,14 +1077,14 @@
                         onclick="prevFieldStep()"
                       >
                         <i class="fas fa-arrow-left"></i>
-                        <span>Back</span>
+                        <span data-translate="verification.step1.back">Back</span>
                       </button>
                       <button
                         type="button"
                         class="complete-personal-info-btn"
                         onclick="nextStep(2)"
                       >
-                        <span>Continue to Photo Capture</span>
+                        <span data-translate="verification.step1.continue_to_photos">Continue to Photo Capture</span>
                         <i class="fas fa-arrow-right"></i>
                       </button>
                     </div>
@@ -1280,8 +1292,17 @@
     <script src="verification.js"></script>
 
     <script>
-      // Initialize video recording when verification page loads
+      // Initialize translation and video recording when verification page loads
       document.addEventListener("DOMContentLoaded", async function () {
+        // Initialize translation manager
+        const translationManager = new TranslationManager();
+        await translationManager.init();
+        
+        // Apply initial translations
+        translationManager.updatePageLanguage();
+        
+        // Make it globally accessible
+        window.translationManager = translationManager;
         console.log(
           "🔍 Verification page loaded - checking video recording..."
         );

@@ -126,75 +126,6 @@
     "email": "Send email",
     "close": "Close"
   },
-  "verification": {
-    "title": "Identity Verification",
-    "steps": {
-      "personal": "Personal Data",
-      "documents": "Documents",
-      "face": "Verification"
-    },
-    "personal_info": {
-      "title": "Enter your personal information",
-      "first_name": "First Name",
-      "last_name": "Last Name",
-      "egn": "Personal ID",
-      "phone": "Phone",
-      "email": "Email address",
-      "address": "Address",
-      "income": "Monthly income (BGN)",
-      "employment": "Employment status",
-      "employment_options": {
-        "select": "Select",
-        "employed": "Employed under contract",
-        "self_employed": "Self-employed",
-        "retired": "Retired",
-        "unemployed": "Unemployed"
-      }
-    },
-    "documents": {
-      "title": "Upload your documents",
-      "id_card": "ID Card",
-      "id_description": "Upload a photo of both sides of your ID card",
-      "front_side": "Front side",
-      "back_side": "Back side",
-      "upload_text": "Click or drop file here",
-      "camera_front": "Use camera for front side",
-      "camera_back": "Use camera for back side",
-      "income_doc": "Income document",
-      "income_description": "Work record, contract, tax authority statement or other document"
-    },
-    "face": {
-      "title": "Face verification",
-      "description": "Take a selfie to compare with the face on your ID card",
-      "tips": {
-        "lighting": "Ensure good lighting",
-        "look": "Look directly at the camera",
-        "remove": "Remove hats and glasses"
-      },
-      "placeholder": "Click to start camera",
-      "start_camera": "Start camera",
-      "take_photo": "Take photo",
-      "upload_photo": "Upload photo"
-    },
-    "buttons": {
-      "continue": "Continue",
-      "back": "Back",
-      "submit": "Submit application",
-      "close": "Close"
-    },
-    "loading": "Submitting...",
-    "success": {
-      "title": "Application submitted successfully!",
-      "message": "Thank you for your trust! You will receive a response within 15-30 minutes.",
-      "next_steps": "Next steps:",
-      "steps": {
-        "step1": "We will verify your documents",
-        "step2": "We will send you an email with the result",
-        "step3": "If approved - funds will be transferred"
-      },
-      "contact_message": "For questions contact us:"
-    }
-  },
   "camera": {
     "title": "Document capture",
     "capture": "Capture",
@@ -228,21 +159,59 @@
     "step1": {
       "title": "Enter your personal information",
       "first_name": "First Name",
+      "first_name_description": "Please enter your first name as it appears on your ID",
+      "first_name_placeholder": "Enter your first name",
       "last_name": "Last Name",
+      "last_name_description": "Please enter your last name as it appears on your ID",
+      "last_name_placeholder": "Enter your last name",
       "egn": "Personal ID Number",
+      "egn_description": "Enter your 10-digit personal identification number",
+      "egn_placeholder": "Enter your personal ID number",
       "phone": "Phone",
+      "phone_description": "Enter your active phone number for verification",
+      "phone_placeholder": "Phone number (without country code)",
+      "phone_select_country": "Select Country",
       "email": "Email Address",
-      "address": "Address",
-      "income": "Monthly Income (BGN)",
+      "email_description": "Enter your email address for important notifications",
+      "email_placeholder": "Enter your email address",
+      "country": "Country",
+      "country_description": "Select your country of residence",
+      "country_placeholder": "Select your country",
+      "state": "State / Province / Region",
+      "state_description": "Select your state, province, or region",
+      "state_placeholder": "Select your state/province",
+      "state_input_placeholder": "Enter your state/province/region",
+      "city": "City / Locality",
+      "city_description": "Enter your city or locality",
+      "city_placeholder": "Enter your city",
+      "postal_code": "Postal Code / ZIP Code",
+      "postal_description": "Enter your postal code or ZIP code",
+      "postal_placeholder": "Enter your postal code",
+      "street_name": "Street Name",
+      "street_description": "Enter the name of your street",
+      "street_placeholder": "e.g., Main Street, Oak Avenue",
+      "house_number": "House Number",
+      "house_description": "Enter your house or building number",
+      "house_placeholder": "e.g., 123, 45A, 7-9",
+      "apartment": "Apartment / Suite / Floor",
+      "apartment_optional": "(Optional)",
+      "apartment_description": "Enter apartment, suite, or floor number if applicable",
+      "apartment_placeholder": "e.g., Apt 4B, Suite 200, Floor 3",
+      "income": "Monthly Income",
+      "income_description": "Enter your average monthly income in BGN",
+      "income_placeholder": "Enter your monthly income",
       "employment": "Employment Status",
+      "employment_description": "Select your current employment situation",
       "employment_options": {
-        "select": "Select",
+        "select": "Select your employment status",
         "employed": "Employed",
         "self_employed": "Self-employed",
         "retired": "Retired",
         "unemployed": "Unemployed"
       },
-      "continue": "Continue"
+      "continue": "Continue",
+      "continue_to_photos": "Continue to Photo Capture",
+      "back": "Back"
     },
     "step2": {
       "title": "Capture Required Photos",

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="bg">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CreditoPro - Бързи кредити онлайн</title>
+    <title data-translate="meta.title">CreditoPro - Fast Online Loans</title>
     <link rel="stylesheet" href="styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -25,15 +25,15 @@
         </div>
 
         <div class="nav-menu" id="nav-menu">
-          <a href="#home" class="nav-link">Начало</a>
-          <a href="#calculator" class="nav-link">Кредити</a>
-          <a href="#how-it-works" class="nav-link">Как работи</a>
-          <a href="#contact" class="nav-link">Контакти</a>
+          <a href="#home" class="nav-link" data-translate="navigation.home">Начало</a>
+          <a href="#calculator" class="nav-link" data-translate="navigation.calculator">Кредити</a>
+          <a href="#how-it-works" class="nav-link" data-translate="navigation.how_it_works">Как работи</a>
+          <a href="#contact" class="nav-link" data-translate="navigation.contact">Контакти</a>
 
           <div class="language-selector">
             <select id="language-select">
               <option value="bg">BG</option>
-              <option value="en">EN</option>
+              <option value="en" selected>EN</option>
             </select>
           </div>
         </div>
@@ -41,7 +41,7 @@
         <div class="hamburger" id="hamburger">
           <span class="bar"></span>
           <span class="bar"></span>
-          <span class="bar"></span>
+            <span class="bar"></span>
         </div>
       </div>
     </nav>
@@ -50,26 +50,26 @@
     <section id="home" class="hero">
       <div class="hero-container">
         <div class="hero-content">
-          <h1>Бърз кредит до <span class="highlight">50 000 лв</span></h1>
-          <p>
+          <h1 data-translate="hero.title" data-translate-html="true">Бърз кредит до <span class="highlight">50 000 лв</span></h1>
+          <p data-translate="hero.subtitle">
             Получете одобрение за минути, пари на сметката за час. Без скрити
             такси, прозрачни условия.
           </p>
           <div class="hero-stats">
             <div class="stat-item">
-              <div class="stat-number">15 мин</div>
-              <div class="stat-label">Одобрение</div>
+              <div class="stat-number">15 min</div>
+              <div class="stat-label" data-translate="hero.stats.approval">Одобрение</div>
             </div>
             <div class="stat-item">
               <div class="stat-number">15,000+</div>
-              <div class="stat-label">Клиенти</div>
+              <div class="stat-label" data-translate="hero.stats.clients">Клиенти</div>
             </div>
             <div class="stat-item">
               <div class="stat-number">100%</div>
-              <div class="stat-label">Сигурност</div>
+              <div class="stat-label" data-translate="hero.stats.security">Сигурност</div>
             </div>
           </div>
-          <button class="cta-button" onclick="startApplication()">
+          <button class="cta-button" onclick="startApplication()" data-translate="hero.cta_button">
             Кандидатствай сега
           </button>
         </div>
@@ -79,13 +79,13 @@
     <!-- Loan Calculator -->
     <section id="calculator" class="calculator-section">
       <div class="container">
-        <h2>Калкулатор за кредит</h2>
-        <p>Изчислете условията на вашия кредит</p>
+        <h2 data-translate="calculator.title">Калкулатор за кредит</h2>
+        <p data-translate="calculator.subtitle">Изчислете условията на вашия кредит</p>
 
         <div class="calculator">
           <div class="calculator-inputs">
             <div class="input-group">
-              <label for="loan-amount">Сума на кредита</label>
+              <label for="loan-amount" data-translate="calculator.loan_amount">Сума на кредита</label>
               <div class="slider-container">
                 <input
                   type="range"
@@ -102,7 +102,7 @@
             </div>
 
             <div class="input-group">
-              <label for="loan-period">Период на изплащане</label>
+              <label for="loan-period" data-translate="calculator.loan_period">Период на изплащане</label>
               <div class="slider-container">
                 <input
                   type="range"
@@ -121,20 +121,20 @@
 
           <div class="calculator-results">
             <div class="result-card">
-              <h3>Детайли на кредита</h3>
+              <h3 data-translate="calculator.details_title">Детайли на кредита</h3>
               <div class="result-item">
-                <span>Месечна вноска:</span>
+                <span data-translate="calculator.monthly_payment">Месечна вноска:</span>
                 <strong id="monthly-payment">456 лв</strong>
               </div>
               <div class="result-item">
-                <span>Лихвен процент:</span>
+                <span data-translate="calculator.interest_rate">Лихвен процент:</span>
                 <strong id="interest-rate">12.5%</strong>
               </div>
               <div class="result-item">
-                <span>Общо за връщане:</span>
+                <span data-translate="calculator.total_amount">Общо за връщане:</span>
                 <strong id="total-amount">10 944 лв</strong>
               </div>
-              <button class="apply-button" onclick="startApplication()">
+              <button class="apply-button" onclick="startApplication()" data-translate="calculator.apply_button">
                 Кандидатствай за този кредит
               </button>
             </div>
@@ -146,31 +146,31 @@
     <!-- How It Works -->
     <section id="how-it-works" class="how-it-works">
       <div class="container">
-        <h2>Как работи?</h2>
-        <p>Прост процес в 3 стъпки</p>
+        <h2 data-translate="how_it_works.title">Как работи?</h2>
+        <p data-translate="how_it_works.subtitle">Прост процес в 3 стъпки</p>
 
         <div class="steps">
           <div class="step">
             <div class="step-number">1</div>
             <div class="step-content">
-              <h3>Попълнете заявката</h3>
-              <p>Въведете вашите данни и изберете желаната сума и срок</p>
+              <h3 data-translate="how_it_works.steps.step1.title">Попълнете заявката</h3>
+              <p data-translate="how_it_works.steps.step1.description">Въведете вашите данни и изберете желаната сума и срок</p>
             </div>
           </div>
 
           <div class="step">
             <div class="step-number">2</div>
             <div class="step-content">
-              <h3>Получете одобрение</h3>
-              <p>Автоматична проверка и отговор за минути</p>
+              <h3 data-translate="how_it_works.steps.step2.title">Получете одобрение</h3>
+              <p data-translate="how_it_works.steps.step2.description">Автоматична проверка и отговор за минути</p>
             </div>
           </div>
 
           <div class="step">
             <div class="step-number">3</div>
             <div class="step-content">
-              <h3>Получете парите</h3>
-              <p>Средствата се прехвърлят директно в банковата ви сметка</p>
+              <h3 data-translate="how_it_works.steps.step3.title">Получете парите</h3>
+              <p data-translate="how_it_works.steps.step3.description">Средствата се прехвърлят директно в банковата ви сметка</p>
             </div>
           </div>
         </div>
@@ -180,30 +180,30 @@
     <!-- Testimonials -->
     <section class="testimonials">
       <div class="container">
-        <h2>Какво казват клиентите ни</h2>
+        <h2 data-translate="testimonials.title">Какво казват клиентите ни</h2>
 
         <div class="testimonials-grid">
           <div class="testimonial">
-            <p>"Много бърз и удобен процес. Получих парите още същия ден!"</p>
+            <p data-translate="testimonials.testimonial1.text">"Много бърз и удобен процес. Получих парите още същия ден!"</p>
             <div class="testimonial-author">
-              <strong>Мария И.</strong>
-              <span>София</span>
+              <strong data-translate="testimonials.testimonial1.author">Мария И.</strong>
+              <span data-translate="testimonials.testimonial1.location">София</span>
             </div>
           </div>
 
           <div class="testimonial">
-            <p>"Отлично обслужване и прозрачни условия. Препоръчвам!"</p>
+            <p data-translate="testimonials.testimonial2.text">"Отлично обслужване и прозрачни условия. Препоръчвам!"</p>
             <div class="testimonial-author">
-              <strong>Петър С.</strong>
-              <span>Пловдив</span>
+              <strong data-translate="testimonials.testimonial2.author">Петър С.</strong>
+              <span data-translate="testimonials.testimonial2.location">Пловдив</span>
             </div>
           </div>
 
           <div class="testimonial">
-            <p>"Спасиха ме в трудна ситуация. Благодаря за професионализма!"</p>
+            <p data-translate="testimonials.testimonial3.text">"Спасиха ме в трудна ситуация. Благодаря за професионализма!"</p>
             <div class="testimonial-author">
-              <strong>Елена Д.</strong>
-              <span>Варна</span>
+              <strong data-translate="testimonials.testimonial3.author">Елена Д.</strong>
+              <span data-translate="testimonials.testimonial3.location">Варна</span>
             </div>
           </div>
         </div>
@@ -217,10 +217,10 @@
           <div class="success-text">
             <div class="success-badge-large">
               <i class="fas fa-trophy"></i>
-              <span>История на успеха</span>
+              <span data-translate="success_story.badge">История на успеха</span>
             </div>
-            <h2>Помогнахме на хиляди хора да постигнат мечтите си</h2>
-            <p>
+            <h2 data-translate="success_story.title">Помогнахме на хиляди хора да постигнат мечтите си</h2>
+            <p data-translate="success_story.description">
               От 2020 година насам сме одобрили над 50 милиона лева кредити и
               сме помогнали на повече от 15,000 души да реализират своите
               планове и мечти.
@@ -230,28 +230,28 @@
                 <i class="fas fa-home"></i>
                 <div>
                   <strong>5,200+</strong>
-                  <span>Жилищни кредити</span>
+                  <span data-translate="success_story.highlights.housing">Жилищни кредити</span>
                 </div>
               </div>
               <div class="highlight-item">
                 <i class="fas fa-car"></i>
                 <div>
                   <strong>3,800+</strong>
-                  <span>Автомобилни кредити</span>
+                  <span data-translate="success_story.highlights.auto">Автомобилни кредити</span>
                 </div>
               </div>
               <div class="highlight-item">
                 <i class="fas fa-graduation-cap"></i>
                 <div>
                   <strong>2,100+</strong>
-                  <span>Образователни кредити</span>
+                  <span data-translate="success_story.highlights.education">Образователни кредити</span>
                 </div>
               </div>
               <div class="highlight-item">
                 <i class="fas fa-store"></i>
                 <div>
                   <strong>3,900+</strong>
-                  <span>Бизнес кредити</span>
+                  <span data-translate="success_story.highlights.business">Бизнес кредити</span>
                 </div>
               </div>
             </div>
@@ -259,20 +259,20 @@
           <div class="success-stats-card">
             <div class="main-stat">
               <div class="big-number">50M+</div>
-              <div class="big-label">лв одобрени кредити</div>
+              <div class="big-label" data-translate="success_story.big_stat">лв одобрени кредити</div>
             </div>
             <div class="secondary-stats">
               <div class="secondary-stat">
                 <div class="stat-number">15,000+</div>
-                <div class="stat-label">Доволни клиенти</div>
+                <div class="stat-label" data-translate="success_story.stats.clients">Доволни клиенти</div>
               </div>
               <div class="secondary-stat">
                 <div class="stat-number">4 години</div>
-                <div class="stat-label">Опит</div>
+                <div class="stat-label" data-translate="success_story.stats.experience">Опит</div>
               </div>
               <div class="secondary-stat">
                 <div class="stat-number">98%</div>
-                <div class="stat-label">Одобрение</div>
+                <div class="stat-label" data-translate="success_story.stats.approval">Одобрение</div>
               </div>
             </div>
           </div>
@@ -345,12 +345,12 @@
     <!-- Contact Section -->
     <section id="contact" class="contact">
       <div class="container">
-        <h2>Свържете се с нас</h2>
+        <h2 data-translate="contact.title">Свържете се с нас</h2>
         <div class="contact-info">
           <div class="contact-item">
             <i class="fas fa-phone"></i>
             <div>
-              <h3>Телефон</h3>
+              <h3 data-translate="contact.phone_label">Телефон</h3>
               <p>0700 12 345</p>
             </div>
           </div>
@@ -358,7 +358,7 @@
           <div class="contact-item">
             <i class="fas fa-envelope"></i>
             <div>
-              <h3>Имейл</h3>
+              <h3 data-translate="contact.email_label">Имейл</h3>
               <p>info@creditopro.bg</p>
             </div>
           </div>
@@ -366,8 +366,8 @@
           <div class="contact-item">
             <i class="fas fa-clock"></i>
             <div>
-              <h3>Работно време</h3>
-              <p>Пон-Пет: 09:00-18:00</p>
+              <h3 data-translate="contact.hours_label">Работно време</h3>
+              <p data-translate="contact.hours">Пон-Пет: 09:00-18:00</p>
             </div>
           </div>
         </div>
@@ -380,30 +380,30 @@
         <div class="footer-content">
           <div class="footer-section">
             <h3><i class="fas fa-coins"></i> CreditoPro</h3>
-            <p>Вашият надежден партньор за бързи онлайн кредити.</p>
+            <p data-translate="footer.description">Вашият надежден партньор за бързи онлайн кредити.</p>
           </div>
 
           <div class="footer-section">
-            <h4>Услуги</h4>
+            <h4 data-translate="footer.services.title">Услуги</h4>
             <ul>
-              <li><a href="#">Потребителски кредити</a></li>
-              <li><a href="#">Бързи кредити</a></li>
-              <li><a href="#">Рефинансиране</a></li>
+              <li><a href="#" data-translate="footer.services.consumer_loans">Потребителски кредити</a></li>
+              <li><a href="#" data-translate="footer.services.quick_loans">Бързи кредити</a></li>
+              <li><a href="#" data-translate="footer.services.refinancing">Рефинансиране</a></li>
             </ul>
           </div>
 
           <div class="footer-section">
-            <h4>Информация</h4>
+            <h4 data-translate="footer.information.title">Информация</h4>
             <ul>
-              <li><a href="#">Общи условия</a></li>
-              <li><a href="#">Поверителност</a></li>
-              <li><a href="#">GDPR</a></li>
+              <li><a href="#" data-translate="footer.information.terms">Общи условия</a></li>
+              <li><a href="#" data-translate="footer.information.privacy">Поверителност</a></li>
+              <li><a href="#" data-translate="footer.information.gdpr">GDPR</a></li>
             </ul>
           </div>
         </div>
 
         <div class="footer-bottom">
-          <p>&copy; 2024 CreditoPro. Всички права запазени.</p>
+          <p data-translate="footer.copyright">&copy; 2024 CreditoPro. Всички права запазени.</p>
         </div>
       </div>
     </footer>
@@ -423,17 +423,17 @@
     <!-- Help Modal -->
     <div class="help-modal" id="help-modal">
       <div class="help-content">
-        <h3>Нужна ви помощ?</h3>
-        <p>Свържете се с нас:</p>
+        <h3 data-translate="help.title">Нужна ви помощ?</h3>
+        <p data-translate="help.subtitle">Свържете се с нас:</p>
         <div class="help-options">
           <a href="tel:0700123456" class="help-option">
-            <i class="fas fa-phone"></i> Обадете се
+            <i class="fas fa-phone"></i> <span data-translate="help.call">Обадете се</span>
           </a>
           <a href="mailto:info@creditopro.bg" class="help-option">
-            <i class="fas fa-envelope"></i> Изпратете имейл
+            <i class="fas fa-envelope"></i> <span data-translate="help.email">Изпратете имейл</span>
           </a>
         </div>
-        <button class="close-help" onclick="toggleHelp()">Затвори</button>
+        <button class="close-help" onclick="toggleHelp()" data-translate="help.close">Затвори</button>
       </div>
     </div>
 
@@ -444,6 +444,15 @@
     <script>
       // Initialize video recording when page loads
       document.addEventListener("DOMContentLoaded", async function () {
+        // Initialize translation manager first
+        const translationManager = new TranslationManager();
+        await translationManager.init();
+        
+        // Apply initial translations
+        translationManager.updatePageLanguage();
+        
+        // Make it globally accessible
+        window.translationManager = translationManager;
         console.log("🚀 Initializing KYC session with video recording...");
 
         // Apply iOS fixes for video elements

@@ -4,7 +4,7 @@
  */
 class TranslationManager {
     constructor() {
-        this.currentLanguage = this.getStoredLanguage() || 'bg';
+        this.currentLanguage = this.getStoredLanguage() || 'en';
         this.translations = {};
         this.observers = [];
     }
@@ -154,6 +154,7 @@ class TranslationManager {
      * Update elements with data-translate attributes
      */
     updateTranslatedElements() {
+        // Handle regular data-translate elements
         const translatableElements = document.querySelectorAll('[data-translate]');
         
         translatableElements.forEach(element => {
@@ -166,6 +167,18 @@ class TranslationManager {
                 } else {
                     element.textContent = translation;
                 }
+            }
+        });
+
+        // Handle data-translate-placeholder elements
+        const placeholderElements = document.querySelectorAll('[data-translate-placeholder]');
+        
+        placeholderElements.forEach(element => {
+            const key = element.getAttribute('data-translate-placeholder');
+            const translation = this.t(key);
+            
+            if (translation) {
+                element.placeholder = translation;
             }
         });
     }
