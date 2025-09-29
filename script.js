@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Update display with proper currency
     const currency = translationManager
       ? translationManager.t("calculator.currency")
-      : "лв";
+      : "€";
     const locale =
       translationManager && translationManager.getCurrentLanguage() === "en"
         ? "en-US"
@@ -451,7 +451,7 @@ function animateCounters() {
         current = target;
         clearInterval(timer);
       }
-      counter.textContent = Math.floor(current).toLocaleString("bg-BG") + " лв";
+      counter.textContent = Math.floor(current).toLocaleString("bg-BG") + " €";
     }, 50);
   });
 }
@@ -524,7 +524,7 @@ function printLoanDetails() {
 
   const printContent = `
         <h2>Детайли на кредита</h2>
-        <p><strong>Сума:</strong> ${amount} лв</p>
+        <p><strong>Сума:</strong> ${amount} €</p>
         <p><strong>Период:</strong> ${period} месеца</p>
         <p><strong>Месечна вноска:</strong> ${monthly}</p>
         <p><strong>Лихвен процент:</strong> ${rate}</p>

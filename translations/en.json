@@ -10,7 +10,7 @@
     "contact": "Contact"
   },
   "hero": {
-    "title": "Quick loan up to <span class=\"highlight\">50,000 BGN</span>",
+    "title": "Quick loan up to <span class=\"highlight\">25,000 €</span>",
     "subtitle": "Get approval in minutes, money in your account within an hour. No hidden fees, transparent conditions.",
     "stats": {
       "approval": "Approval",
@@ -24,7 +24,7 @@
     "subtitle": "Calculate your loan terms",
     "loan_amount": "Loan amount",
     "loan_period": "Repayment period",
-    "currency": "BGN",
+    "currency": "€",
     "months": "months",
     "details_title": "Loan details",
     "monthly_payment": "Monthly payment:",
@@ -134,14 +134,14 @@
   "success_story": {
     "badge": "Success Story",
     "title": "We helped thousands of people achieve their dreams",
-    "description": "Since 2020, we have approved over 50 million BGN in loans and helped more than 15,000 people realize their plans and dreams.",
+    "description": "Since 2020, we have approved over 25 million EUR in loans and helped more than 15,000 people realize their plans and dreams.",
     "highlights": {
       "housing": "Housing loans",
       "auto": "Auto loans",
       "education": "Education loans",
       "business": "Business loans"
     },
-    "big_stat": "BGN approved loans",
+    "big_stat": "EUR approved loans",
     "stats": {
       "clients": "Happy clients",
       "experience": "Experience",
@@ -198,7 +198,7 @@
       "apartment_description": "Enter apartment, suite, or floor number if applicable",
       "apartment_placeholder": "e.g., Apt 4B, Suite 200, Floor 3",
       "income": "Monthly Income",
-      "income_description": "Enter your average monthly income in BGN",
+      "income_description": "Enter your average monthly income in EUR",
       "income_placeholder": "Enter your monthly income",
       "employment": "Employment Status",
       "employment_description": "Select your current employment situation",

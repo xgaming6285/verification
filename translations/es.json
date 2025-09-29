@@ -1,0 +1,276 @@
+{
+  "meta": {
+    "title": "CreditoPro - Préstamos rápidos online",
+    "lang": "es"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "calculator": "Préstamos",
+    "how_it_works": "Cómo funciona",
+    "contact": "Contacto"
+  },
+  "hero": {
+    "title": "Préstamo rápido hasta <span class=\"highlight\">25.000 €</span>",
+    "subtitle": "Obtén aprobación en minutos, dinero en tu cuenta en una hora. Sin tarifas ocultas, condiciones transparentes.",
+    "stats": {
+      "approval": "Aprobación",
+      "clients": "Clientes",
+      "security": "Seguridad"
+    },
+    "cta_button": "Solicitar ahora"
+  },
+  "calculator": {
+    "title": "Calculadora de préstamo",
+    "subtitle": "Calcula las condiciones de tu préstamo",
+    "loan_amount": "Cantidad del préstamo",
+    "loan_period": "Período de reembolso",
+    "currency": "€",
+    "months": "meses",
+    "details_title": "Detalles del préstamo",
+    "monthly_payment": "Pago mensual:",
+    "interest_rate": "Tasa de interés:",
+    "total_amount": "Total a reembolsar:",
+    "apply_button": "Solicitar este préstamo"
+  },
+  "how_it_works": {
+    "title": "¿Cómo funciona?",
+    "subtitle": "Proceso simple en 3 pasos",
+    "steps": {
+      "step1": {
+        "title": "Completa la solicitud",
+        "description": "Ingresa tus datos y elige la cantidad y plazo deseados"
+      },
+      "step2": {
+        "title": "Obtén aprobación",
+        "description": "Verificación automática y respuesta en minutos"
+      },
+      "step3": {
+        "title": "Recibe el dinero",
+        "description": "Los fondos se transfieren directamente a tu cuenta bancaria"
+      }
+    }
+  },
+  "testimonials": {
+    "title": "Lo que dicen nuestros clientes",
+    "subtitle": "Más de 15.000 clientes satisfechos han confiado en nuestros servicios",
+    "stats": {
+      "approval": "Aprobación",
+      "clients": "Clientes"
+    },
+    "testimonial1": {
+      "text": "\"Proceso muy rápido y conveniente. ¡Recibí el dinero el mismo día!\"",
+      "author": "María I.",
+      "location": "Sofía"
+    },
+    "testimonial2": {
+      "text": "\"Excelente servicio y condiciones transparentes. ¡Lo recomiendo!\"",
+      "author": "Pedro S.",
+      "location": "Plovdiv"
+    },
+    "testimonial3": {
+      "text": "\"Me salvaron en una situación difícil. ¡Gracias por el profesionalismo!\"",
+      "author": "Elena D.",
+      "location": "Varna"
+    }
+  },
+  "faq": {
+    "title": "Preguntas frecuentes",
+    "questions": {
+      "q1": {
+        "question": "¿Cuánto tiempo toma el proceso de aprobación?",
+        "answer": "Generalmente el proceso de aprobación toma entre 15-30 minutos. En la mayoría de los casos obtienes una respuesta inmediatamente después de enviar tu solicitud."
+      },
+      "q2": {
+        "question": "¿Qué documentos se requieren?",
+        "answer": "Solo se requiere una tarjeta de identidad y prueba de ingresos. Todos los documentos pueden subirse en línea."
+      },
+      "q3": {
+        "question": "¿Hay tarifas ocultas?",
+        "answer": "No, no hay tarifas ocultas. Todos los costos están claramente indicados antes de firmar el contrato."
+      },
+      "q4": {
+        "question": "¿Puedo pagar el préstamo antes de tiempo?",
+        "answer": "Sí, puedes pagar el préstamo antes de tiempo sin tarifas adicionales por pago anticipado."
+      }
+    }
+  },
+  "contact": {
+    "title": "Contáctanos",
+    "phone_label": "Teléfono",
+    "phone": "0700 12 345",
+    "email_label": "Email",
+    "email": "info@creditopro.bg",
+    "hours_label": "Horario de atención",
+    "hours": "Lun-Vie: 09:00-18:00"
+  },
+  "footer": {
+    "description": "Tu socio confiable para préstamos rápidos en línea.",
+    "services": {
+      "title": "Servicios",
+      "consumer_loans": "Préstamos de consumo",
+      "quick_loans": "Préstamos rápidos",
+      "refinancing": "Refinanciamiento"
+    },
+    "information": {
+      "title": "Información",
+      "terms": "Términos y condiciones",
+      "privacy": "Privacidad",
+      "gdpr": "GDPR"
+    },
+    "copyright": "© 2024 CreditoPro. Todos los derechos reservados."
+  },
+  "help": {
+    "title": "¿Necesitas ayuda?",
+    "subtitle": "Contáctanos:",
+    "call": "Llámanos",
+    "email": "Enviar email",
+    "close": "Cerrar"
+  },
+  "camera": {
+    "title": "Captura de documento",
+    "capture": "Capturar",
+    "cancel": "Cancelar"
+  },
+  "success_story": {
+    "badge": "Historia de éxito",
+    "title": "Hemos ayudado a miles de personas a lograr sus sueños",
+    "description": "Desde 2020, hemos aprobado más de 25 millones de EUR en préstamos y hemos ayudado a más de 15.000 personas a realizar sus planes y sueños.",
+    "highlights": {
+      "housing": "Préstamos de vivienda",
+      "auto": "Préstamos de auto",
+      "education": "Préstamos educativos",
+      "business": "Préstamos comerciales"
+    },
+    "big_stat": "EUR préstamos aprobados",
+    "stats": {
+      "clients": "Clientes felices",
+      "experience": "Experiencia",
+      "approval": "Aprobación"
+    }
+  },
+  "verification": {
+    "title": "Verificación de identidad",
+    "subtitle": "Completa el formulario de verificación para finalizar tu solicitud de préstamo",
+    "steps": {
+      "personal_info": "Información personal",
+      "photo_capture": "Captura de fotos",
+      "complete": "Completar"
+    },
+    "step1": {
+      "title": "Ingresa tu información personal",
+      "first_name": "Nombre",
+      "first_name_description": "Por favor ingresa tu nombre tal como aparece en tu documento de identidad",
+      "first_name_placeholder": "Ingresa tu nombre",
+      "last_name": "Apellido",
+      "last_name_description": "Por favor ingresa tu apellido tal como aparece en tu documento de identidad",
+      "last_name_placeholder": "Ingresa tu apellido",
+      "egn": "Número de identificación personal",
+      "egn_description": "Ingresa tu número de identificación personal de 10 dígitos",
+      "egn_placeholder": "Ingresa tu número de identificación personal",
+      "phone": "Teléfono",
+      "phone_description": "Ingresa tu número de teléfono activo para verificación",
+      "phone_placeholder": "Número de teléfono (sin código de país)",
+      "phone_select_country": "Seleccionar país",
+      "email": "Dirección de email",
+      "email_description": "Ingresa tu dirección de email para notificaciones importantes",
+      "email_placeholder": "Ingresa tu dirección de email",
+      "country": "País",
+      "country_description": "Selecciona tu país de residencia",
+      "country_placeholder": "Selecciona tu país",
+      "state": "Estado / Provincia / Región",
+      "state_description": "Selecciona tu estado, provincia o región",
+      "state_placeholder": "Selecciona tu estado/provincia",
+      "state_input_placeholder": "Ingresa tu estado/provincia/región",
+      "city": "Ciudad / Localidad",
+      "city_description": "Ingresa tu ciudad o localidad",
+      "city_placeholder": "Ingresa tu ciudad",
+      "postal_code": "Código postal",
+      "postal_description": "Ingresa tu código postal",
+      "postal_placeholder": "Ingresa tu código postal",
+      "street_name": "Nombre de la calle",
+      "street_description": "Ingresa el nombre de tu calle",
+      "street_placeholder": "ej., Calle Principal, Avenida Roble",
+      "house_number": "Número de casa",
+      "house_description": "Ingresa tu número de casa o edificio",
+      "house_placeholder": "ej., 123, 45A, 7-9",
+      "apartment": "Apartamento / Suite / Piso",
+      "apartment_optional": "(Opcional)",
+      "apartment_description": "Ingresa número de apartamento, suite o piso si aplica",
+      "apartment_placeholder": "ej., Apt 4B, Suite 200, Piso 3",
+      "income": "Ingresos mensuales",
+      "income_description": "Ingresa tu ingreso mensual promedio en EUR",
+      "income_placeholder": "Ingresa tu ingreso mensual",
+      "employment": "Estado laboral",
+      "employment_description": "Selecciona tu situación laboral actual",
+      "employment_options": {
+        "select": "Selecciona tu estado laboral",
+        "employed": "Empleado",
+        "self_employed": "Trabajador independiente",
+        "retired": "Jubilado",
+        "unemployed": "Desempleado"
+      },
+      "continue": "Continuar",
+      "continue_to_photos": "Continuar a captura de fotos",
+      "back": "Atrás"
+    },
+    "step2": {
+      "title": "Captura las fotos requeridas",
+      "description": "Sigue el proceso guiado para capturar todas las fotos requeridas usando tu cámara",
+      "photo1": "ID frontal",
+      "photo2": "ID posterior",
+      "photo3": "Selfie con ID frontal",
+      "photo4": "Selfie con ID posterior",
+      "photo5": "Solo selfie",
+      "instructions": {
+        "id_front_title": "Captura el lado frontal de tu ID",
+        "id_front_text": "Posiciona el lado frontal de tu documento de identidad claramente en el marco y toma una foto",
+        "id_back_title": "Captura el lado posterior de tu ID",
+        "id_back_text": "Posiciona el lado posterior de tu documento de identidad claramente en el marco y toma una foto",
+        "selfie_id_front_title": "Tómate una selfie con el ID frontal",
+        "selfie_id_front_text": "Sostén el lado frontal de tu documento de identidad junto a tu cara y tómate una selfie",
+        "selfie_id_back_title": "Tómate una selfie con el ID posterior",
+        "selfie_id_back_text": "Sostén el lado posterior de tu documento de identidad junto a tu cara y tómate una selfie",
+        "selfie_only_title": "Tómate tu selfie",
+        "selfie_only_text": "Mira directamente a la cámara y tómate una selfie clara"
+      },
+      "tips": {
+        "lighting": "Asegúrate de tener buena iluminación",
+        "steady": "Mantén la cámara estable",
+        "readable": "Asegúrate de que el texto sea legible"
+      },
+      "start_capture": "Toca para iniciar la cámara",
+      "start_camera": "Iniciar cámara",
+      "capture_photo": "Capturar foto",
+      "retake": "Tomar nuevamente",
+      "next_photo": "Siguiente foto",
+      "back": "Atrás",
+      "continue": "Continuar"
+    },
+    "step3": {
+      "title": "¡Solicitud enviada exitosamente!",
+      "description": "Tu verificación ha sido completada y tu solicitud ha sido enviada.",
+      "summary_title": "Fotos capturadas:",
+      "next_steps": "Qué sigue:",
+      "step_list": {
+        "step1": "Revisaremos tus fotos e información",
+        "step2": "Recibirás un email con la decisión",
+        "step3": "Una vez aprobado, los fondos serán transferidos"
+      },
+      "contact_info": "Para preguntas, contáctanos:",
+      "submit": "Enviar solicitud",
+      "back_home": "Volver al inicio",
+      "success_title": "¡Solicitud enviada exitosamente!",
+      "success_message": "¡Gracias por tu confianza! Recibirás una respuesta dentro de 15-30 minutos."
+    },
+    "validation": {
+      "fill_required": "Por favor completa todos los campos requeridos.",
+      "egn_invalid": "El número de identificación personal debe tener 10 dígitos.",
+      "photos_required": "Por favor captura todas las fotos requeridas.",
+      "file_invalid": "Por favor selecciona un archivo válido",
+      "file_too_large": "El archivo es demasiado grande. Tamaño máximo: 10MB.",
+      "camera_error": "No se puede acceder a la cámara. Por favor revisa los permisos de la cámara.",
+      "submission_error": "Hubo un error al enviar tu solicitud. Por favor intenta de nuevo."
+    },
+    "uploading": "Enviando..."
+  }
+}

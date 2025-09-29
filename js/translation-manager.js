@@ -28,7 +28,7 @@ class TranslationManager {
      * Load translations for all supported languages
      */
     async loadTranslations() {
-        const languages = ['bg', 'en'];
+        const languages = ['bg', 'en', 'es'];
         
         for (const lang of languages) {
             try {
