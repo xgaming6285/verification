@@ -75,7 +75,6 @@
 
     <!-- Verification Section -->
     <section class="verification-page">
-      <div class="container">
         <div class="verification-steps">
           <!-- Step 1: Personal Information -->
           <div class="verification-step active" id="step-1">
@@ -980,7 +979,7 @@
                   <h4 data-translate="verification.step1.income">
                     Monthly Income
                   </h4>
-                  <p data-translate="verification.step1.income_description">Enter your average monthly income in BGN</p>
+                  <p data-translate="verification.step1.income_description">Enter your average monthly income in EUR</p>
                   <form class="single-field-form">
                     <div class="form-group">
                       <input
@@ -992,7 +991,7 @@
                         min="0"
                         required
                       />
-                      <span class="input-suffix">BGN</span>
+                      <span class="input-suffix" data-translate="calculator.currency">€</span>
                     </div>
                     <div class="field-navigation">
                       <button
@@ -1199,7 +1198,7 @@
 
             <div class="camera-placeholder" id="camera-placeholder">
               <i class="fas fa-camera"></i>
-              <p>Loading camera...</p>
+              <p data-translate="verification.step2.loading_camera">Loading camera...</p>
             </div>
 
             <div
@@ -1285,7 +1284,6 @@
             </div>
           </div>
         </div>
-      </div>
     </section>
 
     <script src="js/translation-manager.js"></script>

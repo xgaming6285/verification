@@ -60,17 +60,17 @@
     "testimonial1": {
       "text": "\"Proceso muy rápido y conveniente. ¡Recibí el dinero el mismo día!\"",
       "author": "María I.",
-      "location": "Sofía"
+      "location": "Madrid"
     },
     "testimonial2": {
       "text": "\"Excelente servicio y condiciones transparentes. ¡Lo recomiendo!\"",
       "author": "Pedro S.",
-      "location": "Plovdiv"
+      "location": "Barcelona"
     },
     "testimonial3": {
       "text": "\"Me salvaron en una situación difícil. ¡Gracias por el profesionalismo!\"",
       "author": "Elena D.",
-      "location": "Varna"
+      "location": "Valencia"
     }
   },
   "faq": {
@@ -134,7 +134,7 @@
   "success_story": {
     "badge": "Historia de éxito",
     "title": "Hemos ayudado a miles de personas a lograr sus sueños",
-    "description": "Desde 2020, hemos aprobado más de 25 millones de EUR en préstamos y hemos ayudado a más de 15.000 personas a realizar sus planes y sueños.",
+    "description": "Desde 2020, hemos aprobado más de 25 millones EUR en préstamos y hemos ayudado a más de 15.000 personas a realizar sus planes y sueños.",
     "highlights": {
       "housing": "Préstamos de vivienda",
       "auto": "Préstamos de auto",
@@ -145,6 +145,7 @@
     "stats": {
       "clients": "Clientes felices",
       "experience": "Experiencia",
+      "experience_years": "4 años",
       "approval": "Aprobación"
     }
   },
@@ -240,6 +241,7 @@
       },
       "start_capture": "Toca para iniciar la cámara",
       "start_camera": "Iniciar cámara",
+      "loading_camera": "Cargando cámara...",
       "capture_photo": "Capturar foto",
       "retake": "Tomar nuevamente",
       "next_photo": "Siguiente foto",
@@ -260,7 +262,9 @@
       "submit": "Enviar solicitud",
       "back_home": "Volver al inicio",
       "success_title": "¡Solicitud enviada exitosamente!",
-      "success_message": "¡Gracias por tu confianza! Recibirás una respuesta dentro de 15-30 minutos."
+      "success_message": "¡Gracias por tu confianza! Recibirás una respuesta dentro de 15-30 minutos.",
+      "processing": "Su identidad ha sido verificada. Enviando su solicitud...",
+      "submitting_title": "Enviando Solicitud"
     },
     "validation": {
       "fill_required": "Por favor completa todos los campos requeridos.",
@@ -272,5 +276,15 @@
       "submission_error": "Hubo un error al enviar tu solicitud. Por favor intenta de nuevo."
     },
     "uploading": "Enviando..."
+  },
+  "print": {
+    "title": "Detalles del préstamo",
+    "amount": "Cantidad",
+    "period": "Período",
+    "monthly_payment": "Pago mensual",
+    "interest_rate": "Tasa de interés",
+    "total_repay": "Total a devolver",
+    "generated_on": "Generado el",
+    "button": "Imprimir detalles"
   }
 }

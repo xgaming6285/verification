@@ -9,6 +9,16 @@ body {
   background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
 }
 
+/* Override any body padding from main styles.css */
+body {
+  padding-top: 0 !important;
+}
+
+/* Hide navbar on verification page */
+.navbar {
+  display: none !important;
+}
+
 .verification-page {
   background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
   min-height: 100vh;
@@ -49,8 +59,10 @@ body {
   align-items: center;
   justify-content: center;
   padding: 20px;
+  padding-top: 8vh;
   overflow: hidden;
-  margin-top: -10vh;
+  position: relative;
+  z-index: 1000;
 }
 
 .verification-step {
@@ -430,21 +442,31 @@ body {
 
 /* Mobile Responsiveness for App-like Design */
 @media (max-width: 768px) {
+  /* Override any body padding from main styles on mobile */
+  body {
+    padding-top: 0 !important;
+  }
+
   .verification-page {
     height: 100vh;
     height: calc(var(--vh, 1vh) * 100); /* Dynamic viewport height */
-  }
-
-  .verification-page .container {
-    height: 100vh;
-    height: calc(var(--vh, 1vh) * 100);
+    padding: 0;
+    margin: 0;
+    top: 0;
+    left: 0;
+    position: fixed;
+    width: 100vw;
   }
 
   .verification-steps {
     height: 100vh;
     height: calc(var(--vh, 1vh) * 100);
     padding: 20px 16px;
-    margin-top: -8vh;
+    padding-top: 12vh;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .verification-step {
@@ -2378,11 +2400,31 @@ body {
 
 /* Extra small devices */
 @media (max-width: 480px) {
-  .verification-steps {
-    padding: 16px 12px;
+  /* Ensure no body padding on small devices */
+  body {
+    padding-top: 0 !important;
+  }
+
+  .verification-page {
     height: 100vh;
     height: calc(var(--vh, 1vh) * 100);
-    margin-top: -6vh;
+    padding: 0;
+    margin: 0;
+    top: 0;
+    left: 0;
+    position: fixed;
+    width: 100vw;
+  }
+
+  .verification-steps {
+    padding: 16px 12px;
+    padding-top: 15vh;
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Step header styles removed */

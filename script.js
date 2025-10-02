@@ -300,7 +300,8 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!this.classList.contains("loading")) {
         this.classList.add("loading");
         const originalText = this.innerHTML;
-        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Зареждане...';
+        const loadingText = window.translationManager ? window.translationManager.t('verification.uploading', 'Loading...') : 'Loading...';
+        this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${loadingText}`;
 
         setTimeout(() => {
           this.classList.remove("loading");
@@ -522,21 +523,37 @@ function printLoanDetails() {
   const rate = document.getElementById("interest-rate").textContent;
   const total = document.getElementById("total-amount").textContent;
 
+  // Get translations if available
+  const t = window.translationManager || { t: (key, fallback) => fallback };
+  const title = t.t('print.title', 'Loan Details');
+  const amountLabel = t.t('print.amount', 'Amount');
+  const periodLabel = t.t('print.period', 'Period');
+  const monthlyLabel = t.t('print.monthly_payment', 'Monthly Payment');
+  const rateLabel = t.t('print.interest_rate', 'Interest Rate');
+  const totalLabel = t.t('print.total_repay', 'Total to Repay');
+  const generatedLabel = t.t('print.generated_on', 'Generated on');
+  const monthsLabel = t.t('calculator.months', 'months');
+  const currency = t.t('calculator.currency', '€');
+  
+  // Get proper locale for date
+  const currentLang = window.translationManager?.getCurrentLanguage() || 'en';
+  const locale = currentLang === 'es' ? 'es-ES' : (currentLang === 'bg' ? 'bg-BG' : 'en-US');
+
   const printContent = `
-        <h2>Детайли на кредита</h2>
-        <p><strong>Сума:</strong> ${amount} €</p>
-        <p><strong>Период:</strong> ${period} месеца</p>
-        <p><strong>Месечна вноска:</strong> ${monthly}</p>
-        <p><strong>Лихвен процент:</strong> ${rate}</p>
-        <p><strong>Общо за връщане:</strong> ${total}</p>
-        <p><em>Генерирано на ${new Date().toLocaleDateString("bg-BG")}</em></p>
+        <h2>${title}</h2>
+        <p><strong>${amountLabel}:</strong> ${amount} ${currency}</p>
+        <p><strong>${periodLabel}:</strong> ${period} ${monthsLabel}</p>
+        <p><strong>${monthlyLabel}:</strong> ${monthly}</p>
+        <p><strong>${rateLabel}:</strong> ${rate}</p>
+        <p><strong>${totalLabel}:</strong> ${total}</p>
+        <p><em>${generatedLabel} ${new Date().toLocaleDateString(locale)}</em></p>
     `;
 
   const printWindow = window.open("", "_blank");
   printWindow.document.write(`
         <html>
             <head>
-                <title>Детайли на кредита</title>
+                <title>${title}</title>
                 <style>
                     body { font-family: Arial, sans-serif; padding: 20px; }
                     h2 { color: #1e40af; }
@@ -555,7 +572,12 @@ document.addEventListener("DOMContentLoaded", function () {
   const resultCard = document.querySelector(".result-card");
   if (resultCard) {
     const printButton = document.createElement("button");
-    printButton.innerHTML = '<i class="fas fa-print"></i> Принтирай детайлите';
+    const getPrintButtonText = () => {
+      const t = window.translationManager || { t: (key, fallback) => fallback };
+      return `<i class="fas fa-print"></i> ${t.t('print.button', 'Print Details')}`;
+    };
+    
+    printButton.innerHTML = getPrintButtonText();
     printButton.className = "print-button";
     printButton.style.cssText = `
             background: #6b7280;
@@ -576,6 +598,14 @@ document.addEventListener("DOMContentLoaded", function () {
       printButton.style.background = "#6b7280";
     });
     printButton.addEventListener("click", printLoanDetails);
+    
+    // Update button text when language changes
+    if (window.translationManager) {
+      window.translationManager.addObserver(() => {
+        printButton.innerHTML = getPrintButtonText();
+      });
+    }
+    
     resultCard.appendChild(printButton);
   }
 });
@@ -742,7 +772,10 @@ function validatePersonalInfo() {
   // Basic validation
   for (let [key, value] of formData.entries()) {
     if (!value.trim()) {
-      alert("Моля попълнете всички задължителни полета.");
+      const message = window.translationManager 
+        ? window.translationManager.t("verification.validation.fill_required", "Please fill in all required fields.")
+        : "Please fill in all required fields.";
+      alert(message);
       return false;
     }
   }
@@ -750,7 +783,10 @@ function validatePersonalInfo() {
   // EGN validation (basic)
   const egn = formData.get("egn");
   if (egn && egn.length !== 10) {
-    alert("ЕГН трябва да бъде 10 цифри.");
+    const message = window.translationManager 
+      ? window.translationManager.t("verification.validation.egn_invalid", "Personal ID Number must be 10 digits.")
+      : "Personal ID Number must be 10 digits.";
+    alert(message);
     return false;
   }
 
@@ -759,12 +795,18 @@ function validatePersonalInfo() {
 
 function validateDocuments() {
   if (!uploadedFiles.idFront || !uploadedFiles.idBack) {
-    alert("Моля качете снимки от двете страни на личната карта.");
+    const message = window.translationManager 
+      ? window.translationManager.t("verification.validation.photos_required", "Please capture all required photos.")
+      : "Please capture all required photos.";
+    alert(message);
     return false;
   }
 
   if (!uploadedFiles.incomeDoc) {
-    alert("Моля качете документ за доходи.");
+    const message = window.translationManager 
+      ? window.translationManager.t("verification.validation.photos_required", "Please capture all required photos.")
+      : "Please capture all required photos.";
+    alert(message);
     return false;
   }
 
@@ -773,7 +815,10 @@ function validateDocuments() {
 
 function validateFaceVerification() {
   if (!uploadedFiles.facePhoto) {
-    alert("Моля направете селфи за верификация на лице.");
+    const message = window.translationManager 
+      ? window.translationManager.t("verification.validation.photos_required", "Please capture all required photos.")
+      : "Please capture all required photos.";
+    alert(message);
     return false;
   }
 
@@ -821,17 +866,20 @@ function handleFileUpload(file, inputId, preview) {
   }
 
   if (!validTypes.includes(file.type)) {
-    alert(
-      "Моля изберете валиден файл (JPG, PNG, WEBP" +
-        (inputId === "income-doc" ? ", PDF" : "") +
-        ")."
-    );
+    const fileTypeMsg = inputId === "income-doc" ? ", PDF" : "";
+    const message = window.translationManager 
+      ? window.translationManager.t("verification.validation.file_invalid", "Please select a valid file")
+      : "Please select a valid file";
+    alert(`${message} (JPG, PNG, WEBP${fileTypeMsg}).`);
     return;
   }
 
   // Validate file size (max 10MB)
   if (file.size > 10 * 1024 * 1024) {
-    alert("Файлът е твърде голям. Максимален размер: 10MB.");
+    const message = window.translationManager 
+      ? window.translationManager.t("verification.validation.file_too_large", "File is too large. Maximum size: 10MB.")
+      : "File is too large. Maximum size: 10MB.";
+    alert(message);
     return;
   }
 
@@ -934,9 +982,10 @@ function startCamera() {
     })
     .catch(function (error) {
       console.error("Error accessing camera:", error);
-      alert(
-        "Не може да се достъпи камерата. Моля използвайте опцията за качване на файл."
-      );
+      const message = window.translationManager 
+        ? window.translationManager.t("verification.validation.camera_error", "Cannot access camera. Please check camera permissions.")
+        : "Cannot access camera. Please check camera permissions.";
+      alert(message);
       closeCameraModal();
     });
 }
@@ -1036,9 +1085,10 @@ function startFaceCapture() {
     })
     .catch(function (error) {
       console.error("Error accessing camera:", error);
-      alert(
-        "Не може да се достъпи камерата. Моля използвайте опцията за качване на снимка."
-      );
+      const message = window.translationManager 
+        ? window.translationManager.t("verification.validation.camera_error", "Cannot access camera. Please check camera permissions.")
+        : "Cannot access camera. Please check camera permissions.";
+      alert(message);
     });
 }
 
