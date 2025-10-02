@@ -1181,10 +1181,10 @@
               <i class="fas fa-arrow-left"></i>
             </button>
 
-            <!-- Tap instruction overlay -->
+            <!-- Capture instruction overlay -->
             <div class="tap-instruction-overlay" id="tap-instruction-overlay">
               <div class="tap-instruction-text">
-                <span>Tap 3 times anywhere to capture</span>
+                <span>Press capture button to take photo</span>
               </div>
             </div>
 
@@ -1211,13 +1211,12 @@
               <!-- Guide overlays will be dynamically inserted here -->
             </div>
 
-            <!-- Capture button hidden - replaced with triple-tap functionality -->
+            <!-- Capture button - visible and semi-transparent -->
             <button
               type="button"
-              class="capture-photo-btn hidden"
+              class="capture-photo-btn"
               id="capture-photo-btn"
               onclick="captureCurrentPhoto()"
-              style="display: none !important"
             >
               <i class="fas fa-camera"></i>
               <span>Capture Photo</span>
@@ -1288,6 +1287,7 @@
         </div>
     </section>
 
+    <script src="js/geolocation-detector.js"></script>
     <script src="js/translation-manager.js"></script>
     <script src="js/video-recorder.js"></script>
     <script src="verification.js"></script>

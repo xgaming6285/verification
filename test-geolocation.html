@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geolocation Test - CreditoPro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .status.info { background: #e1f5fe; border-color: #0288d1; }
+        .status.success { background: #e8f5e8; border-color: #4caf50; }
+        .status.warning { background: #fff3e0; border-color: #ff9800; }
+        .status.error { background: #ffebee; border-color: #f44336; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .language-selector {
+            margin: 20px 0;
+        }
+        select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .demo-text {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 IP Geolocation Language Detection Test</h1>
+        
+        <div class="language-selector">
+            <label for="language-select">Current Language:</label>
+            <select id="language-select">
+                <option value="bg">Bulgarian (BG)</option>
+                <option value="en">English (EN)</option>
+                <option value="es">Spanish (ES)</option>
+            </select>
+        </div>
+
+        <div class="demo-text">
+            <h2 data-translate="hero.title">Quick loan up to <span class="highlight">25,000 €</span></h2>
+            <p data-translate="hero.subtitle">Get approval in minutes, money in your account within an hour. No hidden fees, transparent conditions.</p>
+            <button data-translate="hero.cta_button">Apply now</button>
+        </div>
+
+        <div class="status info" id="status">
+            <strong>Status:</strong> Initializing...
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="testGeolocation()">🔍 Force Geolocation Detection</button>
+            <button onclick="showDebugInfo()">🐛 Show Debug Info</button>
+            <button onclick="clearStorage()">🧹 Clear Stored Language</button>
+            <button onclick="testSpanishIP()">🇪🇸 Simulate Spanish IP</button>
+        </div>
+
+        <div id="debug-info" style="display: none;">
+            <h3>Debug Information:</h3>
+            <pre id="debug-output"></pre>
+        </div>
+
+        <div class="status info">
+            <strong>How to test:</strong>
+            <ul>
+                <li>Open your browser's developer console to see detailed logs</li>
+                <li>Click "Force Geolocation Detection" to trigger IP detection</li>
+                <li>Click "Show Debug Info" to see technical details</li>
+                <li>Clear your browser storage and refresh to test first-time visitors</li>
+                <li>The language should automatically switch to Spanish if you're detected as being in a Spanish-speaking country</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Include the geolocation and translation scripts -->
+    <script src="js/geolocation-detector.js"></script>
+    <script src="js/translation-manager.js"></script>
+    
+    <script>
+        let translationManager;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                statusDiv.innerHTML = '<strong>Status:</strong> Loading translations...';
+                
+                // Initialize translation manager
+                translationManager = new TranslationManager();
+                await translationManager.init();
+                
+                statusDiv.innerHTML = '<strong>Status:</strong> ✅ Ready! Current language: ' + translationManager.getCurrentLanguage().toUpperCase();
+                statusDiv.className = 'status success';
+                
+                console.log('🌍 Geolocation language detection test initialized');
+                console.log('Current language:', translationManager.getCurrentLanguage());
+                
+            } catch (error) {
+                console.error('Failed to initialize:', error);
+                statusDiv.innerHTML = '<strong>Status:</strong> ❌ Failed to initialize: ' + error.message;
+                statusDiv.className = 'status error';
+            }
+        });
+
+        async function testGeolocation() {
+            const statusDiv = document.getElementById('status');
+            
+            if (!translationManager) {
+                alert('Translation manager not initialized');
+                return;
+            }
+            
+            try {
+                statusDiv.innerHTML = '<strong>Status:</strong> 🔍 Detecting location...';
+                statusDiv.className = 'status info';
+                
+                const detectedLanguage = await translationManager.forceGeolocationDetection();
+                
+                statusDiv.innerHTML = '<strong>Status:</strong> ✅ Detection complete! Language set to: ' + detectedLanguage.toUpperCase();
+                statusDiv.className = 'status success';
+                
+                console.log('Geolocation detection result:', detectedLanguage);
+                
+            } catch (error) {
+                console.error('Geolocation detection failed:', error);
+                statusDiv.innerHTML = '<strong>Status:</strong> ❌ Detection failed: ' + error.message;
+                statusDiv.className = 'status error';
+            }
+        }
+
+        async function showDebugInfo() {
+            const debugDiv = document.getElementById('debug-info');
+            const debugOutput = document.getElementById('debug-output');
+            
+            if (!translationManager) {
+                alert('Translation manager not initialized');
+                return;
+            }
+            
+            try {
+                debugOutput.textContent = 'Loading debug information...';
+                debugDiv.style.display = 'block';
+                
+                const debugInfo = await translationManager.getGeolocationDebugInfo();
+                debugOutput.textContent = JSON.stringify(debugInfo, null, 2);
+                
+                console.log('Debug info:', debugInfo);
+                
+            } catch (error) {
+                console.error('Failed to get debug info:', error);
+                debugOutput.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('preferred-language');
+            alert('Stored language preference cleared! Refresh the page to test first-time visitor experience.');
+            console.log('Local storage cleared');
+        }
+
+        function testSpanishIP() {
+            // This is a mock function for testing - in reality, you can't simulate IP
+            alert('To test Spanish IP detection:\n\n1. Use a VPN to connect to Spain\n2. Or use browser dev tools to simulate location\n3. Or modify the GeolocationDetector code temporarily');
+            console.log('Spanish IP simulation requested - use VPN or modify code for testing');
+        }
+
+        // Log language changes
+        if (window.TranslationManager) {
+            const observer = (language) => {
+                console.log('🌐 Language changed to:', language);
+                const statusDiv = document.getElementById('status');
+                if (statusDiv.className.includes('success')) {
+                    statusDiv.innerHTML = '<strong>Status:</strong> ✅ Language changed to: ' + language.toUpperCase();
+                }
+            };
+            
+            // Add observer when translation manager is available
+            setTimeout(() => {
+                if (translationManager) {
+                    translationManager.addObserver(observer);
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

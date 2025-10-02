@@ -16,11 +16,55 @@ class TranslationManager {
         try {
             await this.loadTranslations();
             this.setupLanguageSelector();
-            // Don't update page automatically - only when user explicitly changes language
+            
+            // Initialize geolocation-based language detection
+            await this.initializeGeolocationDetection();
+            
             this.observeLanguageChanges();
         } catch (error) {
             console.error('Failed to initialize translation system:', error);
             // Fallback to default behavior without translations
+        }
+    }
+
+    /**
+     * Initialize geolocation-based language detection
+     */
+    async initializeGeolocationDetection() {
+        try {
+            // Only detect if no language is stored or if this is the first visit
+            const storedLanguage = this.getStoredLanguage();
+            
+            if (!storedLanguage && window.GeolocationDetector) {
+                console.log('No stored language preference found, detecting based on IP...');
+                const detector = new window.GeolocationDetector();
+                const detectedLanguage = await detector.init(this);
+                
+                // Update the language selector to reflect the detected language
+                this.updateLanguageSelector();
+                
+                console.log(`Language set to: ${detectedLanguage} based on IP geolocation`);
+            } else if (storedLanguage) {
+                console.log(`Using stored language preference: ${storedLanguage}`);
+                // Still update the page with the stored language
+                this.updatePageLanguage();
+            }
+        } catch (error) {
+            console.warn('Geolocation detection failed, using default language:', error);
+            // Fallback to English if detection fails
+            if (!this.getStoredLanguage()) {
+                await this.changeLanguage('en');
+            }
+        }
+    }
+
+    /**
+     * Update language selector to reflect current language
+     */
+    updateLanguageSelector() {
+        const languageSelect = document.getElementById('language-select');
+        if (languageSelect) {
+            languageSelect.value = this.currentLanguage;
         }
     }
 
@@ -1032,6 +1076,34 @@ class TranslationManager {
      */
     getSupportedLanguages() {
         return Object.keys(this.translations);
+    }
+
+    /**
+     * Force geolocation detection (useful for testing)
+     */
+    async forceGeolocationDetection() {
+        if (window.GeolocationDetector) {
+            console.log('Forcing geolocation detection...');
+            const detector = new window.GeolocationDetector();
+            const detectedLanguage = await detector.forceDetection(this);
+            this.updateLanguageSelector();
+            return detectedLanguage;
+        } else {
+            console.warn('GeolocationDetector not available');
+            return this.currentLanguage;
+        }
+    }
+
+    /**
+     * Get debug information about geolocation detection
+     */
+    async getGeolocationDebugInfo() {
+        if (window.GeolocationDetector) {
+            const detector = new window.GeolocationDetector();
+            return await detector.getDebugInfo();
+        } else {
+            return { error: 'GeolocationDetector not available' };
+        }
     }
 }
 

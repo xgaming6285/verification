@@ -2169,15 +2169,15 @@ function initializeCameraCapture() {
       placeholder.style.display = "none";
       overlay.style.display = "block";
 
-      // Show tap instruction overlay (static, no auto-hide)
+      // Show capture instruction overlay (static, no auto-hide)
       if (tapInstructionOverlay) {
         tapInstructionOverlay.style.display = "block";
       }
 
       // Rotation controls removed - no longer needed
 
-      // Initialize triple-tap functionality instead of showing button
-      initializeTripleTap();
+      // Show capture button instead of triple-tap functionality
+      showCaptureButton();
 
       // Debug log
       console.log("Triple-tap capture initialized:", {
@@ -2450,7 +2450,28 @@ function captureCurrentPhoto() {
   );
 }
 
-// Triple-tap detection functions
+// Show capture button functionality 
+function showCaptureButton() {
+  const captureBtn = document.getElementById("capture-photo-btn");
+  const tapIndicator = document.getElementById("triple-tap-indicator");
+  
+  if (captureBtn) {
+    // Show the capture button
+    captureBtn.style.display = "flex";
+    captureBtn.classList.remove("hidden");
+    console.log("Capture button displayed");
+  }
+  
+  // Hide triple-tap indicator as it's no longer needed
+  if (tapIndicator) {
+    tapIndicator.style.display = "none";
+  }
+  
+  // Remove any existing triple-tap listeners
+  removeTripleTapListeners();
+}
+
+// Triple-tap detection functions (kept for cleanup, but no longer used)
 function initializeTripleTap() {
   const cameraArea = document.getElementById("camera-capture-area");
   const tapIndicator = document.getElementById("triple-tap-indicator");
