@@ -780,15 +780,7 @@ function validatePersonalInfo() {
     }
   }
 
-  // EGN validation (basic)
-  const egn = formData.get("egn");
-  if (egn && egn.length !== 10) {
-    const message = window.translationManager 
-      ? window.translationManager.t("verification.validation.egn_invalid", "Personal ID Number must be 10 digits.")
-      : "Personal ID Number must be 10 digits.";
-    alert(message);
-    return false;
-  }
+  // EGN validation removed per user request
 
   return true;
 }

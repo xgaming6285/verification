@@ -1684,16 +1684,8 @@ function validateCurrentField() {
         return false;
       }
       break;
-    case 9: // Postal code validation
-      const selectedCountry = document.getElementById("country").value;
-      if (selectedCountry && COUNTRIES[selectedCountry]) {
-        const postalFormat = COUNTRIES[selectedCountry].postalFormat;
-        if (value && !postalFormat.test(value)) {
-          alert("Please enter a valid postal code for your country.");
-          inputField.focus();
-          return false;
-        }
-      }
+    case 9: // Postal code - no validation
+      // Postal code validation removed per user request
       break;
     case 10: // Street name validation
       if (value && value.length < 3) {
@@ -1900,16 +1892,8 @@ function validatePersonalInfo() {
     }
   }
 
-  // EGN validation (basic)
-  if (personalInfo.egn && personalInfo.egn.length !== 10) {
-    alert(
-      t(
-        "verification.validation.egn_invalid",
-        "Personal ID Number must be 10 digits."
-      )
-    );
-    return false;
-  }
+  // EGN validation (removed per user request)
+  // Personal ID Number validation removed
 
   // Email validation
   if (
