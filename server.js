@@ -44,8 +44,10 @@ let client;
 let db;
 
 // AWS configuration - use environment variables for security
+const AWS_REGION = process.env.AWS_REGION || "eu-north-1"; // Stockholm region
+
 AWS.config.update({
-  region: "eu-west-1", // Using Ireland region which supports Rekognition
+  region: AWS_REGION,
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
@@ -53,13 +55,13 @@ AWS.config.update({
 const rekognition = new AWS.Rekognition();
 const s3 = new AWS.S3({
   signatureVersion: "v4",
-  region: "eu-west-1", // Using Ireland region for better service availability
+  region: AWS_REGION,
   s3ForcePathStyle: false,
-  endpoint: "https://s3.eu-west-1.amazonaws.com",
+  endpoint: `https://s3.${AWS_REGION}.amazonaws.com`,
 });
 
 // S3 bucket configuration for session recordings
-const SESSION_RECORDING_BUCKET = "verification-form-bucket";
+const SESSION_RECORDING_BUCKET = process.env.S3_BUCKET_NAME || "verification-form-bucket";
 
 // Multer configuration for handling video uploads
 const upload = multer({
