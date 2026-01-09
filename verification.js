@@ -23,13 +23,16 @@ async function requestInitialPermissions() {
   verificationPage.classList.add("permissions-pending");
 
   // Handle grant button click
-  grantBtn.onclick = async function() {
+  grantBtn.onclick = async function () {
     try {
       // Update button to show requesting state
       grantBtn.disabled = true;
       grantBtn.innerHTML = `
         <i class="fas fa-spinner fa-spin"></i>
-        <span>${t("verification.permissions.requesting", "Requesting permissions...")}</span>
+        <span>${t(
+          "verification.permissions.requesting",
+          "Requesting permissions..."
+        )}</span>
       `;
 
       console.log("🔐 Requesting camera and microphone permissions...");
@@ -37,7 +40,7 @@ async function requestInitialPermissions() {
       // Request both camera and microphone permissions
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
-        audio: true
+        audio: true,
       });
 
       // Permissions granted!
@@ -45,12 +48,15 @@ async function requestInitialPermissions() {
       permissionsGranted = true;
 
       // Stop the stream immediately - we just needed to get permissions
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
 
       // Update UI to show success
       grantBtn.innerHTML = `
         <i class="fas fa-check-circle"></i>
-        <span>${t("verification.permissions.granted_success", "Permissions Granted!")}</span>
+        <span>${t(
+          "verification.permissions.granted_success",
+          "Permissions Granted!"
+        )}</span>
       `;
       grantBtn.classList.add("success");
 
@@ -58,16 +64,15 @@ async function requestInitialPermissions() {
       setTimeout(() => {
         // Hide the modal
         modal.style.display = "none";
-        
+
         // Enable the verification page
         verificationPage.classList.remove("permissions-pending");
-        
+
         // Initialize video recording after permissions are granted
-        if (typeof initializeVideoRecording === 'function') {
+        if (typeof initializeVideoRecording === "function") {
           initializeVideoRecording();
         }
       }, 1000);
-
     } catch (error) {
       console.error("❌ Permission denied or error:", error);
       permissionsGranted = false;
@@ -78,23 +83,35 @@ async function requestInitialPermissions() {
 
       // Show detailed error message based on error type
       let errorMessage;
-      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+      if (
+        error.name === "NotAllowedError" ||
+        error.name === "PermissionDeniedError"
+      ) {
         errorMessage = t(
           "verification.validation.permissions_denied",
           "Camera and microphone access denied. Please grant permissions to continue with verification."
         );
         grantBtn.innerHTML = `
           <i class="fas fa-exclamation-triangle"></i>
-          <span>${t("verification.permissions.denied", "Permission Denied - Try Again")}</span>
+          <span>${t(
+            "verification.permissions.denied",
+            "Permission Denied - Try Again"
+          )}</span>
         `;
-      } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+      } else if (
+        error.name === "NotFoundError" ||
+        error.name === "DevicesNotFoundError"
+      ) {
         errorMessage = t(
           "verification.validation.no_camera",
           "No camera or microphone found. Please ensure your device has a camera and microphone."
         );
         grantBtn.innerHTML = `
           <i class="fas fa-exclamation-circle"></i>
-          <span>${t("verification.permissions.no_device", "No Camera/Microphone Found")}</span>
+          <span>${t(
+            "verification.permissions.no_device",
+            "No Camera/Microphone Found"
+          )}</span>
         `;
       } else {
         errorMessage = t(
@@ -103,7 +120,10 @@ async function requestInitialPermissions() {
         );
         grantBtn.innerHTML = `
           <i class="fas fa-times-circle"></i>
-          <span>${t("verification.permissions.error", "Error - Try Again")}</span>
+          <span>${t(
+            "verification.permissions.error",
+            "Error - Try Again"
+          )}</span>
         `;
       }
 
@@ -115,12 +135,16 @@ async function requestInitialPermissions() {
         </div>
         <button class="grant-permission-btn" id="grant-permission-btn">
           <i class="fas fa-redo"></i>
-          <span>${t("verification.permissions.retry", "Retry Permission Request")}</span>
+          <span>${t(
+            "verification.permissions.retry",
+            "Retry Permission Request"
+          )}</span>
         </button>
       `;
 
       // Re-bind the click handler for retry
-      document.getElementById("grant-permission-btn").onclick = grantBtn.onclick;
+      document.getElementById("grant-permission-btn").onclick =
+        grantBtn.onclick;
     }
   };
 }
@@ -345,16 +369,22 @@ class VideoRecordingManager {
 
       console.log("🎥 Initializing session recording...", this.sessionId);
 
-      // Try to get both front and back camera streams
-      const frontCameraStream = await this.getCameraStream("user");
-      const backCameraStream = await this.getCameraStream("environment");
+      // Try to get camera streams
+      // On iOS, we only capture the front camera to prevent resource exhaustion and freezing
+      // simultaneous multi-camera recording is often not supported or unstable on mobile browsers
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
+      const frontCameraStream = await this.getCameraStream("user");
       if (frontCameraStream) {
         this.streams.push({ type: "front", stream: frontCameraStream });
       }
 
-      if (backCameraStream) {
-        this.streams.push({ type: "back", stream: backCameraStream });
+      // Only attempt back camera recording on non-iOS devices
+      if (!isIOS) {
+        const backCameraStream = await this.getCameraStream("environment");
+        if (backCameraStream) {
+          this.streams.push({ type: "back", stream: backCameraStream });
+        }
       }
 
       console.log(
@@ -2141,7 +2171,7 @@ function startCameraCapture() {
 // Request camera and microphone permissions
 async function requestCameraPermissions() {
   const startBtn = document.getElementById("start-camera-btn");
-  
+
   // Update button to show requesting state
   if (startBtn) {
     startBtn.disabled = true;
@@ -2155,7 +2185,7 @@ async function requestCameraPermissions() {
     // Request both camera and microphone permissions
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
-      audio: true
+      audio: true,
     });
 
     // Permissions granted!
@@ -2163,7 +2193,7 @@ async function requestCameraPermissions() {
     permissionsGranted = true;
 
     // Stop the stream immediately - we just needed to get permissions
-    stream.getTracks().forEach(track => track.stop());
+    stream.getTracks().forEach((track) => track.stop());
 
     // Update button to show success and enable camera
     if (startBtn) {
@@ -2172,10 +2202,10 @@ async function requestCameraPermissions() {
         <i class="fas fa-check-circle"></i>
         <span data-translate="verification.step2.permissions_granted">Permissions Granted - Start Camera</span>
       `;
-      
+
       // Add visual feedback
       startBtn.classList.add("permissions-granted");
-      
+
       // Automatically proceed to camera capture after a short delay
       setTimeout(() => {
         if (startBtn) {
@@ -2203,12 +2233,18 @@ async function requestCameraPermissions() {
 
     // Show detailed error message
     let errorMessage;
-    if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+    if (
+      error.name === "NotAllowedError" ||
+      error.name === "PermissionDeniedError"
+    ) {
       errorMessage = t(
         "verification.validation.permissions_denied",
         "Camera and microphone access denied. Please grant permissions in your browser settings to continue with verification."
       );
-    } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+    } else if (
+      error.name === "NotFoundError" ||
+      error.name === "DevicesNotFoundError"
+    ) {
       errorMessage = t(
         "verification.validation.no_camera",
         "No camera or microphone found. Please ensure your device has a camera and microphone."
@@ -2653,23 +2689,23 @@ function captureCurrentPhoto() {
   );
 }
 
-// Show capture button functionality 
+// Show capture button functionality
 function showCaptureButton() {
   const captureBtn = document.getElementById("capture-photo-btn");
   const tapIndicator = document.getElementById("triple-tap-indicator");
-  
+
   if (captureBtn) {
     // Show the capture button
     captureBtn.style.display = "flex";
     captureBtn.classList.remove("hidden");
     console.log("Capture button displayed");
   }
-  
+
   // Hide triple-tap indicator as it's no longer needed
   if (tapIndicator) {
     tapIndicator.style.display = "none";
   }
-  
+
   // Remove any existing triple-tap listeners
   removeTripleTapListeners();
 }
