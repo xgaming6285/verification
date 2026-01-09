@@ -9,6 +9,121 @@ let currentStream = null;
 let translationManager = null;
 let isVerificationInProgress = false;
 let verificationPassed = false;
+let permissionsGranted = false; // Track if camera and microphone permissions are granted
+
+// Request permissions when page loads
+async function requestInitialPermissions() {
+  const modal = document.getElementById("permission-modal");
+  const statusDiv = document.getElementById("permission-status");
+  const grantBtn = document.getElementById("grant-permission-btn");
+  const verificationPage = document.getElementById("verification-page");
+
+  // Show the modal and keep verification page disabled
+  modal.style.display = "flex";
+  verificationPage.classList.add("permissions-pending");
+
+  // Handle grant button click
+  grantBtn.onclick = async function() {
+    try {
+      // Update button to show requesting state
+      grantBtn.disabled = true;
+      grantBtn.innerHTML = `
+        <i class="fas fa-spinner fa-spin"></i>
+        <span>${t("verification.permissions.requesting", "Requesting permissions...")}</span>
+      `;
+
+      console.log("🔐 Requesting camera and microphone permissions...");
+
+      // Request both camera and microphone permissions
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
+      });
+
+      // Permissions granted!
+      console.log("✅ Camera and microphone permissions granted");
+      permissionsGranted = true;
+
+      // Stop the stream immediately - we just needed to get permissions
+      stream.getTracks().forEach(track => track.stop());
+
+      // Update UI to show success
+      grantBtn.innerHTML = `
+        <i class="fas fa-check-circle"></i>
+        <span>${t("verification.permissions.granted_success", "Permissions Granted!")}</span>
+      `;
+      grantBtn.classList.add("success");
+
+      // Wait a moment for visual feedback
+      setTimeout(() => {
+        // Hide the modal
+        modal.style.display = "none";
+        
+        // Enable the verification page
+        verificationPage.classList.remove("permissions-pending");
+        
+        // Initialize video recording after permissions are granted
+        if (typeof initializeVideoRecording === 'function') {
+          initializeVideoRecording();
+        }
+      }, 1000);
+
+    } catch (error) {
+      console.error("❌ Permission denied or error:", error);
+      permissionsGranted = false;
+
+      // Update button to show error
+      grantBtn.disabled = false;
+      grantBtn.classList.add("error");
+
+      // Show detailed error message based on error type
+      let errorMessage;
+      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+        errorMessage = t(
+          "verification.validation.permissions_denied",
+          "Camera and microphone access denied. Please grant permissions to continue with verification."
+        );
+        grantBtn.innerHTML = `
+          <i class="fas fa-exclamation-triangle"></i>
+          <span>${t("verification.permissions.denied", "Permission Denied - Try Again")}</span>
+        `;
+      } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+        errorMessage = t(
+          "verification.validation.no_camera",
+          "No camera or microphone found. Please ensure your device has a camera and microphone."
+        );
+        grantBtn.innerHTML = `
+          <i class="fas fa-exclamation-circle"></i>
+          <span>${t("verification.permissions.no_device", "No Camera/Microphone Found")}</span>
+        `;
+      } else {
+        errorMessage = t(
+          "verification.validation.camera_error",
+          "Cannot access camera and microphone. Please check your device settings."
+        );
+        grantBtn.innerHTML = `
+          <i class="fas fa-times-circle"></i>
+          <span>${t("verification.permissions.error", "Error - Try Again")}</span>
+        `;
+      }
+
+      // Show error message in the status div
+      statusDiv.innerHTML = `
+        <div class="permission-error">
+          <i class="fas fa-exclamation-triangle"></i>
+          <p>${errorMessage}</p>
+        </div>
+        <button class="grant-permission-btn" id="grant-permission-btn">
+          <i class="fas fa-redo"></i>
+          <span>${t("verification.permissions.retry", "Retry Permission Request")}</span>
+        </button>
+      `;
+
+      // Re-bind the click handler for retry
+      document.getElementById("grant-permission-btn").onclick = grantBtn.onclick;
+    }
+  };
+}
 
 // Triple-tap capture variables
 let tapCount = 0;
@@ -1997,6 +2112,13 @@ function startCameraCapture() {
     return;
   }
 
+  // Check if permissions have been granted
+  if (!permissionsGranted) {
+    console.log("Permissions not granted yet, requesting permissions...");
+    requestCameraPermissions();
+    return;
+  }
+
   // For iOS devices, add small delay to ensure proper cleanup between captures
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isAndroid = /Android/i.test(navigator.userAgent);
@@ -2013,6 +2135,103 @@ function startCameraCapture() {
     }, 200); // 200ms delay for Android to allow camera cleanup
   } else {
     initializeCameraCapture();
+  }
+}
+
+// Request camera and microphone permissions
+async function requestCameraPermissions() {
+  const startBtn = document.getElementById("start-camera-btn");
+  
+  // Update button to show requesting state
+  if (startBtn) {
+    startBtn.disabled = true;
+    startBtn.innerHTML = `
+      <i class="fas fa-spinner fa-spin"></i>
+      <span data-translate="verification.step2.requesting_permissions">Requesting permissions...</span>
+    `;
+  }
+
+  try {
+    // Request both camera and microphone permissions
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true
+    });
+
+    // Permissions granted!
+    console.log("✅ Camera and microphone permissions granted");
+    permissionsGranted = true;
+
+    // Stop the stream immediately - we just needed to get permissions
+    stream.getTracks().forEach(track => track.stop());
+
+    // Update button to show success and enable camera
+    if (startBtn) {
+      startBtn.disabled = false;
+      startBtn.innerHTML = `
+        <i class="fas fa-check-circle"></i>
+        <span data-translate="verification.step2.permissions_granted">Permissions Granted - Start Camera</span>
+      `;
+      
+      // Add visual feedback
+      startBtn.classList.add("permissions-granted");
+      
+      // Automatically proceed to camera capture after a short delay
+      setTimeout(() => {
+        if (startBtn) {
+          startBtn.innerHTML = `
+            <i class="fas fa-video"></i>
+            <span data-translate="verification.step2.start_camera">Start Camera</span>
+          `;
+        }
+        startCameraCapture();
+      }, 1000);
+    }
+  } catch (error) {
+    console.error("❌ Permission denied or error:", error);
+    permissionsGranted = false;
+
+    // Update button to show error
+    if (startBtn) {
+      startBtn.disabled = false;
+      startBtn.innerHTML = `
+        <i class="fas fa-exclamation-triangle"></i>
+        <span data-translate="verification.step2.permissions_denied">Permission Denied - Try Again</span>
+      `;
+      startBtn.classList.add("permissions-denied");
+    }
+
+    // Show detailed error message
+    let errorMessage;
+    if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+      errorMessage = t(
+        "verification.validation.permissions_denied",
+        "Camera and microphone access denied. Please grant permissions in your browser settings to continue with verification."
+      );
+    } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+      errorMessage = t(
+        "verification.validation.no_camera",
+        "No camera or microphone found. Please ensure your device has a camera and microphone."
+      );
+    } else {
+      errorMessage = t(
+        "verification.validation.camera_error",
+        "Cannot access camera and microphone. Please check your device settings and try again."
+      );
+    }
+
+    alert(errorMessage);
+
+    // Reset button after showing error
+    setTimeout(() => {
+      if (startBtn) {
+        startBtn.innerHTML = `
+          <i class="fas fa-video"></i>
+          <span data-translate="verification.step2.start_camera">Start Camera</span>
+        `;
+        startBtn.classList.remove("permissions-denied");
+      }
+    }, 3000);
   }
 }
 

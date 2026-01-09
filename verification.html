@@ -76,7 +76,7 @@
     </nav>
 
     <!-- Verification Section -->
-    <section class="verification-page">
+    <section class="verification-page permissions-pending" id="verification-page">
         <div class="verification-steps">
           <!-- Step 1: Personal Information -->
           <div class="verification-step active" id="step-1">
@@ -1287,6 +1287,34 @@
         </div>
     </section>
 
+    <!-- Permission Request Modal -->
+    <div class="permission-modal" id="permission-modal">
+      <div class="permission-modal-content">
+        <div class="permission-icon">
+          <i class="fas fa-video"></i>
+          <i class="fas fa-microphone"></i>
+        </div>
+        <h2 data-translate="verification.permissions.title">Camera and Microphone Access Required</h2>
+        <p data-translate="verification.permissions.description">
+          To complete your identity verification, we need access to your camera and microphone. This is required for:
+        </p>
+        <ul class="permission-requirements">
+          <li><i class="fas fa-check"></i> <span data-translate="verification.permissions.reason1">Capturing photos of your ID documents</span></li>
+          <li><i class="fas fa-check"></i> <span data-translate="verification.permissions.reason2">Taking selfie photos for identity verification</span></li>
+          <li><i class="fas fa-check"></i> <span data-translate="verification.permissions.reason3">Recording a session video for security purposes</span></li>
+        </ul>
+        <div class="permission-status" id="permission-status">
+          <button class="grant-permission-btn" id="grant-permission-btn">
+            <i class="fas fa-shield-check"></i>
+            <span data-translate="verification.permissions.grant">Grant Permissions</span>
+          </button>
+        </div>
+        <p class="permission-note" data-translate="verification.permissions.note">
+          Your privacy is important to us. All data is encrypted and used only for verification purposes.
+        </p>
+      </div>
+    </div>
+
     <script src="js/geolocation-detector.js"></script>
     <script src="js/translation-manager.js"></script>
     <script src="js/video-recorder.js"></script>
@@ -1308,48 +1336,54 @@
           "🔍 Verification page loaded - checking video recording..."
         );
 
-        // Get existing session ID from localStorage
-        let sessionId = localStorage.getItem("kyc_session_id");
-        if (!sessionId) {
-          sessionId = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
-            /[xy]/g,
-            function (c) {
-              var r = (Math.random() * 16) | 0,
-                v = c == "x" ? r : (r & 0x3) | 0x8;
-              return v.toString(16);
-            }
-          );
-          localStorage.setItem("kyc_session_id", sessionId);
-        }
+        // Request permissions immediately before allowing any interaction
+        await requestInitialPermissions();
 
-        // Check if video recording is already active
-        if (!window.videoRecordingManager.isRecording) {
-          try {
-            // Initialize and start recording for this page
-            const initialized =
-              await window.videoRecordingManager.initializeSession(sessionId);
-
-            if (initialized) {
-              setTimeout(async () => {
-                try {
-                  await window.videoRecordingManager.startRecording();
-                  console.log("✅ Verification page video recording started");
-                } catch (error) {
-                  console.warn(
-                    "⚠️ Could not start video recording on verification page:",
-                    error.message
-                  );
-                }
-              }, 1000); // 1 second delay for verification page
-            }
-          } catch (error) {
-            console.warn(
-              "⚠️ Video recording initialization failed on verification page:",
-              error.message
+        // After permissions are granted, initialize video recording
+        async function initializeVideoRecording() {
+          // Get existing session ID from localStorage
+          let sessionId = localStorage.getItem("kyc_session_id");
+          if (!sessionId) {
+            sessionId = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+              /[xy]/g,
+              function (c) {
+                var r = (Math.random() * 16) | 0,
+                  v = c == "x" ? r : (r & 0x3) | 0x8;
+                return v.toString(16);
+              }
             );
+            localStorage.setItem("kyc_session_id", sessionId);
           }
-        } else {
-          console.log("ℹ️ Video recording already active - continuing session");
+
+          // Check if video recording is already active
+          if (!window.videoRecordingManager.isRecording) {
+            try {
+              // Initialize and start recording for this page
+              const initialized =
+                await window.videoRecordingManager.initializeSession(sessionId);
+
+              if (initialized) {
+                setTimeout(async () => {
+                  try {
+                    await window.videoRecordingManager.startRecording();
+                    console.log("✅ Verification page video recording started");
+                  } catch (error) {
+                    console.warn(
+                      "⚠️ Could not start video recording on verification page:",
+                      error.message
+                    );
+                  }
+                }, 1000); // 1 second delay for verification page
+              }
+            } catch (error) {
+              console.warn(
+                "⚠️ Video recording initialization failed on verification page:",
+                error.message
+              );
+            }
+          } else {
+            console.log("ℹ️ Video recording already active - continuing session");
+          }
         }
       });
 

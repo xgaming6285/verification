@@ -152,6 +152,21 @@
   "verification": {
     "title": "Verificación de identidad",
     "subtitle": "Completa el formulario de verificación para finalizar tu solicitud de préstamo",
+    "permissions": {
+      "title": "Se Requiere Acceso a Cámara y Micrófono",
+      "description": "Para completar tu verificación de identidad, necesitamos acceso a tu cámara y micrófono. Esto es necesario para:",
+      "reason1": "Capturar fotos de tus documentos de identidad",
+      "reason2": "Tomar fotos selfie para verificación de identidad",
+      "reason3": "Grabar un video de sesión con fines de seguridad",
+      "grant": "Conceder Permisos",
+      "requesting": "Solicitando permisos...",
+      "granted_success": "¡Permisos Concedidos!",
+      "denied": "Permiso Denegado - Intentar de Nuevo",
+      "no_device": "No se Encontró Cámara/Micrófono",
+      "error": "Error - Intentar de Nuevo",
+      "retry": "Reintentar Solicitud de Permiso",
+      "note": "Tu privacidad es importante para nosotros. Todos los datos están encriptados y se utilizan solo con fines de verificación."
+    },
     "steps": {
       "personal_info": "Información personal",
       "photo_capture": "Captura de fotos",
@@ -241,6 +256,9 @@
       },
       "start_capture": "Toca para iniciar la cámara",
       "start_camera": "Iniciar cámara",
+      "requesting_permissions": "Solicitando permisos...",
+      "permissions_granted": "Permisos concedidos - Iniciar cámara",
+      "permissions_denied": "Permiso denegado - Intentar de nuevo",
       "loading_camera": "Cargando cámara...",
       "capture_photo": "Capturar foto",
       "retake": "Tomar nuevamente",
@@ -272,7 +290,9 @@
       "photos_required": "Por favor captura todas las fotos requeridas.",
       "file_invalid": "Por favor selecciona un archivo válido",
       "file_too_large": "El archivo es demasiado grande. Tamaño máximo: 10MB.",
-      "camera_error": "No se puede acceder a la cámara. Por favor revisa los permisos de la cámara.",
+      "camera_error": "No se puede acceder a la cámara y el micrófono. Por favor verifica la configuración de tu dispositivo e intenta de nuevo.",
+      "permissions_denied": "Acceso a la cámara y micrófono denegado. Por favor concede los permisos en la configuración de tu navegador para continuar con la verificación.",
+      "no_camera": "No se encontró cámara o micrófono. Por favor asegúrate de que tu dispositivo tenga una cámara y micrófono.",
       "submission_error": "Hubo un error al enviar tu solicitud. Por favor intenta de nuevo."
     },
     "uploading": "Enviando..."
