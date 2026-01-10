@@ -1,0 +1,297 @@
+{
+  "meta": {
+    "title": "CreditoPro - Snabba lån online",
+    "lang": "sv"
+  },
+  "navigation": {
+    "home": "Hem",
+    "calculator": "Lån",
+    "how_it_works": "Så fungerar det",
+    "contact": "Kontakt"
+  },
+  "hero": {
+    "title": "Snabbt lån upp till <span class=\"highlight\">25 000 €</span>",
+    "subtitle": "Få godkännande på några minuter, pengar på ditt konto inom en timme. Inga dolda avgifter, transparenta villkor.",
+    "stats": {
+      "approval": "Godkännande",
+      "clients": "Kunder",
+      "security": "Säkerhet"
+    },
+    "cta_button": "Ansök nu"
+  },
+  "calculator": {
+    "title": "Lånekalkylator",
+    "subtitle": "Beräkna dina lånevillkor",
+    "loan_amount": "Lånebelopp",
+    "loan_period": "Återbetalningstid",
+    "currency": "€",
+    "months": "månader",
+    "details_title": "Lånedetaljer",
+    "monthly_payment": "Månadsbetalning:",
+    "interest_rate": "Ränta:",
+    "total_amount": "Totalt att återbetala:",
+    "apply_button": "Ansök om detta lån"
+  },
+  "how_it_works": {
+    "title": "Hur fungerar det?",
+    "subtitle": "Enkel process i 3 steg",
+    "steps": {
+      "step1": {
+        "title": "Fyll i ansökan",
+        "description": "Ange dina uppgifter och välj önskat belopp och löptid"
+      },
+      "step2": {
+        "title": "Få godkännande",
+        "description": "Automatisk verifiering och svar inom några minuter"
+      },
+      "step3": {
+        "title": "Ta emot pengarna",
+        "description": "Pengarna överförs direkt till ditt bankkonto"
+      }
+    }
+  },
+  "testimonials": {
+    "title": "Vad våra kunder säger",
+    "subtitle": "Över 15 000 nöjda kunder har litat på våra tjänster",
+    "stats": {
+      "approval": "Godkännande",
+      "clients": "Kunder"
+    },
+    "testimonial1": {
+      "text": "\"Mycket snabb och bekväm process. Jag fick pengarna samma dag!\"",
+      "author": "Maria I.",
+      "location": "Stockholm"
+    },
+    "testimonial2": {
+      "text": "\"Utmärkt service och transparenta villkor. Jag rekommenderar!\"",
+      "author": "Peter S.",
+      "location": "Göteborg"
+    },
+    "testimonial3": {
+      "text": "\"De räddade mig i en svår situation. Tack för professionalismen!\"",
+      "author": "Elena D.",
+      "location": "Malmö"
+    }
+  },
+  "faq": {
+    "title": "Vanliga frågor",
+    "questions": {
+      "q1": {
+        "question": "Hur lång tid tar godkännandeprocessen?",
+        "answer": "Vanligtvis tar godkännandeprocessen mellan 15-30 minuter. I de flesta fall får du svar direkt efter att du skickat in din ansökan."
+      },
+      "q2": {
+        "question": "Vilka dokument krävs?",
+        "answer": "Endast legitimation och inkomstbevis krävs. Alla dokument kan laddas upp online."
+      },
+      "q3": {
+        "question": "Finns det några dolda avgifter?",
+        "answer": "Nej, det finns inga dolda avgifter. Alla kostnader anges tydligt innan avtalet undertecknas."
+      },
+      "q4": {
+        "question": "Kan jag återbetala lånet i förtid?",
+        "answer": "Ja, du kan återbetala lånet i förtid utan extra avgifter för förtida återbetalning."
+      }
+    }
+  },
+  "contact": {
+    "title": "Kontakta oss",
+    "phone_label": "Telefon",
+    "phone": "0700 12 345",
+    "email_label": "E-post",
+    "email": "info@creditopro.se",
+    "hours_label": "Öppettider",
+    "hours": "Mån-Fre: 09:00-18:00"
+  },
+  "footer": {
+    "description": "Din pålitliga partner för snabba lån online.",
+    "services": {
+      "title": "Tjänster",
+      "consumer_loans": "Konsumentlån",
+      "quick_loans": "Snabblån",
+      "refinancing": "Refinansiering"
+    },
+    "information": {
+      "title": "Information",
+      "terms": "Villkor",
+      "privacy": "Integritet",
+      "gdpr": "GDPR"
+    },
+    "copyright": "© 2024 CreditoPro. Alla rättigheter förbehållna."
+  },
+  "help": {
+    "title": "Behöver du hjälp?",
+    "subtitle": "Kontakta oss:",
+    "call": "Ring oss",
+    "email": "Skicka e-post",
+    "close": "Stäng"
+  },
+  "camera": {
+    "title": "Dokumentfångst",
+    "capture": "Ta bild",
+    "cancel": "Avbryt"
+  },
+  "success_story": {
+    "badge": "Framgångssaga",
+    "title": "Vi hjälpte tusentals människor att uppnå sina drömmar",
+    "description": "Sedan 2020 har vi godkänt över 25 miljoner EUR i lån och hjälpt mer än 15 000 personer att förverkliga sina planer och drömmar.",
+    "highlights": {
+      "housing": "Bostadslån",
+      "auto": "Billån",
+      "education": "Studielån",
+      "business": "Företagslån"
+    },
+    "big_stat": "EUR godkända lån",
+    "stats": {
+      "clients": "Nöjda kunder",
+      "experience": "Erfarenhet",
+      "approval": "Godkännande"
+    }
+  },
+  "verification": {
+    "title": "Identitetsverifiering",
+    "subtitle": "Fyll i verifieringsformuläret för att slutföra din låneansökan",
+    "permissions": {
+      "title": "Kamera- och mikrofonåtkomst krävs",
+      "description": "För att slutföra din identitetsverifiering behöver vi åtkomst till din kamera och mikrofon. Detta krävs för:",
+      "reason1": "Ta foton av dina ID-dokument",
+      "reason2": "Ta selfie-foton för identitetsverifiering",
+      "reason3": "Spela in en sessionsvideo för säkerhetsändamål",
+      "grant": "Bevilja behörigheter",
+      "requesting": "Begär behörigheter...",
+      "granted_success": "Behörigheter beviljades!",
+      "denied": "Behörighet nekad - Försök igen",
+      "no_device": "Ingen kamera/mikrofon hittades",
+      "error": "Fel - Försök igen",
+      "retry": "Försök igen med behörighetsbegäran",
+      "note": "Din integritet är viktig för oss. All data är krypterad och används endast för verifieringsändamål."
+    },
+    "steps": {
+      "personal_info": "Personlig info",
+      "photo_capture": "Fotografering",
+      "complete": "Slutfört"
+    },
+    "step1": {
+      "title": "Ange din personliga information",
+      "first_name": "Förnamn",
+      "first_name_description": "Ange ditt förnamn som det står på din legitimation",
+      "first_name_placeholder": "Ange ditt förnamn",
+      "last_name": "Efternamn",
+      "last_name_description": "Ange ditt efternamn som det står på din legitimation",
+      "last_name_placeholder": "Ange ditt efternamn",
+      "egn": "Personnummer",
+      "egn_description": "Ange ditt personnummer (upp till 18 tecken)",
+      "egn_placeholder": "Ange ditt personnummer",
+      "phone": "Telefon",
+      "phone_description": "Ange ditt aktiva telefonnummer för verifiering",
+      "phone_placeholder": "Telefonnummer (utan landskod)",
+      "phone_select_country": "Välj land",
+      "email": "E-postadress",
+      "email_description": "Ange din e-postadress för viktiga meddelanden",
+      "email_placeholder": "Ange din e-postadress",
+      "country": "Land",
+      "country_description": "Välj ditt bosättningsland",
+      "country_placeholder": "Välj ditt land",
+      "state": "Län / Region",
+      "state_description": "Välj ditt län eller region",
+      "state_placeholder": "Välj ditt län/region",
+      "state_input_placeholder": "Ange ditt län/region",
+      "city": "Stad / Ort",
+      "city_description": "Ange din stad eller ort",
+      "city_placeholder": "Ange din stad",
+      "postal_code": "Postnummer",
+      "postal_description": "Ange ditt postnummer",
+      "postal_placeholder": "Ange ditt postnummer",
+      "street_name": "Gatunamn",
+      "street_description": "Ange namnet på din gata",
+      "street_placeholder": "t.ex. Storgatan, Kyrkvägen",
+      "house_number": "Husnummer",
+      "house_description": "Ange ditt husnummer eller byggnadsnummer",
+      "house_placeholder": "t.ex. 123, 45A, 7-9",
+      "apartment": "Lägenhet / Våning",
+      "apartment_optional": "(Valfritt)",
+      "apartment_description": "Ange lägenhetsnummer eller våning om tillämpligt",
+      "apartment_placeholder": "t.ex. Lgh 4B, Våning 3",
+      "income": "Månadsinkomst",
+      "income_description": "Ange din genomsnittliga månadsinkomst i EUR",
+      "income_placeholder": "Ange din månadsinkomst",
+      "employment": "Anställningsstatus",
+      "employment_description": "Välj din nuvarande anställningssituation",
+      "employment_options": {
+        "select": "Välj din anställningsstatus",
+        "employed": "Anställd",
+        "self_employed": "Egenföretagare",
+        "retired": "Pensionär",
+        "unemployed": "Arbetslös"
+      },
+      "continue": "Fortsätt",
+      "continue_to_photos": "Fortsätt till fotografering",
+      "back": "Tillbaka"
+    },
+    "step2": {
+      "title": "Ta nödvändiga foton",
+      "description": "Följ den guidade processen för att ta alla nödvändiga foton med din kamera",
+      "photo1": "ID framsida",
+      "photo2": "ID baksida",
+      "photo3": "Selfie med ID framsida",
+      "photo4": "Selfie med ID baksida",
+      "photo5": "Endast selfie",
+      "instructions": {
+        "id_front_title": "Ta bild på ID-kortets framsida",
+        "id_front_text": "Placera framsidan av ditt ID-kort tydligt i ramen och ta ett foto",
+        "id_back_title": "Ta bild på ID-kortets baksida",
+        "id_back_text": "Placera baksidan av ditt ID-kort tydligt i ramen och ta ett foto",
+        "selfie_id_front_title": "Ta selfie med ID-kortets framsida",
+        "selfie_id_front_text": "Håll framsidan av ditt ID-kort bredvid ditt ansikte och ta en selfie",
+        "selfie_id_back_title": "Ta selfie med ID-kortets baksida",
+        "selfie_id_back_text": "Håll baksidan av ditt ID-kort bredvid ditt ansikte och ta en selfie",
+        "selfie_only_title": "Ta din selfie",
+        "selfie_only_text": "Titta direkt in i kameran och ta en tydlig selfie"
+      },
+      "tips": {
+        "lighting": "Se till att det är bra belysning",
+        "steady": "Håll kameran stadigt",
+        "readable": "Se till att texten är läsbar"
+      },
+      "start_capture": "Tryck för att starta kameran",
+      "start_camera": "Starta kamera",
+      "requesting_permissions": "Begär behörigheter...",
+      "permissions_granted": "Behörigheter beviljades - Starta kamera",
+      "permissions_denied": "Behörighet nekad - Försök igen",
+      "loading_camera": "Laddar kamera...",
+      "capture_photo": "Ta foto",
+      "retake": "Ta om",
+      "next_photo": "Nästa foto",
+      "back": "Tillbaka",
+      "continue": "Fortsätt"
+    },
+    "step3": {
+      "title": "Ansökan skickad!",
+      "description": "Din verifiering har slutförts och din ansökan har skickats in.",
+      "summary_title": "Tagna foton:",
+      "next_steps": "Vad händer nu:",
+      "step_list": {
+        "step1": "Vi kommer att granska dina foton och information",
+        "step2": "Du får ett e-postmeddelande med beslutet",
+        "step3": "Vid godkännande överförs pengarna"
+      },
+      "contact_info": "Vid frågor, kontakta oss:",
+      "submit": "Skicka ansökan",
+      "back_home": "Tillbaka till startsidan",
+      "success_title": "Ansökan skickad!",
+      "success_message": "Tack för ditt förtroende! Du kommer att få svar inom 15-30 minuter."
+    },
+    "validation": {
+      "fill_required": "Vänligen fyll i alla obligatoriska fält.",
+      "egn_invalid": "Personnummer måste vara upp till 18 tecken.",
+      "photos_required": "Vänligen ta alla nödvändiga foton.",
+      "file_invalid": "Vänligen välj en giltig fil",
+      "file_too_large": "Filen är för stor. Maximal storlek: 10MB.",
+      "camera_error": "Kan inte komma åt kamera och mikrofon. Vänligen kontrollera dina enhetsinställningar och försök igen.",
+      "permissions_denied": "Kamera- och mikrofonåtkomst nekad. Vänligen bevilja behörigheter i dina webbläsarinställningar för att fortsätta med verifieringen.",
+      "no_camera": "Ingen kamera eller mikrofon hittades. Vänligen se till att din enhet har en kamera och mikrofon.",
+      "submission_error": "Det uppstod ett fel vid inlämning av din ansökan. Vänligen försök igen."
+    },
+    "uploading": "Skickar..."
+  }
+}

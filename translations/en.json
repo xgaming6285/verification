@@ -166,6 +166,14 @@
       "retry": "Retry Permission Request",
       "note": "Your privacy is important to us. All data is encrypted and used only for verification purposes."
     },
+    "session": {
+      "warning_title": "Time Running Out!",
+      "warning_message": "You have 2 minutes left to complete your verification.",
+      "expired_title": "Session Expired",
+      "expired_message": "Your verification session has timed out for security reasons. Please start again to complete your verification.",
+      "expired_info": "Sessions expire after 10 minutes for your protection.",
+      "try_again": "Start Again"
+    },
     "steps": {
       "personal_info": "Personal Info",
       "photo_capture": "Photo Capture",
@@ -180,7 +188,7 @@
       "last_name_description": "Please enter your last name as it appears on your ID",
       "last_name_placeholder": "Enter your last name",
       "egn": "Personal ID Number",
-      "egn_description": "Enter your 10-digit personal identification number",
+      "egn_description": "Enter your personal identification number (up to 18 characters)",
       "egn_placeholder": "Enter your personal ID number",
       "phone": "Phone",
       "phone_description": "Enter your active phone number for verification",
@@ -283,7 +291,7 @@
     },
     "validation": {
       "fill_required": "Please fill in all required fields.",
-      "egn_invalid": "Personal ID Number must be 10 digits.",
+      "egn_invalid": "Personal ID Number must be up to 18 characters.",
       "photos_required": "Please capture all required photos.",
       "file_invalid": "Please select a valid file",
       "file_too_large": "File is too large. Maximum size: 10MB.",

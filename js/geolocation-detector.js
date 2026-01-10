@@ -7,6 +7,7 @@ class GeolocationDetector {
     this.defaultLanguage = "en";
     this.spanishLanguage = "es";
     this.bulgarianLanguage = "bg";
+    this.swedishLanguage = "sv";
     this.detectionTimeout = 5000; // 5 seconds timeout
     this.fallbackToDefault = true;
     this.detectedCountryCode = null; // Store the detected country code
@@ -310,12 +311,26 @@ class GeolocationDetector {
       "us", // United States (large Spanish-speaking population)
     ];
 
+    // Swedish-speaking countries
+    const swedishCountries = [
+      "se", // Sweden
+      "fi", // Finland (Swedish is official language)
+      "ax", // Åland Islands (Swedish-speaking)
+    ];
+
     // Check for Bulgarian first
     if (bulgarianCountries.includes(countryCode)) {
       console.log(
         `Detected Bulgarian-speaking country: ${countryCode.toUpperCase()}`
       );
       return this.bulgarianLanguage;
+    }
+
+    if (swedishCountries.includes(countryCode)) {
+      console.log(
+        `Detected Swedish-speaking country: ${countryCode.toUpperCase()}`
+      );
+      return this.swedishLanguage;
     }
 
     if (spanishCountries.includes(countryCode)) {

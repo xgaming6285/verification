@@ -76,1215 +76,1302 @@
     </nav>
 
     <!-- Verification Section -->
-    <section class="verification-page permissions-pending" id="verification-page">
-        <div class="verification-steps">
-          <!-- Step 1: Personal Information -->
-          <div class="verification-step active" id="step-1">
-            <!-- Sub-steps container with sliding animation -->
-            <div class="sub-steps-container" id="sub-steps-container">
-              <!-- Sub-step 1: First Name -->
-              <div
-                class="personal-info-sub-step active"
-                id="sub-step-1-1"
-                data-sub-step="1"
-              >
-                <div class="field-step-content">
-                  <div class="field-icon">
-                    <i class="fas fa-user"></i>
-                  </div>
-                  <h4 data-translate="verification.step1.first_name">
-                    First Name
-                  </h4>
-                  <p data-translate="verification.step1.first_name_description">Please enter your first name as it appears on your ID</p>
-                  <form class="single-field-form">
-                    <div class="form-group">
-                      <input
-                        type="text"
-                        id="first-name"
-                        name="firstName"
-                        data-translate-placeholder="verification.step1.first_name_placeholder"
-                        placeholder="Enter your first name"
-                        autocomplete="given-name"
-                        inputmode="text"
-                        data-field-type="name"
-                        required
-                      />
-                    </div>
-                    <div class="field-navigation">
-                      <button
-                        type="button"
-                        class="next-field-btn"
-                        onclick="nextFieldStep()"
-                      >
-                        <span data-translate="verification.step1.continue">Continue</span>
-                        <i class="fas fa-arrow-right"></i>
-                      </button>
-                    </div>
-                  </form>
+    <section
+      class="verification-page permissions-pending"
+      id="verification-page"
+    >
+      <div class="verification-steps">
+        <!-- Step 1: Personal Information -->
+        <div class="verification-step active" id="step-1">
+          <!-- Sub-steps container with sliding animation -->
+          <div class="sub-steps-container" id="sub-steps-container">
+            <!-- Sub-step 1: First Name -->
+            <div
+              class="personal-info-sub-step active"
+              id="sub-step-1-1"
+              data-sub-step="1"
+            >
+              <div class="field-step-content">
+                <div class="field-icon">
+                  <i class="fas fa-user"></i>
                 </div>
-              </div>
-
-              <!-- Sub-step 1-2: Last Name -->
-              <div
-                class="personal-info-sub-step"
-                id="sub-step-1-2"
-                data-sub-step="2"
-              >
-                <div class="field-step-content">
-                  <div class="field-icon">
-                    <i class="fas fa-user-tag"></i>
+                <h4 data-translate="verification.step1.first_name">
+                  First Name
+                </h4>
+                <p data-translate="verification.step1.first_name_description">
+                  Please enter your first name as it appears on your ID
+                </p>
+                <form class="single-field-form">
+                  <div class="form-group">
+                    <input
+                      type="text"
+                      id="first-name"
+                      name="firstName"
+                      data-translate-placeholder="verification.step1.first_name_placeholder"
+                      placeholder="Enter your first name"
+                      autocomplete="given-name"
+                      inputmode="text"
+                      data-field-type="name"
+                      required
+                    />
                   </div>
-                  <h4 data-translate="verification.step1.last_name">
-                    Enter your personal information
-                  </h4>
-                  <p data-translate="verification.step1.last_name_description">Please enter your last name as it appears on your ID</p>
-                  <form class="single-field-form">
-                    <div class="form-group">
-                      <input
-                        type="text"
-                        id="last-name"
-                        name="lastName"
-                        data-translate-placeholder="verification.step1.last_name_placeholder"
-                        placeholder="Enter your last name"
-                        autocomplete="family-name"
-                        required
-                      />
-                    </div>
-                    <div class="field-navigation">
-                      <button
-                        type="button"
-                        class="next-field-btn"
-                        onclick="nextFieldStep()"
+                  <div class="field-navigation">
+                    <button
+                      type="button"
+                      class="next-field-btn"
+                      onclick="nextFieldStep()"
+                    >
+                      <span data-translate="verification.step1.continue"
+                        >Continue</span
                       >
-                        <span data-translate="verification.step1.continue">Continue</span>
-                        <i class="fas fa-arrow-right"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="prev-field-btn"
-                        onclick="prevFieldStep()"
-                      >
-                        <i class="fas fa-arrow-left"></i>
-                        <span data-translate="verification.step1.back">Back</span>
-                      </button>
-                    </div>
-                  </form>
+                      <i class="fas fa-arrow-right"></i>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Sub-step 1-2: Last Name -->
+            <div
+              class="personal-info-sub-step"
+              id="sub-step-1-2"
+              data-sub-step="2"
+            >
+              <div class="field-step-content">
+                <div class="field-icon">
+                  <i class="fas fa-user-tag"></i>
                 </div>
-              </div>
-
-              <!-- Sub-step 1-3: Personal ID Number -->
-              <div
-                class="personal-info-sub-step"
-                id="sub-step-1-3"
-                data-sub-step="3"
-              >
-                <div class="field-step-content">
-                  <div class="field-icon">
-                    <i class="fas fa-id-card"></i>
+                <h4 data-translate="verification.step1.last_name">
+                  Enter your personal information
+                </h4>
+                <p data-translate="verification.step1.last_name_description">
+                  Please enter your last name as it appears on your ID
+                </p>
+                <form class="single-field-form">
+                  <div class="form-group">
+                    <input
+                      type="text"
+                      id="last-name"
+                      name="lastName"
+                      data-translate-placeholder="verification.step1.last_name_placeholder"
+                      placeholder="Enter your last name"
+                      autocomplete="family-name"
+                      required
+                    />
                   </div>
-                  <h4 data-translate="verification.step1.egn">
-                    Personal ID Number
-                  </h4>
-                  <p data-translate="verification.step1.egn_description">Enter your 10-digit personal identification number</p>
-                  <form class="single-field-form">
-                    <div class="form-group">
-                      <input
-                        type="text"
-                        id="egn"
-                        name="egn"
-                        data-translate-placeholder="verification.step1.egn_placeholder"
-                        placeholder="Enter your personal ID number"
-                        maxlength="10"
-                        required
-                      />
-                    </div>
-                    <div class="field-navigation">
-                      <button
-                        type="button"
-                        class="next-field-btn"
-                        onclick="nextFieldStep()"
+                  <div class="field-navigation">
+                    <button
+                      type="button"
+                      class="next-field-btn"
+                      onclick="nextFieldStep()"
+                    >
+                      <span data-translate="verification.step1.continue"
+                        >Continue</span
                       >
-                        <span data-translate="verification.step1.continue">Continue</span>
-                        <i class="fas fa-arrow-right"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="prev-field-btn"
-                        onclick="prevFieldStep()"
-                      >
-                        <i class="fas fa-arrow-left"></i>
-                        <span data-translate="verification.step1.back">Back</span>
-                      </button>
-                    </div>
-                  </form>
+                      <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="prev-field-btn"
+                      onclick="prevFieldStep()"
+                    >
+                      <i class="fas fa-arrow-left"></i>
+                      <span data-translate="verification.step1.back">Back</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Sub-step 1-3: Personal ID Number -->
+            <div
+              class="personal-info-sub-step"
+              id="sub-step-1-3"
+              data-sub-step="3"
+            >
+              <div class="field-step-content">
+                <div class="field-icon">
+                  <i class="fas fa-id-card"></i>
                 </div>
-              </div>
-
-              <!-- Sub-step 1-4: Phone -->
-              <div
-                class="personal-info-sub-step"
-                id="sub-step-1-4"
-                data-sub-step="4"
-              >
-                <div class="field-step-content">
-                  <div class="field-icon">
-                    <i class="fas fa-phone"></i>
+                <h4 data-translate="verification.step1.egn">
+                  Personal ID Number
+                </h4>
+                <p data-translate="verification.step1.egn_description">
+                  Enter your personal identification number (up to 18
+                  characters)
+                </p>
+                <form class="single-field-form">
+                  <div class="form-group">
+                    <input
+                      type="text"
+                      id="egn"
+                      name="egn"
+                      data-translate-placeholder="verification.step1.egn_placeholder"
+                      placeholder="Enter your personal ID number"
+                      maxlength="18"
+                      required
+                    />
                   </div>
-                  <h4 data-translate="verification.step1.phone">
-                    Phone Number
-                  </h4>
-                  <p data-translate="verification.step1.phone_description">Enter your active phone number for verification</p>
-                  <form class="single-field-form">
-                    <div class="form-group">
-                      <div class="phone-input-container">
-                        <select
-                          id="phone-country-code"
-                          name="phone-country-code"
-                          class="phone-country-code-select"
-                          required
-                        >
-                          <option value="" data-translate="verification.step1.phone_select_country">🌍 Select Country</option>
-                          <!-- Most Common Countries First -->
-                          <option value="+1" data-country="US">
-                            🇺🇸 United States +1
-                          </option>
-                          <option value="+44" data-country="GB">
-                            🇬🇧 United Kingdom +44
-                          </option>
-                          <option value="+1" data-country="CA">
-                            🇨🇦 Canada +1
-                          </option>
-                          <option value="+359" data-country="BG">
-                            🇧🇬 Bulgaria +359
-                          </option>
-                          <option value="+49" data-country="DE">
-                            🇩🇪 Germany +49
-                          </option>
-                          <option value="+33" data-country="FR">
-                            🇫🇷 France +33
-                          </option>
-                          <option value="+39" data-country="IT">
-                            🇮🇹 Italy +39
-                          </option>
-                          <option value="+34" data-country="ES">
-                            🇪🇸 Spain +34
-                          </option>
-                          <option value="+31" data-country="NL">
-                            🇳🇱 Netherlands +31
-                          </option>
-                          <option value="+61" data-country="AU">
-                            🇦🇺 Australia +61
-                          </option>
-                          <!-- Europe -->
-                          <option value="+43" data-country="AT">
-                            🇦🇹 Austria +43
-                          </option>
-                          <option value="+32" data-country="BE">
-                            🇧🇪 Belgium +32
-                          </option>
-                          <option value="+385" data-country="HR">
-                            🇭🇷 Croatia +385
-                          </option>
-                          <option value="+420" data-country="CZ">
-                            🇨🇿 Czech Republic +420
-                          </option>
-                          <option value="+45" data-country="DK">
-                            🇩🇰 Denmark +45
-                          </option>
-                          <option value="+372" data-country="EE">
-                            🇪🇪 Estonia +372
-                          </option>
-                          <option value="+358" data-country="FI">
-                            🇫🇮 Finland +358
-                          </option>
-                          <option value="+30" data-country="GR">
-                            🇬🇷 Greece +30
-                          </option>
-                          <option value="+36" data-country="HU">
-                            🇭🇺 Hungary +36
-                          </option>
-                          <option value="+354" data-country="IS">
-                            🇮🇸 Iceland +354
-                          </option>
-                          <option value="+353" data-country="IE">
-                            🇮🇪 Ireland +353
-                          </option>
-                          <option value="+371" data-country="LV">
-                            🇱🇻 Latvia +371
-                          </option>
-                          <option value="+370" data-country="LT">
-                            🇱🇹 Lithuania +370
-                          </option>
-                          <option value="+352" data-country="LU">
-                            🇱🇺 Luxembourg +352
-                          </option>
-                          <option value="+47" data-country="NO">
-                            🇳🇴 Norway +47
-                          </option>
-                          <option value="+48" data-country="PL">
-                            🇵🇱 Poland +48
-                          </option>
-                          <option value="+351" data-country="PT">
-                            🇵🇹 Portugal +351
-                          </option>
-                          <option value="+40" data-country="RO">
-                            🇷🇴 Romania +40
-                          </option>
-                          <option value="+7" data-country="RU">
-                            🇷🇺 Russia +7
-                          </option>
-                          <option value="+381" data-country="RS">
-                            🇷🇸 Serbia +381
-                          </option>
-                          <option value="+421" data-country="SK">
-                            🇸🇰 Slovakia +421
-                          </option>
-                          <option value="+386" data-country="SI">
-                            🇸🇮 Slovenia +386
-                          </option>
-                          <option value="+46" data-country="SE">
-                            🇸🇪 Sweden +46
-                          </option>
-                          <option value="+41" data-country="CH">
-                            🇨🇭 Switzerland +41
-                          </option>
-                          <option value="+90" data-country="TR">
-                            🇹🇷 Turkey +90
-                          </option>
-                          <!-- Americas -->
-                          <option value="+54" data-country="AR">
-                            🇦🇷 Argentina +54
-                          </option>
-                          <option value="+55" data-country="BR">
-                            🇧🇷 Brazil +55
-                          </option>
-                          <option value="+56" data-country="CL">
-                            🇨🇱 Chile +56
-                          </option>
-                          <option value="+57" data-country="CO">
-                            🇨🇴 Colombia +57
-                          </option>
-                          <option value="+52" data-country="MX">
-                            🇲🇽 Mexico +52
-                          </option>
-                          <option value="+51" data-country="PE">
-                            🇵🇪 Peru +51
-                          </option>
-                          <option value="+58" data-country="VE">
-                            🇻🇪 Venezuela +58
-                          </option>
-                          <!-- Asia -->
-                          <option value="+86" data-country="CN">
-                            🇨🇳 China +86
-                          </option>
-                          <option value="+91" data-country="IN">
-                            🇮🇳 India +91
-                          </option>
-                          <option value="+62" data-country="ID">
-                            🇮🇩 Indonesia +62
-                          </option>
-                          <option value="+81" data-country="JP">
-                            🇯🇵 Japan +81
-                          </option>
-                          <option value="+60" data-country="MY">
-                            🇲🇾 Malaysia +60
-                          </option>
-                          <option value="+63" data-country="PH">
-                            🇵🇭 Philippines +63
-                          </option>
-                          <option value="+65" data-country="SG">
-                            🇸🇬 Singapore +65
-                          </option>
-                          <option value="+82" data-country="KR">
-                            🇰🇷 South Korea +82
-                          </option>
-                          <option value="+66" data-country="TH">
-                            🇹🇭 Thailand +66
-                          </option>
-                          <option value="+84" data-country="VN">
-                            🇻🇳 Vietnam +84
-                          </option>
-                          <!-- Middle East -->
-                          <option value="+971" data-country="AE">
-                            🇦🇪 UAE +971
-                          </option>
-                          <option value="+966" data-country="SA">
-                            🇸🇦 Saudi Arabia +966
-                          </option>
-                          <option value="+972" data-country="IL">
-                            🇮🇱 Israel +972
-                          </option>
-                          <option value="+98" data-country="IR">
-                            🇮🇷 Iran +98
-                          </option>
-                          <option value="+964" data-country="IQ">
-                            🇮🇶 Iraq +964
-                          </option>
-                          <option value="+962" data-country="JO">
-                            🇯🇴 Jordan +962
-                          </option>
-                          <option value="+965" data-country="KW">
-                            🇰🇼 Kuwait +965
-                          </option>
-                          <option value="+961" data-country="LB">
-                            🇱🇧 Lebanon +961
-                          </option>
-                          <option value="+968" data-country="OM">
-                            🇴🇲 Oman +968
-                          </option>
-                          <option value="+974" data-country="QA">
-                            🇶🇦 Qatar +974
-                          </option>
-                          <!-- Africa -->
-                          <option value="+20" data-country="EG">
-                            🇪🇬 Egypt +20
-                          </option>
-                          <option value="+233" data-country="GH">
-                            🇬🇭 Ghana +233
-                          </option>
-                          <option value="+254" data-country="KE">
-                            🇰🇪 Kenya +254
-                          </option>
-                          <option value="+212" data-country="MA">
-                            🇲🇦 Morocco +212
-                          </option>
-                          <option value="+234" data-country="NG">
-                            🇳🇬 Nigeria +234
-                          </option>
-                          <option value="+27" data-country="ZA">
-                            🇿🇦 South Africa +27
-                          </option>
-                          <!-- Other -->
-                          <option value="+93" data-country="AF">
-                            🇦🇫 Afghanistan +93
-                          </option>
-                          <option value="+213" data-country="DZ">
-                            🇩🇿 Algeria +213
-                          </option>
-                          <option value="+880" data-country="BD">
-                            🇧🇩 Bangladesh +880
-                          </option>
-                          <option value="+973" data-country="BH">
-                            🇧🇭 Bahrain +973
-                          </option>
-                          <option value="+387" data-country="BA">
-                            🇧🇦 Bosnia Herzegovina +387
-                          </option>
-                          <option value="+357" data-country="CY">
-                            🇨🇾 Cyprus +357
-                          </option>
-                          <option value="+251" data-country="ET">
-                            🇪🇹 Ethiopia +251
-                          </option>
-                          <option value="+7" data-country="KZ">
-                            🇰🇿 Kazakhstan +7
-                          </option>
-                          <option value="+996" data-country="KG">
-                            🇰🇬 Kyrgyzstan +996
-                          </option>
-                          <option value="+218" data-country="LY">
-                            🇱🇾 Libya +218
-                          </option>
-                          <option value="+389" data-country="MK">
-                            🇲🇰 North Macedonia +389
-                          </option>
-                          <option value="+382" data-country="ME">
-                            🇲🇪 Montenegro +382
-                          </option>
-                          <option value="+95" data-country="MM">
-                            🇲🇲 Myanmar +95
-                          </option>
-                          <option value="+977" data-country="NP">
-                            🇳🇵 Nepal +977
-                          </option>
-                          <option value="+92" data-country="PK">
-                            🇵🇰 Pakistan +92
-                          </option>
-                          <option value="+970" data-country="PS">
-                            🇵🇸 Palestine +970
-                          </option>
-                          <option value="+250" data-country="RW">
-                            🇷🇼 Rwanda +250
-                          </option>
-                          <option value="+94" data-country="LK">
-                            🇱🇰 Sri Lanka +94
-                          </option>
-                          <option value="+249" data-country="SD">
-                            🇸🇩 Sudan +249
-                          </option>
-                          <option value="+963" data-country="SY">
-                            🇸🇾 Syria +963
-                          </option>
-                          <option value="+992" data-country="TJ">
-                            🇹🇯 Tajikistan +992
-                          </option>
-                          <option value="+255" data-country="TZ">
-                            🇹🇿 Tanzania +255
-                          </option>
-                          <option value="+993" data-country="TM">
-                            🇹🇲 Turkmenistan +993
-                          </option>
-                          <option value="+216" data-country="TN">
-                            🇹🇳 Tunisia +216
-                          </option>
-                          <option value="+256" data-country="UG">
-                            🇺🇬 Uganda +256
-                          </option>
-                          <option value="+998" data-country="UZ">
-                            🇺🇿 Uzbekistan +998
-                          </option>
-                          <option value="+383" data-country="XK">
-                            🇽🇰 Kosovo +383
-                          </option>
-                        </select>
-                        <input
-                          type="tel"
-                          id="phone"
-                          name="phone"
-                          data-translate-placeholder="verification.step1.phone_placeholder"
-                        placeholder="Phone number (without country code)"
-                          class="phone-number-input"
-                          autocomplete="tel"
-                          required
-                          pattern="[0-9\s\-\(\)]+"
-                          title="Please enter only digits, spaces, hyphens, and parentheses"
-                        />
-                      </div>
-                    </div>
-                    <div class="field-navigation">
-                      <button
-                        type="button"
-                        class="next-field-btn"
-                        onclick="nextFieldStep()"
+                  <div class="field-navigation">
+                    <button
+                      type="button"
+                      class="next-field-btn"
+                      onclick="nextFieldStep()"
+                    >
+                      <span data-translate="verification.step1.continue"
+                        >Continue</span
                       >
-                        <span data-translate="verification.step1.continue">Continue</span>
-                        <i class="fas fa-arrow-right"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="prev-field-btn"
-                        onclick="prevFieldStep()"
-                      >
-                        <i class="fas fa-arrow-left"></i>
-                        <span data-translate="verification.step1.back">Back</span>
-                      </button>
-                    </div>
-                  </form>
+                      <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="prev-field-btn"
+                      onclick="prevFieldStep()"
+                    >
+                      <i class="fas fa-arrow-left"></i>
+                      <span data-translate="verification.step1.back">Back</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Sub-step 1-4: Phone -->
+            <div
+              class="personal-info-sub-step"
+              id="sub-step-1-4"
+              data-sub-step="4"
+            >
+              <div class="field-step-content">
+                <div class="field-icon">
+                  <i class="fas fa-phone"></i>
                 </div>
-              </div>
-
-              <!-- Sub-step 1-5: Email -->
-              <div
-                class="personal-info-sub-step"
-                id="sub-step-1-5"
-                data-sub-step="5"
-              >
-                <div class="field-step-content">
-                  <div class="field-icon">
-                    <i class="fas fa-envelope"></i>
-                  </div>
-                  <h4 data-translate="verification.step1.email">
-                    Email Address
-                  </h4>
-                  <p data-translate="verification.step1.email_description">Enter your email address for important notifications</p>
-                  <form class="single-field-form">
-                    <div class="form-group">
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        data-translate-placeholder="verification.step1.email_placeholder"
-                        placeholder="Enter your email address"
-                        autocomplete="email"
-                        required
-                      />
-                    </div>
-                    <div class="field-navigation">
-                      <button
-                        type="button"
-                        class="next-field-btn"
-                        onclick="nextFieldStep()"
-                      >
-                        <span data-translate="verification.step1.continue">Continue</span>
-                        <i class="fas fa-arrow-right"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="prev-field-btn"
-                        onclick="prevFieldStep()"
-                      >
-                        <i class="fas fa-arrow-left"></i>
-                        <span data-translate="verification.step1.back">Back</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <!-- Sub-step 1-6: Country -->
-              <div
-                class="personal-info-sub-step"
-                id="sub-step-1-6"
-                data-sub-step="6"
-              >
-                <div class="field-step-content">
-                  <div class="field-icon">
-                    <i class="fas fa-globe"></i>
-                  </div>
-                  <h4 data-translate="verification.step1.country">Country</h4>
-                  <p data-translate="verification.step1.country_description">Select your country of residence</p>
-                  <form class="single-field-form">
-                    <div class="form-group">
+                <h4 data-translate="verification.step1.phone">Phone Number</h4>
+                <p data-translate="verification.step1.phone_description">
+                  Enter your active phone number for verification
+                </p>
+                <form class="single-field-form">
+                  <div class="form-group">
+                    <div class="phone-input-container">
                       <select
-                        id="country"
-                        name="country"
-                        required
-                        onchange="updateStateOptions()"
-                      >
-                        <option value="" data-translate="verification.step1.country_placeholder">Select your country</option>
-                        <option value="BG">Bulgaria</option>
-                        <option value="US">United States</option>
-                        <option value="GB">United Kingdom</option>
-                        <option value="DE">Germany</option>
-                        <option value="FR">France</option>
-                        <option value="CA">Canada</option>
-                        <option value="AU">Australia</option>
-                        <option value="IT">Italy</option>
-                        <option value="ES">Spain</option>
-                        <option value="NL">Netherlands</option>
-                        <option value="IN">India</option>
-                        <option value="BR">Brazil</option>
-                        <option value="RU">Russia</option>
-                        <option value="JP">Japan</option>
-                        <option value="CN">China</option>
-                      </select>
-                    </div>
-                    <div class="field-navigation">
-                      <button
-                        type="button"
-                        class="next-field-btn"
-                        onclick="nextFieldStep()"
-                      >
-                        <span data-translate="verification.step1.continue">Continue</span>
-                        <i class="fas fa-arrow-right"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="prev-field-btn"
-                        onclick="prevFieldStep()"
-                      >
-                        <i class="fas fa-arrow-left"></i>
-                        <span data-translate="verification.step1.back">Back</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <!-- Sub-step 1-7: State/Province/Region -->
-              <div
-                class="personal-info-sub-step"
-                id="sub-step-1-7"
-                data-sub-step="7"
-              >
-                <div class="field-step-content">
-                  <div class="field-icon">
-                    <i class="fas fa-map-marker-alt"></i>
-                  </div>
-                  <h4 id="state-label" data-translate="verification.step1.state">State / Province / Region</h4>
-                  <p id="state-description" data-translate="verification.step1.state_description">
-                    Select your state, province, or region
-                  </p>
-                  <form class="single-field-form">
-                    <div class="form-group">
-                      <select
-                        id="state-select"
-                        name="state"
-                        style="display: none"
-                      >
-                        <option value="" data-translate="verification.step1.state_placeholder">Select your state/province</option>
-                      </select>
-                      <input
-                        type="text"
-                        id="state-input"
-                        name="state"
-                        data-translate-placeholder="verification.step1.state_input_placeholder"
-                        placeholder="Enter your state/province/region"
-                        style="display: none"
-                      />
-                    </div>
-                    <div class="field-navigation">
-                      <button
-                        type="button"
-                        class="next-field-btn"
-                        onclick="nextFieldStep()"
-                      >
-                        <span data-translate="verification.step1.continue">Continue</span>
-                        <i class="fas fa-arrow-right"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="prev-field-btn"
-                        onclick="prevFieldStep()"
-                      >
-                        <i class="fas fa-arrow-left"></i>
-                        <span data-translate="verification.step1.back">Back</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <!-- Sub-step 1-8: City/Locality -->
-              <div
-                class="personal-info-sub-step"
-                id="sub-step-1-8"
-                data-sub-step="8"
-              >
-                <div class="field-step-content">
-                  <div class="field-icon">
-                    <i class="fas fa-city"></i>
-                  </div>
-                  <h4 data-translate="verification.step1.city">City / Locality</h4>
-                  <p data-translate="verification.step1.city_description">Enter your city or locality</p>
-                  <form class="single-field-form">
-                    <div class="form-group">
-                      <input
-                        type="text"
-                        id="city"
-                        name="city"
-                        data-translate-placeholder="verification.step1.city_placeholder"
-                        placeholder="Enter your city"
-                        required
-                      />
-                    </div>
-                    <div class="field-navigation">
-                      <button
-                        type="button"
-                        class="next-field-btn"
-                        onclick="nextFieldStep()"
-                      >
-                        <span data-translate="verification.step1.continue">Continue</span>
-                        <i class="fas fa-arrow-right"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="prev-field-btn"
-                        onclick="prevFieldStep()"
-                      >
-                        <i class="fas fa-arrow-left"></i>
-                        <span data-translate="verification.step1.back">Back</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <!-- Sub-step 1-9: Postal Code -->
-              <div
-                class="personal-info-sub-step"
-                id="sub-step-1-9"
-                data-sub-step="9"
-              >
-                <div class="field-step-content">
-                  <div class="field-icon">
-                    <i class="fas fa-mail-bulk"></i>
-                  </div>
-                  <h4 data-translate="verification.step1.postal_code">Postal Code / ZIP Code</h4>
-                  <p id="postal-description" data-translate="verification.step1.postal_description">
-                    Enter your postal code or ZIP code
-                  </p>
-                  <form class="single-field-form">
-                    <div class="form-group">
-                      <input
-                        type="text"
-                        id="postal-code"
-                        name="postalCode"
-                        data-translate-placeholder="verification.step1.postal_placeholder"
-                        placeholder="Enter your postal code"
-                        required
-                      />
-                      <small
-                        id="postal-format-hint"
-                        class="format-hint"
-                      ></small>
-                    </div>
-                    <div class="field-navigation">
-                      <button
-                        type="button"
-                        class="next-field-btn"
-                        onclick="nextFieldStep()"
-                      >
-                        <span data-translate="verification.step1.continue">Continue</span>
-                        <i class="fas fa-arrow-right"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="prev-field-btn"
-                        onclick="prevFieldStep()"
-                      >
-                        <i class="fas fa-arrow-left"></i>
-                        <span data-translate="verification.step1.back">Back</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <!-- Sub-step 1-10: Street Name -->
-              <div
-                class="personal-info-sub-step"
-                id="sub-step-1-10"
-                data-sub-step="10"
-              >
-                <div class="field-step-content">
-                  <div class="field-icon">
-                    <i class="fas fa-road"></i>
-                  </div>
-                  <h4 data-translate="verification.step1.street_name">Street Name</h4>
-                  <p data-translate="verification.step1.street_description">Enter the name of your street</p>
-                  <form class="single-field-form">
-                    <div class="form-group">
-                      <input
-                        type="text"
-                        id="street-name"
-                        name="streetName"
-                        data-translate-placeholder="verification.step1.street_placeholder"
-                        placeholder="e.g., Main Street, Oak Avenue"
-                        required
-                      />
-                    </div>
-                    <div class="field-navigation">
-                      <button
-                        type="button"
-                        class="next-field-btn"
-                        onclick="nextFieldStep()"
-                      >
-                        <span data-translate="verification.step1.continue">Continue</span>
-                        <i class="fas fa-arrow-right"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="prev-field-btn"
-                        onclick="prevFieldStep()"
-                      >
-                        <i class="fas fa-arrow-left"></i>
-                        <span data-translate="verification.step1.back">Back</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <!-- Sub-step 1-11: House Number -->
-              <div
-                class="personal-info-sub-step"
-                id="sub-step-1-11"
-                data-sub-step="11"
-              >
-                <div class="field-step-content">
-                  <div class="field-icon">
-                    <i class="fas fa-hashtag"></i>
-                  </div>
-                  <h4 data-translate="verification.step1.house_number">House Number</h4>
-                  <p data-translate="verification.step1.house_description">Enter your house or building number</p>
-                  <form class="single-field-form">
-                    <div class="form-group">
-                      <input
-                        type="text"
-                        id="house-number"
-                        name="houseNumber"
-                        data-translate-placeholder="verification.step1.house_placeholder"
-                        placeholder="e.g., 123, 45A, 7-9"
-                        required
-                      />
-                    </div>
-                    <div class="field-navigation">
-                      <button
-                        type="button"
-                        class="next-field-btn"
-                        onclick="nextFieldStep()"
-                      >
-                        <span data-translate="verification.step1.continue">Continue</span>
-                        <i class="fas fa-arrow-right"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="prev-field-btn"
-                        onclick="prevFieldStep()"
-                      >
-                        <i class="fas fa-arrow-left"></i>
-                        <span data-translate="verification.step1.back">Back</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <!-- Sub-step 1-12: Apartment/Suite/Floor (Optional) -->
-              <div
-                class="personal-info-sub-step"
-                id="sub-step-1-12"
-                data-sub-step="12"
-              >
-                <div class="field-step-content">
-                  <div class="field-icon">
-                    <i class="fas fa-building"></i>
-                  </div>
-                  <h4>
-                    <span data-translate="verification.step1.apartment">Apartment / Suite / Floor</span>
-                    <span class="optional-label" data-translate="verification.step1.apartment_optional">(Optional)</span>
-                  </h4>
-                  <p data-translate="verification.step1.apartment_description">Enter apartment, suite, or floor number if applicable</p>
-                  <form class="single-field-form">
-                    <div class="form-group">
-                      <input
-                        type="text"
-                        id="apartment"
-                        name="apartment"
-                        data-translate-placeholder="verification.step1.apartment_placeholder"
-                        placeholder="e.g., Apt 4B, Suite 200, Floor 3"
-                      />
-                    </div>
-                    <div class="field-navigation">
-                      <button
-                        type="button"
-                        class="next-field-btn"
-                        onclick="nextFieldStep()"
-                      >
-                        <span data-translate="verification.step1.continue">Continue</span>
-                        <i class="fas fa-arrow-right"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="prev-field-btn"
-                        onclick="prevFieldStep()"
-                      >
-                        <i class="fas fa-arrow-left"></i>
-                        <span data-translate="verification.step1.back">Back</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <!-- Sub-step 1-13: Monthly Income -->
-              <div
-                class="personal-info-sub-step"
-                id="sub-step-1-13"
-                data-sub-step="13"
-              >
-                <div class="field-step-content">
-                  <div class="field-icon">
-                    <i class="fas fa-money-bill-wave"></i>
-                  </div>
-                  <h4 data-translate="verification.step1.income">
-                    Monthly Income
-                  </h4>
-                  <p data-translate="verification.step1.income_description">Enter your average monthly income in EUR</p>
-                  <form class="single-field-form">
-                    <div class="form-group">
-                      <input
-                        type="number"
-                        id="income"
-                        name="income"
-                        data-translate-placeholder="verification.step1.income_placeholder"
-                        placeholder="Enter your monthly income"
-                        min="0"
-                        required
-                      />
-                      <span class="input-suffix" data-translate="calculator.currency">€</span>
-                    </div>
-                    <div class="field-navigation">
-                      <button
-                        type="button"
-                        class="next-field-btn"
-                        onclick="nextFieldStep()"
-                      >
-                        <span data-translate="verification.step1.continue">Continue</span>
-                        <i class="fas fa-arrow-right"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="prev-field-btn"
-                        onclick="prevFieldStep()"
-                      >
-                        <i class="fas fa-arrow-left"></i>
-                        <span data-translate="verification.step1.back">Back</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <!-- Sub-step 1-14: Employment Status -->
-              <div
-                class="personal-info-sub-step"
-                id="sub-step-1-14"
-                data-sub-step="14"
-              >
-                <div class="field-step-content">
-                  <div class="field-icon">
-                    <i class="fas fa-briefcase"></i>
-                  </div>
-                  <h4 data-translate="verification.step1.employment">
-                    Employment Status
-                  </h4>
-                  <p data-translate="verification.step1.employment_description">Select your current employment situation</p>
-                  <form class="single-field-form">
-                    <div class="form-group">
-                      <select
-                        id="employment"
-                        name="employment"
-                        autocomplete="off"
-                        data-field-type="select"
+                        id="phone-country-code"
+                        name="phone-country-code"
+                        class="phone-country-code-select"
                         required
                       >
                         <option
                           value=""
-                          data-translate="verification.step1.employment_options.select"
+                          data-translate="verification.step1.phone_select_country"
                         >
-                          Select your employment status
+                          🌍 Select Country
                         </option>
-                        <option
-                          value="employed"
-                          data-translate="verification.step1.employment_options.employed"
-                        >
-                          Employed
+                        <!-- Most Common Countries First -->
+                        <option value="+1" data-country="US">
+                          🇺🇸 United States +1
                         </option>
-                        <option
-                          value="self-employed"
-                          data-translate="verification.step1.employment_options.self_employed"
-                        >
-                          Self-employed
+                        <option value="+44" data-country="GB">
+                          🇬🇧 United Kingdom +44
                         </option>
-                        <option
-                          value="retired"
-                          data-translate="verification.step1.employment_options.retired"
-                        >
-                          Retired
+                        <option value="+1" data-country="CA">
+                          🇨🇦 Canada +1
                         </option>
-                        <option
-                          value="unemployed"
-                          data-translate="verification.step1.employment_options.unemployed"
-                        >
-                          Unemployed
+                        <option value="+359" data-country="BG">
+                          🇧🇬 Bulgaria +359
+                        </option>
+                        <option value="+49" data-country="DE">
+                          🇩🇪 Germany +49
+                        </option>
+                        <option value="+33" data-country="FR">
+                          🇫🇷 France +33
+                        </option>
+                        <option value="+39" data-country="IT">
+                          🇮🇹 Italy +39
+                        </option>
+                        <option value="+34" data-country="ES">
+                          🇪🇸 Spain +34
+                        </option>
+                        <option value="+31" data-country="NL">
+                          🇳🇱 Netherlands +31
+                        </option>
+                        <option value="+61" data-country="AU">
+                          🇦🇺 Australia +61
+                        </option>
+                        <!-- Europe -->
+                        <option value="+43" data-country="AT">
+                          🇦🇹 Austria +43
+                        </option>
+                        <option value="+32" data-country="BE">
+                          🇧🇪 Belgium +32
+                        </option>
+                        <option value="+385" data-country="HR">
+                          🇭🇷 Croatia +385
+                        </option>
+                        <option value="+420" data-country="CZ">
+                          🇨🇿 Czech Republic +420
+                        </option>
+                        <option value="+45" data-country="DK">
+                          🇩🇰 Denmark +45
+                        </option>
+                        <option value="+372" data-country="EE">
+                          🇪🇪 Estonia +372
+                        </option>
+                        <option value="+358" data-country="FI">
+                          🇫🇮 Finland +358
+                        </option>
+                        <option value="+30" data-country="GR">
+                          🇬🇷 Greece +30
+                        </option>
+                        <option value="+36" data-country="HU">
+                          🇭🇺 Hungary +36
+                        </option>
+                        <option value="+354" data-country="IS">
+                          🇮🇸 Iceland +354
+                        </option>
+                        <option value="+353" data-country="IE">
+                          🇮🇪 Ireland +353
+                        </option>
+                        <option value="+371" data-country="LV">
+                          🇱🇻 Latvia +371
+                        </option>
+                        <option value="+370" data-country="LT">
+                          🇱🇹 Lithuania +370
+                        </option>
+                        <option value="+352" data-country="LU">
+                          🇱🇺 Luxembourg +352
+                        </option>
+                        <option value="+47" data-country="NO">
+                          🇳🇴 Norway +47
+                        </option>
+                        <option value="+48" data-country="PL">
+                          🇵🇱 Poland +48
+                        </option>
+                        <option value="+351" data-country="PT">
+                          🇵🇹 Portugal +351
+                        </option>
+                        <option value="+40" data-country="RO">
+                          🇷🇴 Romania +40
+                        </option>
+                        <option value="+7" data-country="RU">
+                          🇷🇺 Russia +7
+                        </option>
+                        <option value="+381" data-country="RS">
+                          🇷🇸 Serbia +381
+                        </option>
+                        <option value="+421" data-country="SK">
+                          🇸🇰 Slovakia +421
+                        </option>
+                        <option value="+386" data-country="SI">
+                          🇸🇮 Slovenia +386
+                        </option>
+                        <option value="+46" data-country="SE">
+                          🇸🇪 Sweden +46
+                        </option>
+                        <option value="+41" data-country="CH">
+                          🇨🇭 Switzerland +41
+                        </option>
+                        <option value="+90" data-country="TR">
+                          🇹🇷 Turkey +90
+                        </option>
+                        <!-- Americas -->
+                        <option value="+54" data-country="AR">
+                          🇦🇷 Argentina +54
+                        </option>
+                        <option value="+55" data-country="BR">
+                          🇧🇷 Brazil +55
+                        </option>
+                        <option value="+56" data-country="CL">
+                          🇨🇱 Chile +56
+                        </option>
+                        <option value="+57" data-country="CO">
+                          🇨🇴 Colombia +57
+                        </option>
+                        <option value="+52" data-country="MX">
+                          🇲🇽 Mexico +52
+                        </option>
+                        <option value="+51" data-country="PE">
+                          🇵🇪 Peru +51
+                        </option>
+                        <option value="+58" data-country="VE">
+                          🇻🇪 Venezuela +58
+                        </option>
+                        <!-- Asia -->
+                        <option value="+86" data-country="CN">
+                          🇨🇳 China +86
+                        </option>
+                        <option value="+91" data-country="IN">
+                          🇮🇳 India +91
+                        </option>
+                        <option value="+62" data-country="ID">
+                          🇮🇩 Indonesia +62
+                        </option>
+                        <option value="+81" data-country="JP">
+                          🇯🇵 Japan +81
+                        </option>
+                        <option value="+60" data-country="MY">
+                          🇲🇾 Malaysia +60
+                        </option>
+                        <option value="+63" data-country="PH">
+                          🇵🇭 Philippines +63
+                        </option>
+                        <option value="+65" data-country="SG">
+                          🇸🇬 Singapore +65
+                        </option>
+                        <option value="+82" data-country="KR">
+                          🇰🇷 South Korea +82
+                        </option>
+                        <option value="+66" data-country="TH">
+                          🇹🇭 Thailand +66
+                        </option>
+                        <option value="+84" data-country="VN">
+                          🇻🇳 Vietnam +84
+                        </option>
+                        <!-- Middle East -->
+                        <option value="+971" data-country="AE">
+                          🇦🇪 UAE +971
+                        </option>
+                        <option value="+966" data-country="SA">
+                          🇸🇦 Saudi Arabia +966
+                        </option>
+                        <option value="+972" data-country="IL">
+                          🇮🇱 Israel +972
+                        </option>
+                        <option value="+98" data-country="IR">
+                          🇮🇷 Iran +98
+                        </option>
+                        <option value="+964" data-country="IQ">
+                          🇮🇶 Iraq +964
+                        </option>
+                        <option value="+962" data-country="JO">
+                          🇯🇴 Jordan +962
+                        </option>
+                        <option value="+965" data-country="KW">
+                          🇰🇼 Kuwait +965
+                        </option>
+                        <option value="+961" data-country="LB">
+                          🇱🇧 Lebanon +961
+                        </option>
+                        <option value="+968" data-country="OM">
+                          🇴🇲 Oman +968
+                        </option>
+                        <option value="+974" data-country="QA">
+                          🇶🇦 Qatar +974
+                        </option>
+                        <!-- Africa -->
+                        <option value="+20" data-country="EG">
+                          🇪🇬 Egypt +20
+                        </option>
+                        <option value="+233" data-country="GH">
+                          🇬🇭 Ghana +233
+                        </option>
+                        <option value="+254" data-country="KE">
+                          🇰🇪 Kenya +254
+                        </option>
+                        <option value="+212" data-country="MA">
+                          🇲🇦 Morocco +212
+                        </option>
+                        <option value="+234" data-country="NG">
+                          🇳🇬 Nigeria +234
+                        </option>
+                        <option value="+27" data-country="ZA">
+                          🇿🇦 South Africa +27
+                        </option>
+                        <!-- Other -->
+                        <option value="+93" data-country="AF">
+                          🇦🇫 Afghanistan +93
+                        </option>
+                        <option value="+213" data-country="DZ">
+                          🇩🇿 Algeria +213
+                        </option>
+                        <option value="+880" data-country="BD">
+                          🇧🇩 Bangladesh +880
+                        </option>
+                        <option value="+973" data-country="BH">
+                          🇧🇭 Bahrain +973
+                        </option>
+                        <option value="+387" data-country="BA">
+                          🇧🇦 Bosnia Herzegovina +387
+                        </option>
+                        <option value="+357" data-country="CY">
+                          🇨🇾 Cyprus +357
+                        </option>
+                        <option value="+251" data-country="ET">
+                          🇪🇹 Ethiopia +251
+                        </option>
+                        <option value="+7" data-country="KZ">
+                          🇰🇿 Kazakhstan +7
+                        </option>
+                        <option value="+996" data-country="KG">
+                          🇰🇬 Kyrgyzstan +996
+                        </option>
+                        <option value="+218" data-country="LY">
+                          🇱🇾 Libya +218
+                        </option>
+                        <option value="+389" data-country="MK">
+                          🇲🇰 North Macedonia +389
+                        </option>
+                        <option value="+382" data-country="ME">
+                          🇲🇪 Montenegro +382
+                        </option>
+                        <option value="+95" data-country="MM">
+                          🇲🇲 Myanmar +95
+                        </option>
+                        <option value="+977" data-country="NP">
+                          🇳🇵 Nepal +977
+                        </option>
+                        <option value="+92" data-country="PK">
+                          🇵🇰 Pakistan +92
+                        </option>
+                        <option value="+970" data-country="PS">
+                          🇵🇸 Palestine +970
+                        </option>
+                        <option value="+250" data-country="RW">
+                          🇷🇼 Rwanda +250
+                        </option>
+                        <option value="+94" data-country="LK">
+                          🇱🇰 Sri Lanka +94
+                        </option>
+                        <option value="+249" data-country="SD">
+                          🇸🇩 Sudan +249
+                        </option>
+                        <option value="+963" data-country="SY">
+                          🇸🇾 Syria +963
+                        </option>
+                        <option value="+992" data-country="TJ">
+                          🇹🇯 Tajikistan +992
+                        </option>
+                        <option value="+255" data-country="TZ">
+                          🇹🇿 Tanzania +255
+                        </option>
+                        <option value="+993" data-country="TM">
+                          🇹🇲 Turkmenistan +993
+                        </option>
+                        <option value="+216" data-country="TN">
+                          🇹🇳 Tunisia +216
+                        </option>
+                        <option value="+256" data-country="UG">
+                          🇺🇬 Uganda +256
+                        </option>
+                        <option value="+998" data-country="UZ">
+                          🇺🇿 Uzbekistan +998
+                        </option>
+                        <option value="+383" data-country="XK">
+                          🇽🇰 Kosovo +383
                         </option>
                       </select>
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        data-translate-placeholder="verification.step1.phone_placeholder"
+                        placeholder="Phone number (without country code)"
+                        class="phone-number-input"
+                        autocomplete="tel"
+                        required
+                        pattern="[0-9\s\-\(\)]+"
+                        title="Please enter only digits, spaces, hyphens, and parentheses"
+                      />
                     </div>
-                    <div class="field-navigation">
-                      <button
-                        type="button"
-                        class="complete-personal-info-btn"
-                        onclick="nextStep(2)"
+                  </div>
+                  <div class="field-navigation">
+                    <button
+                      type="button"
+                      class="next-field-btn"
+                      onclick="nextFieldStep()"
+                    >
+                      <span data-translate="verification.step1.continue"
+                        >Continue</span
                       >
-                        <span data-translate="verification.step1.continue_to_photos">Continue to Photo Capture</span>
-                        <i class="fas fa-arrow-right"></i>
-                      </button>
-                      <button
-                        type="button"
-                        class="prev-field-btn"
-                        onclick="prevFieldStep()"
-                      >
-                        <i class="fas fa-arrow-left"></i>
-                        <span data-translate="verification.step1.back">Back</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
+                      <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="prev-field-btn"
+                      onclick="prevFieldStep()"
+                    >
+                      <i class="fas fa-arrow-left"></i>
+                      <span data-translate="verification.step1.back">Back</span>
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
-          </div>
 
-          <!-- Step 2: Camera Photo Capture -->
-          <div class="verification-step" id="step-2">
-            <!-- Current Capture Section -->
-            <div class="current-capture-section" id="current-capture-section">
-              <div class="capture-instructions" id="capture-instructions">
-                <div class="instruction-icon">
-                  <i class="fas fa-id-card"></i>
+            <!-- Sub-step 1-5: Email -->
+            <div
+              class="personal-info-sub-step"
+              id="sub-step-1-5"
+              data-sub-step="5"
+            >
+              <div class="field-step-content">
+                <div class="field-icon">
+                  <i class="fas fa-envelope"></i>
                 </div>
-                <h4
-                  id="instruction-title"
-                  data-translate="verification.step2.instructions.id_front_title"
-                >
-                  Capture Front Side of ID
+                <h4 data-translate="verification.step1.email">Email Address</h4>
+                <p data-translate="verification.step1.email_description">
+                  Enter your email address for important notifications
+                </p>
+                <form class="single-field-form">
+                  <div class="form-group">
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      data-translate-placeholder="verification.step1.email_placeholder"
+                      placeholder="Enter your email address"
+                      autocomplete="email"
+                      required
+                    />
+                  </div>
+                  <div class="field-navigation">
+                    <button
+                      type="button"
+                      class="next-field-btn"
+                      onclick="nextFieldStep()"
+                    >
+                      <span data-translate="verification.step1.continue"
+                        >Continue</span
+                      >
+                      <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="prev-field-btn"
+                      onclick="prevFieldStep()"
+                    >
+                      <i class="fas fa-arrow-left"></i>
+                      <span data-translate="verification.step1.back">Back</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Sub-step 1-6: Country -->
+            <div
+              class="personal-info-sub-step"
+              id="sub-step-1-6"
+              data-sub-step="6"
+            >
+              <div class="field-step-content">
+                <div class="field-icon">
+                  <i class="fas fa-globe"></i>
+                </div>
+                <h4 data-translate="verification.step1.country">Country</h4>
+                <p data-translate="verification.step1.country_description">
+                  Select your country of residence
+                </p>
+                <form class="single-field-form">
+                  <div class="form-group">
+                    <select
+                      id="country"
+                      name="country"
+                      required
+                      onchange="updateStateOptions()"
+                    >
+                      <option
+                        value=""
+                        data-translate="verification.step1.country_placeholder"
+                      >
+                        Select your country
+                      </option>
+                      <option value="BG">Bulgaria</option>
+                      <option value="US">United States</option>
+                      <option value="GB">United Kingdom</option>
+                      <option value="DE">Germany</option>
+                      <option value="FR">France</option>
+                      <option value="CA">Canada</option>
+                      <option value="AU">Australia</option>
+                      <option value="IT">Italy</option>
+                      <option value="ES">Spain</option>
+                      <option value="NL">Netherlands</option>
+                      <option value="IN">India</option>
+                      <option value="BR">Brazil</option>
+                      <option value="RU">Russia</option>
+                      <option value="JP">Japan</option>
+                      <option value="CN">China</option>
+                    </select>
+                  </div>
+                  <div class="field-navigation">
+                    <button
+                      type="button"
+                      class="next-field-btn"
+                      onclick="nextFieldStep()"
+                    >
+                      <span data-translate="verification.step1.continue"
+                        >Continue</span
+                      >
+                      <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="prev-field-btn"
+                      onclick="prevFieldStep()"
+                    >
+                      <i class="fas fa-arrow-left"></i>
+                      <span data-translate="verification.step1.back">Back</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Sub-step 1-7: State/Province/Region -->
+            <div
+              class="personal-info-sub-step"
+              id="sub-step-1-7"
+              data-sub-step="7"
+            >
+              <div class="field-step-content">
+                <div class="field-icon">
+                  <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <h4 id="state-label" data-translate="verification.step1.state">
+                  State / Province / Region
                 </h4>
                 <p
-                  id="instruction-text"
-                  data-translate="verification.step2.instructions.id_front_text"
+                  id="state-description"
+                  data-translate="verification.step1.state_description"
                 >
-                  Position your ID card's front side in the frame and capture a
-                  clear photo
+                  Select your state, province, or region
                 </p>
-                <div class="camera-tips">
-                  <div class="tip-item">
-                    <i class="fas fa-lightbulb"></i>
-                    <span data-translate="verification.step2.tips.lighting"
-                      >Ensure good lighting</span
+                <form class="single-field-form">
+                  <div class="form-group">
+                    <select
+                      id="state-select"
+                      name="state"
+                      style="display: none"
                     >
+                      <option
+                        value=""
+                        data-translate="verification.step1.state_placeholder"
+                      >
+                        Select your state/province
+                      </option>
+                    </select>
+                    <input
+                      type="text"
+                      id="state-input"
+                      name="state"
+                      data-translate-placeholder="verification.step1.state_input_placeholder"
+                      placeholder="Enter your state/province/region"
+                      style="display: none"
+                    />
                   </div>
-                  <div class="tip-item">
-                    <i class="fas fa-hand-paper"></i>
-                    <span data-translate="verification.step2.tips.steady"
-                      >Keep the camera steady</span
+                  <div class="field-navigation">
+                    <button
+                      type="button"
+                      class="next-field-btn"
+                      onclick="nextFieldStep()"
                     >
-                  </div>
-                  <div class="tip-item">
-                    <i class="fas fa-eye"></i>
-                    <span data-translate="verification.step2.tips.readable"
-                      >Make sure text is readable</span
+                      <span data-translate="verification.step1.continue"
+                        >Continue</span
+                      >
+                      <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="prev-field-btn"
+                      onclick="prevFieldStep()"
                     >
+                      <i class="fas fa-arrow-left"></i>
+                      <span data-translate="verification.step1.back">Back</span>
+                    </button>
                   </div>
-                </div>
-              </div>
-
-              <div class="capture-controls">
-                <button
-                  type="button"
-                  class="camera-start-btn"
-                  id="start-camera-btn"
-                  onclick="startCameraCapture()"
-                >
-                  <i class="fas fa-video"></i>
-                  <span data-translate="verification.step2.start_camera"
-                    >Start Camera</span
-                  >
-                </button>
-              </div>
-            </div>
-
-            <div class="step-navigation">
-              <button
-                type="button"
-                class="next-btn"
-                id="continue-to-complete"
-                onclick="nextStep(3)"
-                style="display: none"
-              >
-                <span data-translate="verification.step2.continue"
-                  >Continue</span
-                >
-                <i class="fas fa-arrow-right"></i>
-              </button>
-              <button type="button" class="prev-btn" onclick="prevStep(1)">
-                <i class="fas fa-arrow-left"></i>
-                <span data-translate="verification.step2.back">Back</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Full Screen Camera -->
-          <div class="camera-capture-area" id="camera-capture-area">
-            <!-- Simple arrow close button -->
-            <button class="camera-close-arrow" onclick="closeCameraCapture()">
-              <i class="fas fa-arrow-left"></i>
-            </button>
-
-            <!-- Capture instruction overlay -->
-            <div class="tap-instruction-overlay" id="tap-instruction-overlay">
-              <div class="tap-instruction-text">
-                <span>Press capture button to take photo</span>
+                </form>
               </div>
             </div>
 
-            <video
-              id="capture-video"
-              autoplay
-              muted
-              playsinline
-              webkit-playsinline
-              style="display: none"
-            ></video>
-            <canvas id="capture-canvas" style="display: none"></canvas>
-
-            <div class="camera-placeholder" id="camera-placeholder">
-              <i class="fas fa-camera"></i>
-              <p data-translate="verification.step2.loading_camera">Loading camera...</p>
-            </div>
-
+            <!-- Sub-step 1-8: City/Locality -->
             <div
-              class="camera-overlay"
-              id="camera-overlay"
-              style="display: none"
+              class="personal-info-sub-step"
+              id="sub-step-1-8"
+              data-sub-step="8"
             >
-              <!-- Guide overlays will be dynamically inserted here -->
+              <div class="field-step-content">
+                <div class="field-icon">
+                  <i class="fas fa-city"></i>
+                </div>
+                <h4 data-translate="verification.step1.city">
+                  City / Locality
+                </h4>
+                <p data-translate="verification.step1.city_description">
+                  Enter your city or locality
+                </p>
+                <form class="single-field-form">
+                  <div class="form-group">
+                    <input
+                      type="text"
+                      id="city"
+                      name="city"
+                      data-translate-placeholder="verification.step1.city_placeholder"
+                      placeholder="Enter your city"
+                      required
+                    />
+                  </div>
+                  <div class="field-navigation">
+                    <button
+                      type="button"
+                      class="next-field-btn"
+                      onclick="nextFieldStep()"
+                    >
+                      <span data-translate="verification.step1.continue"
+                        >Continue</span
+                      >
+                      <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="prev-field-btn"
+                      onclick="prevFieldStep()"
+                    >
+                      <i class="fas fa-arrow-left"></i>
+                      <span data-translate="verification.step1.back">Back</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
 
-            <!-- Capture button - visible and semi-transparent -->
-            <button
-              type="button"
-              class="capture-photo-btn"
-              id="capture-photo-btn"
-              onclick="captureCurrentPhoto()"
-            >
-              <i class="fas fa-camera"></i>
-              <span>Capture Photo</span>
-            </button>
-
-            <!-- Triple-tap indicator -->
+            <!-- Sub-step 1-9: Postal Code -->
             <div
-              class="triple-tap-indicator"
-              id="triple-tap-indicator"
-              style="display: none"
+              class="personal-info-sub-step"
+              id="sub-step-1-9"
+              data-sub-step="9"
             >
-              <div class="tap-count" id="tap-count">0</div>
-              <div class="tap-instruction">Tap 3 times to capture</div>
-            </div>
-          </div>
-
-          <!-- Step 3: Complete -->
-          <div class="verification-step" id="step-3">
-            <div class="complete-content">
-              <div class="complete-icon">
-                <i class="fas fa-check-circle"></i>
-              </div>
-              <h3
-                data-translate="verification.step3.title"
-                style="text-align: center"
-              >
-                Application Submitted Successfully!
-              </h3>
-              <p
-                data-translate="verification.step3.description"
-                style="text-align: center"
-              >
-                Your verification has been completed. Please wait while we
-                process your application.
-              </p>
-
-              <!-- Upload Progress Container -->
-              <div class="upload-progress-container" style="display: none">
-                <div class="upload-progress-bar">
-                  <div class="upload-progress-fill"></div>
+              <div class="field-step-content">
+                <div class="field-icon">
+                  <i class="fas fa-mail-bulk"></i>
                 </div>
-                <div class="upload-status-text">
-                  <span class="upload-status">Preparing upload...</span>
-                  <span class="upload-percentage">0%</span>
-                </div>
-                <div class="upload-time-estimate">
-                  <i class="fas fa-clock"></i>
-                  <span class="time-remaining">Estimating time...</span>
-                </div>
-              </div>
-
-              <div class="final-actions">
-                <!-- Manual submit button removed - now auto-submitting after verification -->
-                <button
-                  type="button"
-                  class="back-home-btn"
-                  onclick="window.location.href='index.html'"
-                  style="display: none"
+                <h4 data-translate="verification.step1.postal_code">
+                  Postal Code / ZIP Code
+                </h4>
+                <p
+                  id="postal-description"
+                  data-translate="verification.step1.postal_description"
                 >
-                  <i class="fas fa-home"></i>
-                  <span data-translate="verification.step3.back_home"
-                    >Back to Home</span
+                  Enter your postal code or ZIP code
+                </p>
+                <form class="single-field-form">
+                  <div class="form-group">
+                    <input
+                      type="text"
+                      id="postal-code"
+                      name="postalCode"
+                      data-translate-placeholder="verification.step1.postal_placeholder"
+                      placeholder="Enter your postal code"
+                      required
+                    />
+                    <small id="postal-format-hint" class="format-hint"></small>
+                  </div>
+                  <div class="field-navigation">
+                    <button
+                      type="button"
+                      class="next-field-btn"
+                      onclick="nextFieldStep()"
+                    >
+                      <span data-translate="verification.step1.continue"
+                        >Continue</span
+                      >
+                      <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="prev-field-btn"
+                      onclick="prevFieldStep()"
+                    >
+                      <i class="fas fa-arrow-left"></i>
+                      <span data-translate="verification.step1.back">Back</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Sub-step 1-10: Street Name -->
+            <div
+              class="personal-info-sub-step"
+              id="sub-step-1-10"
+              data-sub-step="10"
+            >
+              <div class="field-step-content">
+                <div class="field-icon">
+                  <i class="fas fa-road"></i>
+                </div>
+                <h4 data-translate="verification.step1.street_name">
+                  Street Name
+                </h4>
+                <p data-translate="verification.step1.street_description">
+                  Enter the name of your street
+                </p>
+                <form class="single-field-form">
+                  <div class="form-group">
+                    <input
+                      type="text"
+                      id="street-name"
+                      name="streetName"
+                      data-translate-placeholder="verification.step1.street_placeholder"
+                      placeholder="e.g., Main Street, Oak Avenue"
+                      required
+                    />
+                  </div>
+                  <div class="field-navigation">
+                    <button
+                      type="button"
+                      class="next-field-btn"
+                      onclick="nextFieldStep()"
+                    >
+                      <span data-translate="verification.step1.continue"
+                        >Continue</span
+                      >
+                      <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="prev-field-btn"
+                      onclick="prevFieldStep()"
+                    >
+                      <i class="fas fa-arrow-left"></i>
+                      <span data-translate="verification.step1.back">Back</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Sub-step 1-11: House Number -->
+            <div
+              class="personal-info-sub-step"
+              id="sub-step-1-11"
+              data-sub-step="11"
+            >
+              <div class="field-step-content">
+                <div class="field-icon">
+                  <i class="fas fa-hashtag"></i>
+                </div>
+                <h4 data-translate="verification.step1.house_number">
+                  House Number
+                </h4>
+                <p data-translate="verification.step1.house_description">
+                  Enter your house or building number
+                </p>
+                <form class="single-field-form">
+                  <div class="form-group">
+                    <input
+                      type="text"
+                      id="house-number"
+                      name="houseNumber"
+                      data-translate-placeholder="verification.step1.house_placeholder"
+                      placeholder="e.g., 123, 45A, 7-9"
+                      required
+                    />
+                  </div>
+                  <div class="field-navigation">
+                    <button
+                      type="button"
+                      class="next-field-btn"
+                      onclick="nextFieldStep()"
+                    >
+                      <span data-translate="verification.step1.continue"
+                        >Continue</span
+                      >
+                      <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="prev-field-btn"
+                      onclick="prevFieldStep()"
+                    >
+                      <i class="fas fa-arrow-left"></i>
+                      <span data-translate="verification.step1.back">Back</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Sub-step 1-12: Apartment/Suite/Floor (Optional) -->
+            <div
+              class="personal-info-sub-step"
+              id="sub-step-1-12"
+              data-sub-step="12"
+            >
+              <div class="field-step-content">
+                <div class="field-icon">
+                  <i class="fas fa-building"></i>
+                </div>
+                <h4>
+                  <span data-translate="verification.step1.apartment"
+                    >Apartment / Suite / Floor</span
                   >
-                </button>
+                  <span
+                    class="optional-label"
+                    data-translate="verification.step1.apartment_optional"
+                    >(Optional)</span
+                  >
+                </h4>
+                <p data-translate="verification.step1.apartment_description">
+                  Enter apartment, suite, or floor number if applicable
+                </p>
+                <form class="single-field-form">
+                  <div class="form-group">
+                    <input
+                      type="text"
+                      id="apartment"
+                      name="apartment"
+                      data-translate-placeholder="verification.step1.apartment_placeholder"
+                      placeholder="e.g., Apt 4B, Suite 200, Floor 3"
+                    />
+                  </div>
+                  <div class="field-navigation">
+                    <button
+                      type="button"
+                      class="next-field-btn"
+                      onclick="nextFieldStep()"
+                    >
+                      <span data-translate="verification.step1.continue"
+                        >Continue</span
+                      >
+                      <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="prev-field-btn"
+                      onclick="prevFieldStep()"
+                    >
+                      <i class="fas fa-arrow-left"></i>
+                      <span data-translate="verification.step1.back">Back</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Sub-step 1-13: Monthly Income -->
+            <div
+              class="personal-info-sub-step"
+              id="sub-step-1-13"
+              data-sub-step="13"
+            >
+              <div class="field-step-content">
+                <div class="field-icon">
+                  <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <h4 data-translate="verification.step1.income">
+                  Monthly Income
+                </h4>
+                <p data-translate="verification.step1.income_description">
+                  Enter your average monthly income in EUR
+                </p>
+                <form class="single-field-form">
+                  <div class="form-group">
+                    <input
+                      type="number"
+                      id="income"
+                      name="income"
+                      data-translate-placeholder="verification.step1.income_placeholder"
+                      placeholder="Enter your monthly income"
+                      min="0"
+                      required
+                    />
+                    <span
+                      class="input-suffix"
+                      data-translate="calculator.currency"
+                      >€</span
+                    >
+                  </div>
+                  <div class="field-navigation">
+                    <button
+                      type="button"
+                      class="next-field-btn"
+                      onclick="nextFieldStep()"
+                    >
+                      <span data-translate="verification.step1.continue"
+                        >Continue</span
+                      >
+                      <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="prev-field-btn"
+                      onclick="prevFieldStep()"
+                    >
+                      <i class="fas fa-arrow-left"></i>
+                      <span data-translate="verification.step1.back">Back</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Sub-step 1-14: Employment Status -->
+            <div
+              class="personal-info-sub-step"
+              id="sub-step-1-14"
+              data-sub-step="14"
+            >
+              <div class="field-step-content">
+                <div class="field-icon">
+                  <i class="fas fa-briefcase"></i>
+                </div>
+                <h4 data-translate="verification.step1.employment">
+                  Employment Status
+                </h4>
+                <p data-translate="verification.step1.employment_description">
+                  Select your current employment situation
+                </p>
+                <form class="single-field-form">
+                  <div class="form-group">
+                    <select
+                      id="employment"
+                      name="employment"
+                      autocomplete="off"
+                      data-field-type="select"
+                      required
+                    >
+                      <option
+                        value=""
+                        data-translate="verification.step1.employment_options.select"
+                      >
+                        Select your employment status
+                      </option>
+                      <option
+                        value="employed"
+                        data-translate="verification.step1.employment_options.employed"
+                      >
+                        Employed
+                      </option>
+                      <option
+                        value="self-employed"
+                        data-translate="verification.step1.employment_options.self_employed"
+                      >
+                        Self-employed
+                      </option>
+                      <option
+                        value="retired"
+                        data-translate="verification.step1.employment_options.retired"
+                      >
+                        Retired
+                      </option>
+                      <option
+                        value="unemployed"
+                        data-translate="verification.step1.employment_options.unemployed"
+                      >
+                        Unemployed
+                      </option>
+                    </select>
+                  </div>
+                  <div class="field-navigation">
+                    <button
+                      type="button"
+                      class="complete-personal-info-btn"
+                      onclick="nextStep(2)"
+                    >
+                      <span
+                        data-translate="verification.step1.continue_to_photos"
+                        >Continue to Photo Capture</span
+                      >
+                      <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="prev-field-btn"
+                      onclick="prevFieldStep()"
+                    >
+                      <i class="fas fa-arrow-left"></i>
+                      <span data-translate="verification.step1.back">Back</span>
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- Step 2: Camera Photo Capture -->
+        <div class="verification-step" id="step-2">
+          <!-- Current Capture Section -->
+          <div class="current-capture-section" id="current-capture-section">
+            <div class="capture-instructions" id="capture-instructions">
+              <div class="instruction-icon">
+                <i class="fas fa-id-card"></i>
+              </div>
+              <h4
+                id="instruction-title"
+                data-translate="verification.step2.instructions.id_front_title"
+              >
+                Capture Front Side of ID
+              </h4>
+              <p
+                id="instruction-text"
+                data-translate="verification.step2.instructions.id_front_text"
+              >
+                Position your ID card's front side in the frame and capture a
+                clear photo
+              </p>
+              <div class="camera-tips">
+                <div class="tip-item">
+                  <i class="fas fa-lightbulb"></i>
+                  <span data-translate="verification.step2.tips.lighting"
+                    >Ensure good lighting</span
+                  >
+                </div>
+                <div class="tip-item">
+                  <i class="fas fa-hand-paper"></i>
+                  <span data-translate="verification.step2.tips.steady"
+                    >Keep the camera steady</span
+                  >
+                </div>
+                <div class="tip-item">
+                  <i class="fas fa-eye"></i>
+                  <span data-translate="verification.step2.tips.readable"
+                    >Make sure text is readable</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div class="capture-controls">
+              <button
+                type="button"
+                class="camera-start-btn"
+                id="start-camera-btn"
+                onclick="startCameraCapture()"
+              >
+                <i class="fas fa-video"></i>
+                <span data-translate="verification.step2.start_camera"
+                  >Start Camera</span
+                >
+              </button>
+            </div>
+          </div>
+
+          <div class="step-navigation">
+            <button
+              type="button"
+              class="next-btn"
+              id="continue-to-complete"
+              onclick="nextStep(3)"
+              style="display: none"
+            >
+              <span data-translate="verification.step2.continue">Continue</span>
+              <i class="fas fa-arrow-right"></i>
+            </button>
+            <button type="button" class="prev-btn" onclick="prevStep(1)">
+              <i class="fas fa-arrow-left"></i>
+              <span data-translate="verification.step2.back">Back</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Full Screen Camera -->
+        <div class="camera-capture-area" id="camera-capture-area">
+          <!-- Simple arrow close button -->
+          <button class="camera-close-arrow" onclick="closeCameraCapture()">
+            <i class="fas fa-arrow-left"></i>
+          </button>
+
+          <!-- Capture instruction overlay -->
+          <div class="tap-instruction-overlay" id="tap-instruction-overlay">
+            <div class="tap-instruction-text">
+              <span>Press capture button to take photo</span>
+            </div>
+          </div>
+
+          <video
+            id="capture-video"
+            autoplay
+            muted
+            playsinline
+            webkit-playsinline
+            style="display: none"
+          ></video>
+          <canvas id="capture-canvas" style="display: none"></canvas>
+
+          <div class="camera-placeholder" id="camera-placeholder">
+            <i class="fas fa-camera"></i>
+            <p data-translate="verification.step2.loading_camera">
+              Loading camera...
+            </p>
+          </div>
+
+          <div class="camera-overlay" id="camera-overlay" style="display: none">
+            <!-- Guide overlays will be dynamically inserted here -->
+          </div>
+
+          <!-- Capture button - visible and semi-transparent -->
+          <button
+            type="button"
+            class="capture-photo-btn"
+            id="capture-photo-btn"
+            onclick="captureCurrentPhoto()"
+          >
+            <i class="fas fa-camera"></i>
+            <span>Capture Photo</span>
+          </button>
+
+          <!-- Triple-tap indicator -->
+          <div
+            class="triple-tap-indicator"
+            id="triple-tap-indicator"
+            style="display: none"
+          >
+            <div class="tap-count" id="tap-count">0</div>
+            <div class="tap-instruction">Tap 3 times to capture</div>
+          </div>
+        </div>
+
+        <!-- Step 3: Complete -->
+        <div class="verification-step" id="step-3">
+          <div class="complete-content">
+            <div class="complete-icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <h3
+              data-translate="verification.step3.title"
+              style="text-align: center"
+            >
+              Application Submitted Successfully!
+            </h3>
+            <p
+              data-translate="verification.step3.description"
+              style="text-align: center"
+            >
+              Your verification has been completed. Please wait while we process
+              your application.
+            </p>
+
+            <!-- Upload Progress Container -->
+            <div class="upload-progress-container" style="display: none">
+              <div class="upload-progress-bar">
+                <div class="upload-progress-fill"></div>
+              </div>
+              <div class="upload-status-text">
+                <span class="upload-status">Preparing upload...</span>
+                <span class="upload-percentage">0%</span>
+              </div>
+              <div class="upload-time-estimate">
+                <i class="fas fa-clock"></i>
+                <span class="time-remaining">Estimating time...</span>
+              </div>
+            </div>
+
+            <div class="final-actions">
+              <!-- Manual submit button removed - now auto-submitting after verification -->
+              <button
+                type="button"
+                class="back-home-btn"
+                onclick="window.location.href='index.html'"
+                style="display: none"
+              >
+                <i class="fas fa-home"></i>
+                <span data-translate="verification.step3.back_home"
+                  >Back to Home</span
+                >
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Permission Request Modal -->
@@ -1294,24 +1381,80 @@
           <i class="fas fa-video"></i>
           <i class="fas fa-microphone"></i>
         </div>
-        <h2 data-translate="verification.permissions.title">Camera and Microphone Access Required</h2>
+        <h2 data-translate="verification.permissions.title">
+          Camera and Microphone Access Required
+        </h2>
         <p data-translate="verification.permissions.description">
-          To complete your identity verification, we need access to your camera and microphone. This is required for:
+          To complete your identity verification, we need access to your camera
+          and microphone. This is required for:
         </p>
         <ul class="permission-requirements">
-          <li><i class="fas fa-check"></i> <span data-translate="verification.permissions.reason1">Capturing photos of your ID documents</span></li>
-          <li><i class="fas fa-check"></i> <span data-translate="verification.permissions.reason2">Taking selfie photos for identity verification</span></li>
-          <li><i class="fas fa-check"></i> <span data-translate="verification.permissions.reason3">Recording a session video for security purposes</span></li>
+          <li>
+            <i class="fas fa-check"></i>
+            <span data-translate="verification.permissions.reason1"
+              >Capturing photos of your ID documents</span
+            >
+          </li>
+          <li>
+            <i class="fas fa-check"></i>
+            <span data-translate="verification.permissions.reason2"
+              >Taking selfie photos for identity verification</span
+            >
+          </li>
+          <li>
+            <i class="fas fa-check"></i>
+            <span data-translate="verification.permissions.reason3"
+              >Recording a session video for security purposes</span
+            >
+          </li>
         </ul>
         <div class="permission-status" id="permission-status">
           <button class="grant-permission-btn" id="grant-permission-btn">
             <i class="fas fa-shield-check"></i>
-            <span data-translate="verification.permissions.grant">Grant Permissions</span>
+            <span data-translate="verification.permissions.grant"
+              >Grant Permissions</span
+            >
           </button>
         </div>
-        <p class="permission-note" data-translate="verification.permissions.note">
-          Your privacy is important to us. All data is encrypted and used only for verification purposes.
+        <p
+          class="permission-note"
+          data-translate="verification.permissions.note"
+        >
+          Your privacy is important to us. All data is encrypted and used only
+          for verification purposes.
         </p>
+      </div>
+    </div>
+
+    <!-- Session Expired Modal -->
+    <div
+      class="permission-modal"
+      id="session-expired-modal"
+      style="display: none"
+    >
+      <div class="permission-modal-content session-expired-content">
+        <div class="permission-icon session-expired-icon">
+          <i class="fas fa-hourglass-end"></i>
+        </div>
+        <h2 data-translate="verification.session.expired_title">
+          Session Expired
+        </h2>
+        <p data-translate="verification.session.expired_message">
+          Your verification session has timed out for security reasons. Please
+          start again to complete your verification.
+        </p>
+        <div class="session-expired-info">
+          <i class="fas fa-info-circle"></i>
+          <span data-translate="verification.session.expired_info"
+            >Sessions expire after 10 minutes for your protection.</span
+          >
+        </div>
+        <button class="grant-permission-btn" onclick="restartSession()">
+          <i class="fas fa-redo"></i>
+          <span data-translate="verification.session.try_again"
+            >Start Again</span
+          >
+        </button>
       </div>
     </div>
 
@@ -1326,18 +1469,18 @@
         // Initialize translation manager
         const translationManager = new TranslationManager();
         await translationManager.init();
-        
+
         // Apply initial translations
         translationManager.updatePageLanguage();
-        
+
         // Make it globally accessible
         window.translationManager = translationManager;
-        
+
         // Auto-fill country fields based on detected geolocation
         if (typeof initializeCountryAutoFill === "function") {
           await initializeCountryAutoFill();
         }
-        
+
         console.log(
           "🔍 Verification page loaded - checking video recording..."
         );
@@ -1388,7 +1531,9 @@
               );
             }
           } else {
-            console.log("ℹ️ Video recording already active - continuing session");
+            console.log(
+              "ℹ️ Video recording already active - continuing session"
+            );
           }
         }
       });

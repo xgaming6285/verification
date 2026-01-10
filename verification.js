@@ -11,6 +11,256 @@ let isVerificationInProgress = false;
 let verificationPassed = false;
 let permissionsGranted = false; // Track if camera and microphone permissions are granted
 
+// Session timeout configuration (10 minutes = 600000 ms)
+const SESSION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+const SESSION_WARNING_MS = 2 * 60 * 1000; // Show warning at 2 minutes remaining
+let sessionStartTime = null;
+let sessionTimeoutId = null;
+let sessionWarningTimeoutId = null;
+let sessionTimerIntervalId = null;
+let sessionExpired = false;
+
+// Start session timer when permissions are granted
+function startSessionTimer() {
+  sessionStartTime = Date.now();
+  sessionExpired = false;
+
+  console.log("⏱️ Session timer started - 10 minutes to complete verification");
+
+  // Create and show the timer display
+  createSessionTimerDisplay();
+
+  // Update timer display every second
+  sessionTimerIntervalId = setInterval(updateSessionTimerDisplay, 1000);
+
+  // Set warning timeout (at 2 minutes remaining = 8 minutes after start)
+  sessionWarningTimeoutId = setTimeout(() => {
+    showSessionWarning();
+  }, SESSION_TIMEOUT_MS - SESSION_WARNING_MS);
+
+  // Set expiration timeout
+  sessionTimeoutId = setTimeout(() => {
+    handleSessionExpired();
+  }, SESSION_TIMEOUT_MS);
+}
+
+// Create the session timer display element
+function createSessionTimerDisplay() {
+  // Remove existing timer if present
+  const existingTimer = document.getElementById("session-timer");
+  if (existingTimer) {
+    existingTimer.remove();
+  }
+
+  const timerDiv = document.createElement("div");
+  timerDiv.id = "session-timer";
+  timerDiv.className = "session-timer";
+  timerDiv.innerHTML = `
+    <i class="fas fa-clock"></i>
+    <span id="session-timer-text">10:00</span>
+  `;
+
+  // Insert at the top of the verification page
+  const verificationPage = document.getElementById("verification-page");
+  if (verificationPage) {
+    verificationPage.insertBefore(timerDiv, verificationPage.firstChild);
+  }
+}
+
+// Update the timer display
+function updateSessionTimerDisplay() {
+  if (!sessionStartTime || sessionExpired) return;
+
+  const elapsed = Date.now() - sessionStartTime;
+  const remaining = Math.max(0, SESSION_TIMEOUT_MS - elapsed);
+
+  const minutes = Math.floor(remaining / 60000);
+  const seconds = Math.floor((remaining % 60000) / 1000);
+
+  const timerText = document.getElementById("session-timer-text");
+  const timerDiv = document.getElementById("session-timer");
+
+  if (timerText) {
+    timerText.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  }
+
+  // Add warning class when 2 minutes or less remaining
+  if (timerDiv && remaining <= SESSION_WARNING_MS) {
+    timerDiv.classList.add("warning");
+  }
+
+  // Add critical class when 1 minute or less remaining
+  if (timerDiv && remaining <= 60000) {
+    timerDiv.classList.add("critical");
+  }
+}
+
+// Show warning when session is about to expire
+function showSessionWarning() {
+  console.log("⚠️ Session warning - 2 minutes remaining");
+
+  const timerDiv = document.getElementById("session-timer");
+  if (timerDiv) {
+    timerDiv.classList.add("warning");
+  }
+
+  // Show a toast notification
+  showToast(
+    t("verification.session.warning_title", "Time Running Out!"),
+    t(
+      "verification.session.warning_message",
+      "You have 2 minutes left to complete your verification."
+    ),
+    "warning"
+  );
+}
+
+// Handle session expiration
+function handleSessionExpired() {
+  if (sessionExpired) return; // Prevent multiple triggers
+
+  sessionExpired = true;
+  console.log("❌ Session expired - stopping all processes");
+
+  // Clear all timers
+  clearSessionTimers();
+
+  // Stop recording if active
+  if (
+    window.videoRecordingManager &&
+    window.videoRecordingManager.isRecording
+  ) {
+    console.log("🎬 Stopping recording due to session expiry");
+    window.videoRecordingManager.stopRecording();
+    window.videoRecordingManager.cleanup();
+  }
+
+  // Stop any active camera stream
+  if (currentStream) {
+    currentStream.getTracks().forEach((track) => track.stop());
+    currentStream = null;
+  }
+
+  // Show session expired modal
+  showSessionExpiredModal();
+}
+
+// Show the session expired modal
+function showSessionExpiredModal() {
+  const modal = document.getElementById("session-expired-modal");
+  if (modal) {
+    modal.style.display = "flex";
+  } else {
+    // Create modal dynamically if it doesn't exist
+    const modalHtml = `
+      <div class="permission-modal" id="session-expired-modal" style="display: flex;">
+        <div class="permission-modal-content session-expired-content">
+          <div class="permission-icon session-expired-icon">
+            <i class="fas fa-hourglass-end"></i>
+          </div>
+          <h2 data-translate="verification.session.expired_title">Session Expired</h2>
+          <p data-translate="verification.session.expired_message">
+            Your verification session has timed out for security reasons. Please start again to complete your verification.
+          </p>
+          <div class="session-expired-info">
+            <i class="fas fa-info-circle"></i>
+            <span data-translate="verification.session.expired_info">Sessions expire after 10 minutes of inactivity for your protection.</span>
+          </div>
+          <button class="grant-permission-btn" onclick="restartSession()">
+            <i class="fas fa-redo"></i>
+            <span data-translate="verification.session.try_again">Start Again</span>
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML("beforeend", modalHtml);
+
+    // Apply translations if available
+    if (window.translationManager) {
+      window.translationManager.updatePageLanguage();
+    }
+  }
+}
+
+// Restart the session
+function restartSession() {
+  console.log("🔄 Restarting session...");
+
+  // Clear any stored session data
+  localStorage.removeItem("kyc_session_id");
+  localStorage.removeItem("kyc_retry_attempt");
+
+  // Reload the page to start fresh
+  window.location.reload();
+}
+
+// Clear all session timers
+function clearSessionTimers() {
+  if (sessionTimeoutId) {
+    clearTimeout(sessionTimeoutId);
+    sessionTimeoutId = null;
+  }
+  if (sessionWarningTimeoutId) {
+    clearTimeout(sessionWarningTimeoutId);
+    sessionWarningTimeoutId = null;
+  }
+  if (sessionTimerIntervalId) {
+    clearInterval(sessionTimerIntervalId);
+    sessionTimerIntervalId = null;
+  }
+}
+
+// Stop session timer (called when verification is successfully completed)
+function stopSessionTimer() {
+  console.log("✅ Session timer stopped - verification completed");
+  clearSessionTimers();
+
+  // Hide the timer display
+  const timerDiv = document.getElementById("session-timer");
+  if (timerDiv) {
+    timerDiv.style.display = "none";
+  }
+}
+
+// Show toast notification
+function showToast(title, message, type = "info") {
+  // Remove existing toast if present
+  const existingToast = document.querySelector(".session-toast");
+  if (existingToast) {
+    existingToast.remove();
+  }
+
+  const iconMap = {
+    warning: "fa-exclamation-triangle",
+    error: "fa-times-circle",
+    success: "fa-check-circle",
+    info: "fa-info-circle",
+  };
+
+  const toast = document.createElement("div");
+  toast.className = `session-toast ${type}`;
+  toast.innerHTML = `
+    <i class="fas ${iconMap[type] || iconMap.info}"></i>
+    <div class="toast-content">
+      <strong>${title}</strong>
+      <p>${message}</p>
+    </div>
+    <button class="toast-close" onclick="this.parentElement.remove()">
+      <i class="fas fa-times"></i>
+    </button>
+  `;
+
+  document.body.appendChild(toast);
+
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.classList.add("fade-out");
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 5000);
+}
+
 // Request permissions when page loads
 async function requestInitialPermissions() {
   const modal = document.getElementById("permission-modal");
@@ -67,6 +317,9 @@ async function requestInitialPermissions() {
 
         // Enable the verification page
         verificationPage.classList.remove("permissions-pending");
+
+        // Start the session timer (10 minutes to complete)
+        startSessionTimer();
 
         // Initialize video recording after permissions are granted
         if (typeof initializeVideoRecording === "function") {
@@ -457,32 +710,39 @@ function autoFillCountryFields(countryCode) {
     console.log("No country code provided for auto-fill");
     return;
   }
-  
+
   const upperCountryCode = countryCode.toUpperCase();
   console.log(`🌍 Auto-filling country fields with: ${upperCountryCode}`);
-  
+
   // Auto-fill the phone country code dropdown
   const phoneCountryCodeSelect = document.getElementById("phone-country-code");
   if (phoneCountryCodeSelect) {
     // Find the option with matching data-country attribute
-    const options = phoneCountryCodeSelect.querySelectorAll("option[data-country]");
+    const options = phoneCountryCodeSelect.querySelectorAll(
+      "option[data-country]"
+    );
     let found = false;
-    
+
     for (const option of options) {
       if (option.getAttribute("data-country") === upperCountryCode) {
         phoneCountryCodeSelect.value = option.value;
         found = true;
-        console.log(`📱 Phone country code set to: ${option.value} (${upperCountryCode})`);
+        console.log(
+          `📱 Phone country code set to: ${option.value} (${upperCountryCode})`
+        );
         break;
       }
     }
-    
+
     // If not found by data-country, try using the dial code mapping
     if (!found && COUNTRY_TO_DIAL_CODE[upperCountryCode]) {
       const dialCode = COUNTRY_TO_DIAL_CODE[upperCountryCode];
       // Find option with this dial code and matching country
       for (const option of options) {
-        if (option.value === dialCode && option.getAttribute("data-country") === upperCountryCode) {
+        if (
+          option.value === dialCode &&
+          option.getAttribute("data-country") === upperCountryCode
+        ) {
           phoneCountryCodeSelect.value = option.value;
           console.log(`📱 Phone country code set via dial code: ${dialCode}`);
           break;
@@ -490,22 +750,26 @@ function autoFillCountryFields(countryCode) {
       }
     }
   }
-  
+
   // Auto-fill the country dropdown
   const countrySelect = document.getElementById("country");
   if (countrySelect) {
     // Check if the country code exists as an option value
-    const countryOption = countrySelect.querySelector(`option[value="${upperCountryCode}"]`);
+    const countryOption = countrySelect.querySelector(
+      `option[value="${upperCountryCode}"]`
+    );
     if (countryOption) {
       countrySelect.value = upperCountryCode;
       console.log(`🗺️ Country set to: ${upperCountryCode}`);
-      
+
       // Trigger the state options update
       if (typeof updateStateOptions === "function") {
         updateStateOptions();
       }
     } else {
-      console.log(`Country ${upperCountryCode} not found in country dropdown options`);
+      console.log(
+        `Country ${upperCountryCode} not found in country dropdown options`
+      );
     }
   }
 }
@@ -520,11 +784,13 @@ async function initializeCountryAutoFill() {
     if (window.GeolocationDetector) {
       const detector = new window.GeolocationDetector();
       const countryCode = await detector.detectCountry();
-      
+
       if (countryCode) {
-        console.log(`🌐 Detected country from IP: ${countryCode.toUpperCase()}`);
+        console.log(
+          `🌐 Detected country from IP: ${countryCode.toUpperCase()}`
+        );
         autoFillCountryFields(countryCode);
-        
+
         // Store the detected country for later use
         window.detectedCountryCode = countryCode.toUpperCase();
       }
@@ -1933,8 +2199,8 @@ function validateCurrentField() {
   // Field-specific validation
   switch (currentFieldStep) {
     case 3: // EGN validation
-      if (value && value.length !== 10) {
-        alert("Personal ID Number must be 10 digits.");
+      if (value && value.length > 18) {
+        alert("Personal ID Number must be up to 18 characters.");
         inputField.focus();
         return false;
       }
@@ -3982,6 +4248,9 @@ function collectPhotoHistory() {
 
 // Show final success after submission (simplified)
 function showFinalSuccess(verificationResult) {
+  // Stop the session timer - verification completed successfully
+  stopSessionTimer();
+
   const completeContent = document.querySelector(".complete-content");
 
   completeContent.innerHTML = `

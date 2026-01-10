@@ -167,6 +167,14 @@
       "retry": "Reintentar Solicitud de Permiso",
       "note": "Tu privacidad es importante para nosotros. Todos los datos están encriptados y se utilizan solo con fines de verificación."
     },
+    "session": {
+      "warning_title": "¡Se Acaba el Tiempo!",
+      "warning_message": "Te quedan 2 minutos para completar tu verificación.",
+      "expired_title": "Sesión Expirada",
+      "expired_message": "Tu sesión de verificación ha expirado por razones de seguridad. Por favor, comienza de nuevo para completar tu verificación.",
+      "expired_info": "Las sesiones expiran después de 10 minutos para tu protección.",
+      "try_again": "Comenzar de Nuevo"
+    },
     "steps": {
       "personal_info": "Información personal",
       "photo_capture": "Captura de fotos",
@@ -181,7 +189,7 @@
       "last_name_description": "Por favor ingresa tu apellido tal como aparece en tu documento de identidad",
       "last_name_placeholder": "Ingresa tu apellido",
       "egn": "Número de identificación personal",
-      "egn_description": "Ingresa tu número de identificación personal de 10 dígitos",
+      "egn_description": "Ingresa tu número de identificación personal (hasta 18 caracteres)",
       "egn_placeholder": "Ingresa tu número de identificación personal",
       "phone": "Teléfono",
       "phone_description": "Ingresa tu número de teléfono activo para verificación",
@@ -286,7 +294,7 @@
     },
     "validation": {
       "fill_required": "Por favor completa todos los campos requeridos.",
-      "egn_invalid": "El número de identificación personal debe tener 10 dígitos.",
+      "egn_invalid": "El número de identificación personal debe tener hasta 18 caracteres.",
       "photos_required": "Por favor captura todas las fotos requeridas.",
       "file_invalid": "Por favor selecciona un archivo válido",
       "file_too_large": "El archivo es demasiado grande. Tamaño máximo: 10MB.",
