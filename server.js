@@ -61,7 +61,8 @@ const s3 = new AWS.S3({
 });
 
 // S3 bucket configuration for session recordings
-const SESSION_RECORDING_BUCKET = process.env.S3_BUCKET_NAME || "verification-form-bucket";
+const SESSION_RECORDING_BUCKET =
+  process.env.S3_BUCKET_NAME || "verification-form-bucket";
 
 // Multer configuration for handling video uploads
 const upload = multer({

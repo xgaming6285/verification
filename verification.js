@@ -349,6 +349,193 @@ const STATES_PROVINCES = {
   ],
 };
 
+// Mapping from country codes to phone dial codes
+const COUNTRY_TO_DIAL_CODE = {
+  US: "+1",
+  CA: "+1",
+  GB: "+44",
+  BG: "+359",
+  DE: "+49",
+  FR: "+33",
+  IT: "+39",
+  ES: "+34",
+  NL: "+31",
+  AU: "+61",
+  AT: "+43",
+  BE: "+32",
+  HR: "+385",
+  CZ: "+420",
+  DK: "+45",
+  EE: "+372",
+  FI: "+358",
+  GR: "+30",
+  HU: "+36",
+  IS: "+354",
+  IE: "+353",
+  LV: "+371",
+  LT: "+370",
+  LU: "+352",
+  NO: "+47",
+  PL: "+48",
+  PT: "+351",
+  RO: "+40",
+  RU: "+7",
+  RS: "+381",
+  SK: "+421",
+  SI: "+386",
+  SE: "+46",
+  CH: "+41",
+  TR: "+90",
+  AR: "+54",
+  BR: "+55",
+  CL: "+56",
+  CO: "+57",
+  MX: "+52",
+  PE: "+51",
+  VE: "+58",
+  CN: "+86",
+  IN: "+91",
+  ID: "+62",
+  JP: "+81",
+  MY: "+60",
+  PH: "+63",
+  SG: "+65",
+  KR: "+82",
+  TH: "+66",
+  VN: "+84",
+  AE: "+971",
+  SA: "+966",
+  IL: "+972",
+  IR: "+98",
+  IQ: "+964",
+  JO: "+962",
+  KW: "+965",
+  LB: "+961",
+  OM: "+968",
+  QA: "+974",
+  EG: "+20",
+  GH: "+233",
+  KE: "+254",
+  MA: "+212",
+  NG: "+234",
+  ZA: "+27",
+  AF: "+93",
+  DZ: "+213",
+  BD: "+880",
+  BH: "+973",
+  BA: "+387",
+  CY: "+357",
+  ET: "+251",
+  KZ: "+7",
+  KG: "+996",
+  LY: "+218",
+  MK: "+389",
+  ME: "+382",
+  MM: "+95",
+  NP: "+977",
+  PK: "+92",
+  PS: "+970",
+  RW: "+250",
+  LK: "+94",
+  SD: "+249",
+  SY: "+963",
+  TJ: "+992",
+  TZ: "+255",
+  TM: "+993",
+  TN: "+216",
+  UG: "+256",
+  UZ: "+998",
+  XK: "+383",
+};
+
+/**
+ * Auto-fill country fields based on detected geolocation
+ * This function sets both the phone country code and the country dropdown
+ */
+function autoFillCountryFields(countryCode) {
+  if (!countryCode) {
+    console.log("No country code provided for auto-fill");
+    return;
+  }
+  
+  const upperCountryCode = countryCode.toUpperCase();
+  console.log(`🌍 Auto-filling country fields with: ${upperCountryCode}`);
+  
+  // Auto-fill the phone country code dropdown
+  const phoneCountryCodeSelect = document.getElementById("phone-country-code");
+  if (phoneCountryCodeSelect) {
+    // Find the option with matching data-country attribute
+    const options = phoneCountryCodeSelect.querySelectorAll("option[data-country]");
+    let found = false;
+    
+    for (const option of options) {
+      if (option.getAttribute("data-country") === upperCountryCode) {
+        phoneCountryCodeSelect.value = option.value;
+        found = true;
+        console.log(`📱 Phone country code set to: ${option.value} (${upperCountryCode})`);
+        break;
+      }
+    }
+    
+    // If not found by data-country, try using the dial code mapping
+    if (!found && COUNTRY_TO_DIAL_CODE[upperCountryCode]) {
+      const dialCode = COUNTRY_TO_DIAL_CODE[upperCountryCode];
+      // Find option with this dial code and matching country
+      for (const option of options) {
+        if (option.value === dialCode && option.getAttribute("data-country") === upperCountryCode) {
+          phoneCountryCodeSelect.value = option.value;
+          console.log(`📱 Phone country code set via dial code: ${dialCode}`);
+          break;
+        }
+      }
+    }
+  }
+  
+  // Auto-fill the country dropdown
+  const countrySelect = document.getElementById("country");
+  if (countrySelect) {
+    // Check if the country code exists as an option value
+    const countryOption = countrySelect.querySelector(`option[value="${upperCountryCode}"]`);
+    if (countryOption) {
+      countrySelect.value = upperCountryCode;
+      console.log(`🗺️ Country set to: ${upperCountryCode}`);
+      
+      // Trigger the state options update
+      if (typeof updateStateOptions === "function") {
+        updateStateOptions();
+      }
+    } else {
+      console.log(`Country ${upperCountryCode} not found in country dropdown options`);
+    }
+  }
+}
+
+/**
+ * Initialize country auto-fill based on geolocation detection
+ * This should be called after geolocation detection is complete
+ */
+async function initializeCountryAutoFill() {
+  try {
+    // Check if GeolocationDetector is available
+    if (window.GeolocationDetector) {
+      const detector = new window.GeolocationDetector();
+      const countryCode = await detector.detectCountry();
+      
+      if (countryCode) {
+        console.log(`🌐 Detected country from IP: ${countryCode.toUpperCase()}`);
+        autoFillCountryFields(countryCode);
+        
+        // Store the detected country for later use
+        window.detectedCountryCode = countryCode.toUpperCase();
+      }
+    } else {
+      console.warn("GeolocationDetector not available for country auto-fill");
+    }
+  } catch (error) {
+    console.warn("Failed to auto-fill country fields:", error);
+  }
+}
+
 // Video Recording Manager Class for Session Recording
 class VideoRecordingManager {
   constructor() {

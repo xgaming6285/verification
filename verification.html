@@ -1332,6 +1332,12 @@
         
         // Make it globally accessible
         window.translationManager = translationManager;
+        
+        // Auto-fill country fields based on detected geolocation
+        if (typeof initializeCountryAutoFill === "function") {
+          await initializeCountryAutoFill();
+        }
+        
         console.log(
           "🔍 Verification page loaded - checking video recording..."
         );
