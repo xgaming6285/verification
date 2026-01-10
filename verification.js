@@ -4033,8 +4033,12 @@ function fileToBase64(file) {
 async function submitToDatabase(data) {
   try {
     console.log("📤 Submitting verification data to database...");
-    console.log("📊 Submission data size:", JSON.stringify(data).length, "bytes");
-    
+    console.log(
+      "📊 Submission data size:",
+      JSON.stringify(data).length,
+      "bytes"
+    );
+
     const response = await fetch("/api/submit-verification", {
       method: "POST",
       headers: {
@@ -4242,7 +4246,7 @@ async function collectPhotoData() {
         const base64Size = base64Data.length;
         totalSize += base64Size;
         console.log(`📸 ${photoType} base64 size: ${base64Size} bytes`);
-        
+
         photoData[photoType] = {
           data: base64Data,
           filename: file.name || `${photoType}.jpg`,
@@ -4256,7 +4260,9 @@ async function collectPhotoData() {
     }
   }
 
-  console.log(`📸 Total photo data size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+  console.log(
+    `📸 Total photo data size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`
+  );
   return photoData;
 }
 
@@ -4302,6 +4308,52 @@ function showFinalSuccess(verificationResult) {
   `;
 }
 
+// Debug toast notification for Facebook Pixel (visible on page)
+function showPixelDebugToast(message) {
+  // Remove existing debug toast if any
+  const existing = document.getElementById("fb-pixel-debug-toast");
+  if (existing) existing.remove();
+
+  // Create debug toast
+  const toast = document.createElement("div");
+  toast.id = "fb-pixel-debug-toast";
+  toast.innerHTML = `
+    <div style="
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #1877f2, #42b72a);
+      color: white;
+      padding: 16px 20px;
+      border-radius: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    ">
+      <span style="font-size: 24px;">📊</span>
+      <div>
+        <div style="font-weight: 700; margin-bottom: 4px;">Facebook Pixel Debug</div>
+        <div style="opacity: 0.95;">${message}</div>
+        <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">Pixel ID: 1177285404600305</div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  // Auto-remove after 8 seconds
+  setTimeout(() => {
+    toast.style.transition = "opacity 0.5s";
+    toast.style.opacity = "0";
+    setTimeout(() => toast.remove(), 500);
+  }, 8000);
+}
+
 // Facebook Pixel - fires SubmitApplication event on successful submission
 function fireFacebookPixelSubmitApplication() {
   // Only inject the pixel once
@@ -4309,6 +4361,7 @@ function fireFacebookPixelSubmitApplication() {
     // Pixel already loaded, just fire the event
     fbq("track", "SubmitApplication");
     console.log("📊 Facebook Pixel: SubmitApplication event fired");
+    showPixelDebugToast("✅ SubmitApplication event fired (pixel was already loaded)");
     return;
   }
 
@@ -4356,6 +4409,9 @@ function fireFacebookPixelSubmitApplication() {
   console.log(
     "📊 Facebook Pixel: Base code loaded + SubmitApplication event fired"
   );
+  
+  // Show visual debug toast
+  showPixelDebugToast("✅ Pixel loaded + PageView + SubmitApplication events fired!");
 }
 
 // Show submission error
