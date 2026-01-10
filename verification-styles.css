@@ -1448,17 +1448,17 @@ body {
   gap: 15px;
 }
 
-/* Photo-specific capture button positioning - moved even higher */
+/* Photo-specific capture button positioning - consistent across all steps */
 .camera-capture-area.id-capture .capture-photo-btn {
   bottom: 160px;
 }
 
 .camera-capture-area.face-capture .capture-photo-btn {
-  bottom: 150px;
+  bottom: 160px;
 }
 
 .camera-capture-area.face-with-id-capture .capture-photo-btn {
-  bottom: 155px;
+  bottom: 160px;
 }
 
 .capture-photo-btn {

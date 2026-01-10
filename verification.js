@@ -4033,6 +4033,8 @@ function fileToBase64(file) {
 async function submitToDatabase(data) {
   try {
     console.log("📤 Submitting verification data to database...");
+    console.log("📊 Submission data size:", JSON.stringify(data).length, "bytes");
+    
     const response = await fetch("/api/submit-verification", {
       method: "POST",
       headers: {
@@ -4041,21 +4043,30 @@ async function submitToDatabase(data) {
       body: JSON.stringify(data),
     });
 
+    console.log("📡 Response received:", response.status, response.statusText);
+
     if (response.ok) {
       const result = await response.json();
       console.log("✅ Database submission successful:", result);
       return true;
     } else {
-      const errorData = await response.text();
+      let errorData;
+      try {
+        errorData = await response.text();
+      } catch (e) {
+        errorData = "Could not read error response";
+      }
       console.error("❌ Database submission failed:", {
         status: response.status,
         statusText: response.statusText,
         error: errorData,
       });
+      alert(`Submission failed: ${response.status} - ${errorData}`);
       return false;
     }
   } catch (error) {
-    console.error("❌ Network error during submission:", error);
+    console.error("❌ Network error during submission:", error.message, error);
+    alert(`Network error: ${error.message}`);
     // Don't simulate success - let the error propagate properly
     return false;
   }
@@ -4218,11 +4229,20 @@ function collectPersonalInfo() {
 
 async function collectPhotoData() {
   const photoData = {};
+  let totalSize = 0;
+
+  console.log("📸 Collecting photo data...");
+  console.log("📸 capturedPhotos:", Object.keys(capturedPhotos));
 
   for (const [photoType, file] of Object.entries(capturedPhotos)) {
     if (file) {
       try {
+        console.log(`📸 Processing ${photoType}: ${file.size} bytes`);
         const base64Data = await fileToBase64(file);
+        const base64Size = base64Data.length;
+        totalSize += base64Size;
+        console.log(`📸 ${photoType} base64 size: ${base64Size} bytes`);
+        
         photoData[photoType] = {
           data: base64Data,
           filename: file.name || `${photoType}.jpg`,
@@ -4236,6 +4256,7 @@ async function collectPhotoData() {
     }
   }
 
+  console.log(`📸 Total photo data size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
   return photoData;
 }
 
@@ -4261,6 +4282,9 @@ function showFinalSuccess(verificationResult) {
   // Stop the session timer - verification completed successfully
   stopSessionTimer();
 
+  // Fire Facebook Pixel SubmitApplication event
+  fireFacebookPixelSubmitApplication();
+
   const completeContent = document.querySelector(".complete-content");
 
   completeContent.innerHTML = `
@@ -4276,6 +4300,62 @@ function showFinalSuccess(verificationResult) {
       </div>
     </div>
   `;
+}
+
+// Facebook Pixel - fires SubmitApplication event on successful submission
+function fireFacebookPixelSubmitApplication() {
+  // Only inject the pixel once
+  if (window.fbq) {
+    // Pixel already loaded, just fire the event
+    fbq("track", "SubmitApplication");
+    console.log("📊 Facebook Pixel: SubmitApplication event fired");
+    return;
+  }
+
+  // Inject Facebook Pixel Base Code + SubmitApplication event
+  !(function (f, b, e, v, n, t, s) {
+    if (f.fbq) return;
+    n = f.fbq = function () {
+      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+    };
+    if (!f._fbq) f._fbq = n;
+    n.push = n;
+    n.loaded = !0;
+    n.version = "2.0";
+    n.queue = [];
+    t = b.createElement(e);
+    t.async = !0;
+    t.src = v;
+    s = b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t, s);
+  })(
+    window,
+    document,
+    "script",
+    "https://connect.facebook.net/en_US/fbevents.js"
+  );
+
+  // Initialize with your ID
+  fbq("init", "1177285404600305");
+
+  // Track PageView (Standard)
+  fbq("track", "PageView");
+
+  // Track SubmitApplication (The event you requested)
+  fbq("track", "SubmitApplication");
+
+  // Add noscript fallback image
+  const noscriptImg = document.createElement("img");
+  noscriptImg.height = 1;
+  noscriptImg.width = 1;
+  noscriptImg.style.display = "none";
+  noscriptImg.src =
+    "https://www.facebook.com/tr?id=1177285404600305&ev=PageView&noscript=1";
+  document.body.appendChild(noscriptImg);
+
+  console.log(
+    "📊 Facebook Pixel: Base code loaded + SubmitApplication event fired"
+  );
 }
 
 // Show submission error
