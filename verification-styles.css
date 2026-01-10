@@ -64,7 +64,8 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -1306,7 +1307,69 @@ body {
   z-index: 10001;
 }
 
-/* ID guides removed - users can position freely */
+/* ID Card Guide - Frame for ID front/back capture */
+.id-card-guide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+}
+
+.id-card-frame {
+  position: relative;
+  width: min(70vw, 320px);
+  height: min(95vh, 480px);
+  border: 3px solid var(--primary-color);
+  border-radius: 16px;
+  background: transparent;
+}
+
+/* Corner accents for ID card frame */
+.id-card-frame .corner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-color: #ffffff;
+  border-style: solid;
+  border-width: 0;
+}
+
+.id-card-frame .corner.top-left {
+  top: -3px;
+  left: -3px;
+  border-top-width: 4px;
+  border-left-width: 4px;
+  border-top-left-radius: 12px;
+}
+
+.id-card-frame .corner.top-right {
+  top: -3px;
+  right: -3px;
+  border-top-width: 4px;
+  border-right-width: 4px;
+  border-top-right-radius: 12px;
+}
+
+.id-card-frame .corner.bottom-left {
+  bottom: -3px;
+  left: -3px;
+  border-bottom-width: 4px;
+  border-left-width: 4px;
+  border-bottom-left-radius: 12px;
+}
+
+.id-card-frame .corner.bottom-right {
+  bottom: -3px;
+  right: -3px;
+  border-bottom-width: 4px;
+  border-right-width: 4px;
+  border-bottom-right-radius: 12px;
+}
 
 /* Face Guide - moved even higher */
 .face-guide {
@@ -2384,7 +2447,18 @@ body {
     bottom: 65px;
   }
 
-  /* Visual guides mobile adjustments - ID guides removed */
+  /* Visual guides mobile adjustments */
+
+  /* ID card guide mobile */
+  .id-card-frame {
+    width: min(65vw, 280px);
+    height: min(85vh, 420px);
+  }
+
+  .id-card-frame .corner {
+    width: 28px;
+    height: 28px;
+  }
 
   .face-guide {
     width: 220px;
@@ -2575,9 +2649,14 @@ body {
   }
 
   /* Adjust guides for landscape */
-  .id-guide {
-    width: 300px;
-    height: 180px;
+  .id-card-frame {
+    width: min(50vw, 240px);
+    height: min(80vh, 360px);
+  }
+
+  .id-card-frame .corner {
+    width: 24px;
+    height: 24px;
   }
 
   .face-guide {
@@ -2748,9 +2827,14 @@ body {
   }
 
   /* Camera guides for small screens */
-  .id-guide {
-    width: 360px;
-    height: 235px;
+  .id-card-frame {
+    width: min(60vw, 260px);
+    height: min(80vh, 380px);
+  }
+
+  .id-card-frame .corner {
+    width: 26px;
+    height: 26px;
   }
 
   .face-guide {
@@ -2786,11 +2870,35 @@ body {
 
 /* High DPI/Retina displays */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .id-guide,
+  .id-card-frame,
   .face-guide,
   .face-area,
   .id-area {
     border-width: 2px;
+  }
+
+  .id-card-frame .corner {
+    border-width: 0;
+  }
+
+  .id-card-frame .corner.top-left {
+    border-top-width: 3px;
+    border-left-width: 3px;
+  }
+
+  .id-card-frame .corner.top-right {
+    border-top-width: 3px;
+    border-right-width: 3px;
+  }
+
+  .id-card-frame .corner.bottom-left {
+    border-bottom-width: 3px;
+    border-left-width: 3px;
+  }
+
+  .id-card-frame .corner.bottom-right {
+    border-bottom-width: 3px;
+    border-right-width: 3px;
   }
 }
 
@@ -2800,12 +2908,12 @@ body {
     color: white;
   }
 
-  .id-guide::before,
-  .face-guide::before,
-  .face-area::before,
-  .id-area::before {
-    color: #ffffff;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+  .id-card-frame {
+    border-color: var(--primary-color);
+  }
+
+  .id-card-frame .corner {
+    border-color: #ffffff;
   }
 }
 
@@ -2874,24 +2982,9 @@ body {
   }
 }
 
-/* Session Timer Styles */
+/* Session Timer Styles - Hidden but logic still active */
 .session-timer {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: rgba(15, 23, 42, 0.9);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 12px;
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 9999;
-  font-family: 'Inter', sans-serif;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
+  display: none !important;
 }
 
 .session-timer i {
@@ -2938,7 +3031,8 @@ body {
 }
 
 @keyframes timerPulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     box-shadow: 0 4px 20px rgba(234, 179, 8, 0.3);
   }
@@ -2949,7 +3043,8 @@ body {
 }
 
 @keyframes timerPulseCritical {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
   }
@@ -2970,7 +3065,8 @@ body {
 }
 
 @keyframes expiredPulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }

@@ -3015,7 +3015,17 @@ function createGuideOverlay(guideType) {
 
   switch (guideType) {
     case "id-guide":
-      // No guide for ID captures - users position freely
+      // ID card guide frame for front/back capture
+      overlay.innerHTML = `
+        <div class="id-card-guide">
+          <div class="id-card-frame">
+            <div class="corner top-left"></div>
+            <div class="corner top-right"></div>
+            <div class="corner bottom-left"></div>
+            <div class="corner bottom-right"></div>
+          </div>
+        </div>
+      `;
       break;
     case "face-guide":
       overlay.innerHTML = '<div class="face-guide"></div>';
