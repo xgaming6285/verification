@@ -33,8 +33,19 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json({ limit: "50mb" })); // Increased limit for base64 images
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
+// JSON body parser with reasonable limit (images are now compressed on client)
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Set keep-alive timeout to prevent connection drops during long requests
+// Render has a 30-second proxy timeout, so we set this slightly higher
+app.use((req, res, next) => {
+  // Set timeout for request processing (25 seconds to stay under Render's 30s limit)
+  req.setTimeout(25000);
+  res.setTimeout(25000);
+  next();
+});
 
 // Serve static files
 app.use(express.static("."));

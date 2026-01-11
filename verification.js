@@ -3690,9 +3690,11 @@ async function startIdentityVerification() {
       throw new Error("Required images not found");
     }
 
-    // Convert files to base64
-    const idFrontBase64 = await fileToBase64(idFrontImage);
-    const selfieOnlyBase64 = await fileToBase64(selfieOnlyImage);
+    // Convert files to base64 with compression for faster upload
+    // Compress images to reduce payload size and avoid timeout on Render
+    console.log("📷 Compressing images for verification...");
+    const idFrontBase64 = await compressImageForVerification(idFrontImage, 1024, 0.85);
+    const selfieOnlyBase64 = await compressImageForVerification(selfieOnlyImage, 1024, 0.85);
 
     console.log(
       "🔍 Starting identity verification (video upload continues in background)..."
@@ -3786,36 +3788,67 @@ async function performAWSVerification(idFrontBase64, selfieOnlyBase64) {
 
   updateVerificationProgress(40, "Comparing facial features...");
 
-  // Call verification API
-  const response = await fetch("/api/verify-identity", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      idFrontImage: idFrontBase64,
-      selfieOnlyImage: selfieOnlyBase64,
-    }),
-  });
+  // Log payload size for debugging
+  const payloadSize = idFrontBase64.length + selfieOnlyBase64.length;
+  console.log(`📤 Verification payload size: ${(payloadSize / 1024).toFixed(1)} KB`);
 
-  const result = await response.json();
+  // Set up timeout for the request (25 seconds to stay under Render's 30s proxy timeout)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-  // Check for API errors
-  if (!response.ok || !result.success) {
-    console.error("❌ AWS Rekognition API error:", result);
-    updateVerificationProgress(70, "Verification issue detected...");
-    // Return the result so caller can handle the error properly
+  try {
+    // Call verification API with abort signal
+    const response = await fetch("/api/verify-identity", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        idFrontImage: idFrontBase64,
+        selfieOnlyImage: selfieOnlyBase64,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    const result = await response.json();
+
+    // Check for API errors
+    if (!response.ok || !result.success) {
+      console.error("❌ AWS Rekognition API error:", result);
+      updateVerificationProgress(70, "Verification issue detected...");
+      // Return the result so caller can handle the error properly
+      return {
+        success: false,
+        verified: false,
+        error: result.error || "Verification service error",
+      };
+    }
+
+    updateVerificationProgress(70, "Finalizing identity verification...");
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    if (error.name === "AbortError") {
+      console.error("❌ Verification request timed out");
+      return {
+        success: false,
+        verified: false,
+        error: "Verification request timed out. Please try again.",
+      };
+    }
+    
+    console.error("❌ Verification request failed:", error);
     return {
       success: false,
       verified: false,
-      error: result.error || "Verification service error",
+      error: error.message || "Network error during verification",
     };
   }
-
-  updateVerificationProgress(70, "Finalizing identity verification...");
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  return result;
 }
 
 // Handle video upload in background during verification
@@ -4484,6 +4517,55 @@ function fileToBase64(file) {
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
     reader.onerror = (error) => reject(error);
+  });
+}
+
+// Helper function to compress image for verification API
+// Reduces image size while maintaining quality for face recognition
+function compressImageForVerification(file, maxWidth = 1024, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      img.onload = () => {
+        // Calculate new dimensions maintaining aspect ratio
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        // Create canvas and draw resized image
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to JPEG with compression
+        const compressedBase64 = canvas.toDataURL("image/jpeg", quality);
+        
+        // Log compression results
+        const originalSize = e.target.result.length;
+        const compressedSize = compressedBase64.length;
+        const savings = ((1 - compressedSize / originalSize) * 100).toFixed(1);
+        console.log(
+          `📦 Image compressed: ${(originalSize / 1024).toFixed(1)}KB → ${(compressedSize / 1024).toFixed(1)}KB (${savings}% reduction)`
+        );
+
+        resolve(compressedBase64);
+      };
+
+      img.onerror = () => reject(new Error("Failed to load image for compression"));
+      img.src = e.target.result;
+    };
+
+    reader.onerror = () => reject(new Error("Failed to read file for compression"));
+    reader.readAsDataURL(file);
   });
 }
 

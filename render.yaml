@@ -8,7 +8,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 10000
+        value: 3000
       - key: AWS_REGION
         value: eu-north-1
       # Add these as environment variables in Render dashboard:
@@ -18,7 +18,3 @@ services:
       # - S3_BUCKET_NAME (your bucket name)
     healthCheckPath: /
     autoDeploy: true
-    disk:
-      name: verification-disk
-      mountPath: /tmp
-      sizeGB: 1
