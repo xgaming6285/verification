@@ -4115,7 +4115,7 @@ async function quickSubmitApplication(
   }
 }
 
-// Handle verification failed - stop recording and show retry option
+// Handle verification failed - stop recording and redirect to homepage
 async function handleVerificationFailed(result) {
   const completeContent = document.querySelector(".complete-content");
 
@@ -4133,14 +4133,11 @@ async function handleVerificationFailed(result) {
   await submitFailedVerification(result);
 
   // Determine the failure message based on error code
-  let failureMessage =
-    "Your selfie does not match your ID photo. Please try again with clearer photos.";
+  let failureMessage = "Your selfie does not match your ID photo.";
   if (result.errorCode === "NO_FACE_DETECTED") {
-    failureMessage =
-      "Could not detect a face in one of the images. Please ensure your face is clearly visible and well-lit.";
+    failureMessage = "Could not detect a face in one of the images.";
   } else if (result.errorCode === "IMAGE_TOO_SMALL") {
-    failureMessage =
-      "Image quality was too low. Please capture clearer, higher quality photos.";
+    failureMessage = "Image quality was too low.";
   } else if (result.message) {
     failureMessage = result.message;
   }
@@ -4152,58 +4149,46 @@ async function handleVerificationFailed(result) {
       </div>
       <h3>Identity Not Verified</h3>
       <p>${failureMessage}</p>
-      <div class="retry-options">
-        <button type="button" class="retry-btn" onclick="retryVerification()">
-          <i class="fas fa-redo"></i>
-          Retake Photos
-        </button>
-      </div>
+      <p style="margin-top: 10px; color: #666;">Redirecting to homepage...</p>
     </div>
   `;
+
+  // Redirect to homepage after a short delay
+  setTimeout(() => {
+    window.location.href = "/";
+  }, 3000);
 }
 
-// Show verification error
+// Show verification error and redirect to homepage
 function showVerificationError(errorMessage) {
   // Update the complete-content where the verification progress is shown
   const completeContent = document.querySelector(".complete-content");
 
-  if (completeContent) {
-    completeContent.innerHTML = `
-      <div class="verification-result error">
-        <div class="result-icon">
-          <i class="fas fa-exclamation-triangle"></i>
-        </div>
-        <h4>Verification Error</h4>
-        <p>There was a technical issue during verification. Please try again.</p>
-        <div class="retry-options">
-          <button type="button" class="retry-btn" onclick="retryVerification()">
-            <i class="fas fa-redo"></i>
-            <span>Try Again</span>
-          </button>
-        </div>
+  const errorHTML = `
+    <div class="verification-result error">
+      <div class="result-icon">
+        <i class="fas fa-exclamation-triangle"></i>
       </div>
-    `;
+      <h4>Verification Error</h4>
+      <p>There was a technical issue during verification.</p>
+      <p style="margin-top: 10px; color: #666;">Redirecting to homepage...</p>
+    </div>
+  `;
+
+  if (completeContent) {
+    completeContent.innerHTML = errorHTML;
   } else {
     // Fallback to results-page if complete-content not found
     const resultsPage = document.getElementById("results-page");
     if (resultsPage) {
-      resultsPage.innerHTML = `
-        <div class="verification-result error">
-          <div class="result-icon">
-            <i class="fas fa-exclamation-triangle"></i>
-          </div>
-          <h4>Verification Error</h4>
-          <p>There was a technical issue during verification: ${errorMessage}</p>
-          <div class="retry-options">
-            <button type="button" class="retry-btn" onclick="retryVerification()">
-              <i class="fas fa-redo"></i>
-              <span>Try Again</span>
-            </button>
-          </div>
-        </div>
-      `;
+      resultsPage.innerHTML = errorHTML;
     }
   }
+
+  // Redirect to homepage after a short delay
+  setTimeout(() => {
+    window.location.href = "/";
+  }, 3000);
 }
 
 // Retry verification function
