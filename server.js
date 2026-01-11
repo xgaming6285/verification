@@ -71,8 +71,12 @@ const upload = multer({
     fileSize: 100 * 1024 * 1024, // 100MB limit for video files
   },
   fileFilter: (req, file, cb) => {
-    // Accept video files (both webm and mp4)
-    if (file.mimetype.startsWith("video/")) {
+    // Accept video files (both webm and mp4) and binary data for chunks
+    if (
+      file.mimetype.startsWith("video/") ||
+      file.mimetype === "application/octet-stream" ||
+      file.fieldname === "chunk" // Allow chunks regardless of mimetype
+    ) {
       cb(null, true);
     } else {
       cb(new Error("Only video files are allowed"), false);
@@ -233,6 +237,21 @@ app.post("/api/verify-identity", async (req, res) => {
     const idFrontBuffer = base64ToBuffer(idFrontImage);
     const selfieBuffer = base64ToBuffer(selfieOnlyImage);
 
+    console.log("📷 Image sizes - ID Front:", (idFrontBuffer.length / 1024).toFixed(1), "KB, Selfie:", (selfieBuffer.length / 1024).toFixed(1), "KB");
+
+    // Validate buffer sizes (AWS requires at least some data)
+    if (idFrontBuffer.length < 1000 || selfieBuffer.length < 1000) {
+      console.error("❌ Image data too small - ID:", idFrontBuffer.length, "Selfie:", selfieBuffer.length);
+      return res.json({
+        success: true,
+        verified: false,
+        similarity: 0,
+        confidence: 0,
+        message: "Image quality too low. Please capture clearer photos.",
+        errorCode: "IMAGE_TOO_SMALL",
+      });
+    }
+
     // AWS Rekognition parameters for face comparison
     const params = {
       SourceImage: {
@@ -284,10 +303,21 @@ app.post("/api/verify-identity", async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("❌ AWS Rekognition error:", error);
+    console.error("❌ AWS Rekognition error:", error.code, error.message);
 
-    // Handle specific AWS errors
-    if (error.code === "InvalidImageFormatException") {
+    // Handle specific AWS errors with user-friendly messages
+    if (error.code === "InvalidParameterException") {
+      // This usually means no face detected in one or both images
+      console.log("⚠️ InvalidParameterException - likely no face detected in image");
+      return res.json({
+        success: true,
+        verified: false,
+        similarity: 0,
+        confidence: 0,
+        message: "Could not detect a face in one of the images. Please ensure your face is clearly visible.",
+        errorCode: "NO_FACE_DETECTED",
+      });
+    } else if (error.code === "InvalidImageFormatException") {
       return res.status(400).json({
         success: false,
         error:
@@ -678,6 +708,243 @@ app.get("/api/debug/verifications", async (req, res) => {
     });
   }
 });
+
+// ==========================================
+// S3 Multipart Upload Endpoints for Streaming
+// ==========================================
+
+// API endpoint to initiate multipart upload
+app.post("/api/initiate-multipart-upload", async (req, res) => {
+  try {
+    const { sessionId, cameraType, mimeType } = req.body;
+
+    if (!sessionId || !cameraType) {
+      return res.status(400).json({
+        success: false,
+        error: "SessionId and cameraType are required",
+      });
+    }
+
+    // Determine file extension based on mimetype
+    let extension = ".webm";
+    if (mimeType && mimeType.includes("mp4")) {
+      extension = ".mp4";
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const filename = `${sessionId}/${cameraType}_${timestamp}${extension}`;
+
+    console.log(`🚀 Initiating multipart upload: ${filename}`);
+
+    const params = {
+      Bucket: SESSION_RECORDING_BUCKET,
+      Key: filename,
+      ContentType: mimeType || "video/webm",
+      Metadata: {
+        sessionId: sessionId,
+        cameraType: cameraType,
+        uploadedAt: new Date().toISOString(),
+        mimeType: mimeType || "video/webm",
+        streamingUpload: "true",
+      },
+    };
+
+    const multipartUpload = await s3.createMultipartUpload(params).promise();
+
+    console.log(`✅ Multipart upload initiated: ${multipartUpload.UploadId}`);
+
+    res.json({
+      success: true,
+      uploadId: multipartUpload.UploadId,
+      key: filename,
+      message: "Multipart upload initiated",
+    });
+  } catch (error) {
+    console.error("❌ Error initiating multipart upload:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to initiate multipart upload",
+      details: error.message,
+    });
+  }
+});
+
+// API endpoint to upload a part of the multipart upload
+app.post("/api/upload-part", upload.single("chunk"), async (req, res) => {
+  try {
+    const { uploadId, key, partNumber } = req.body;
+
+    if (!uploadId || !key || !partNumber || !req.file) {
+      return res.status(400).json({
+        success: false,
+        error: "uploadId, key, partNumber, and chunk file are required",
+      });
+    }
+
+    console.log(
+      `📤 Uploading part ${partNumber} for ${key} (${req.file.size} bytes)`
+    );
+
+    const params = {
+      Bucket: SESSION_RECORDING_BUCKET,
+      Key: key,
+      UploadId: uploadId,
+      PartNumber: parseInt(partNumber),
+      Body: req.file.buffer,
+    };
+
+    const result = await s3.uploadPart(params).promise();
+
+    console.log(`✅ Part ${partNumber} uploaded, ETag: ${result.ETag}`);
+
+    res.json({
+      success: true,
+      partNumber: parseInt(partNumber),
+      eTag: result.ETag,
+      size: req.file.size,
+    });
+  } catch (error) {
+    console.error(`❌ Error uploading part:`, error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to upload part",
+      details: error.message,
+    });
+  }
+});
+
+// API endpoint to complete multipart upload
+app.post("/api/complete-multipart-upload", async (req, res) => {
+  try {
+    const { uploadId, key, parts, sessionId, cameraType, duration, mimeType } =
+      req.body;
+
+    if (!uploadId || !key || !parts || parts.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "uploadId, key, and parts are required",
+      });
+    }
+
+    console.log(
+      `🏁 Completing multipart upload: ${key} with ${parts.length} parts`
+    );
+
+    // Sort parts by part number
+    const sortedParts = parts.sort((a, b) => a.PartNumber - b.PartNumber);
+
+    const params = {
+      Bucket: SESSION_RECORDING_BUCKET,
+      Key: key,
+      UploadId: uploadId,
+      MultipartUpload: {
+        Parts: sortedParts.map((part) => ({
+          ETag: part.ETag,
+          PartNumber: part.PartNumber,
+        })),
+      },
+    };
+
+    const result = await s3.completeMultipartUpload(params).promise();
+
+    console.log(`✅ Multipart upload completed: ${result.Location}`);
+
+    // Calculate total size from parts
+    const totalSize = parts.reduce((sum, part) => sum + (part.Size || 0), 0);
+
+    // Update MongoDB with recording metadata
+    if (db && sessionId) {
+      try {
+        const collection = db.collection(COLLECTION_NAME);
+        await collection.updateOne(
+          { sessionId },
+          {
+            $push: {
+              "metadata.sessionRecordings": {
+                cameraType: cameraType || "unknown",
+                s3Location: result.Location,
+                s3Key: key,
+                uploadedAt: new Date(),
+                duration: parseInt(duration) || 0,
+                fileSize: totalSize,
+                mimeType: mimeType || "video/webm",
+                streamingUpload: true,
+                partsCount: parts.length,
+                filename: key,
+              },
+            },
+          }
+        );
+        console.log(
+          `📝 Recording metadata saved to MongoDB for session: ${sessionId}`
+        );
+      } catch (dbError) {
+        console.warn(
+          "⚠️ Failed to update MongoDB with recording metadata:",
+          dbError
+        );
+      }
+    }
+
+    res.json({
+      success: true,
+      s3Location: result.Location,
+      filename: key,
+      size: totalSize,
+      partsCount: parts.length,
+      message: "Multipart upload completed successfully",
+    });
+  } catch (error) {
+    console.error("❌ Error completing multipart upload:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to complete multipart upload",
+      details: error.message,
+    });
+  }
+});
+
+// API endpoint to abort multipart upload (cleanup on failure)
+app.post("/api/abort-multipart-upload", async (req, res) => {
+  try {
+    const { uploadId, key } = req.body;
+
+    if (!uploadId || !key) {
+      return res.status(400).json({
+        success: false,
+        error: "uploadId and key are required",
+      });
+    }
+
+    console.log(`🛑 Aborting multipart upload: ${key}`);
+
+    const params = {
+      Bucket: SESSION_RECORDING_BUCKET,
+      Key: key,
+      UploadId: uploadId,
+    };
+
+    await s3.abortMultipartUpload(params).promise();
+
+    console.log(`✅ Multipart upload aborted: ${key}`);
+
+    res.json({
+      success: true,
+      message: "Multipart upload aborted",
+    });
+  } catch (error) {
+    console.error("❌ Error aborting multipart upload:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to abort multipart upload",
+      details: error.message,
+    });
+  }
+});
+
+// ==========================================
+// Legacy Upload Endpoint (fallback)
+// ==========================================
 
 // API endpoint to upload session recordings to S3
 app.post(

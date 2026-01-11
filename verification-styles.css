@@ -2440,7 +2440,7 @@ body {
   }
 
   .camera-capture-area.face-capture .capture-photo-btn {
-    bottom: 50px;
+    bottom: 80px;
   }
 
   .camera-capture-area.face-with-id-capture .capture-photo-btn {
@@ -2641,7 +2641,7 @@ body {
   }
 
   .camera-capture-area.face-capture .capture-photo-btn {
-    bottom: 30px;
+    bottom: 45px;
   }
 
   .camera-capture-area.face-with-id-capture .capture-photo-btn {
@@ -2860,7 +2860,7 @@ body {
   }
 
   .camera-capture-area.face-capture .capture-photo-btn {
-    bottom: 60px !important;
+    bottom: 90px !important;
   }
 
   .camera-capture-area.face-with-id-capture .capture-photo-btn {
@@ -2950,7 +2950,7 @@ body {
     }
 
     .camera-capture-area.face-capture .capture-photo-btn {
-      bottom: max(130px, env(safe-area-inset-bottom, 0px) + 110px);
+      bottom: max(140px, env(safe-area-inset-bottom, 0px) + 120px);
     }
 
     .camera-capture-area.face-with-id-capture .capture-photo-btn {
@@ -2973,7 +2973,7 @@ body {
     }
 
     .camera-capture-area.face-capture .capture-photo-btn {
-      bottom: max(80px, env(safe-area-inset-bottom, 0px) + 70px);
+      bottom: max(90px, env(safe-area-inset-bottom, 0px) + 70px);
     }
 
     .camera-capture-area.face-with-id-capture .capture-photo-btn {

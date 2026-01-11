@@ -812,6 +812,15 @@ class VideoRecordingManager {
     this.sessionId = null;
     this.startTime = null;
     this.streams = [];
+
+    // Streaming upload state
+    this.multipartUploads = new Map(); // Store multipart upload info per camera
+    this.uploadedParts = new Map(); // Store uploaded parts per camera
+    this.pendingChunks = new Map(); // Chunks waiting to be uploaded
+    this.uploadIntervalId = null;
+    this.UPLOAD_INTERVAL_MS = 5000; // Upload every 5 seconds
+    this.MIN_PART_SIZE = 5 * 1024 * 1024; // 5MB minimum for S3 multipart (except last part)
+    this.isStreamingUpload = true; // Enable streaming upload by default
   }
 
   async initializeRecording() {
@@ -988,7 +997,7 @@ class VideoRecordingManager {
     return "rec_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
   }
 
-  startRecording() {
+  async startRecording() {
     if (this.isRecording || this.streams.length === 0) {
       return false;
     }
@@ -996,9 +1005,17 @@ class VideoRecordingManager {
     this.isRecording = true;
     this.startTime = new Date();
     this.videoChunks.clear();
+    this.pendingChunks.clear();
+    this.uploadedParts.clear();
+    this.multipartUploads.clear();
     this.mediaRecorders = [];
 
-    console.log("🔴 Starting session recording...");
+    console.log("🔴 Starting session recording with streaming upload...");
+
+    // Initialize multipart uploads for each camera
+    if (this.isStreamingUpload) {
+      await this.initializeMultipartUploads();
+    }
 
     this.streams.forEach((streamInfo) => {
       try {
@@ -1020,9 +1037,17 @@ class VideoRecordingManager {
           this.videoChunks.set(streamInfo.type, []);
         }
 
+        if (!this.pendingChunks.has(streamInfo.type)) {
+          this.pendingChunks.set(streamInfo.type, []);
+        }
+
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
             this.videoChunks.get(streamInfo.type).push(event.data);
+            // Also add to pending chunks for streaming upload
+            if (this.isStreamingUpload) {
+              this.pendingChunks.get(streamInfo.type).push(event.data);
+            }
           }
         };
 
@@ -1054,7 +1079,147 @@ class VideoRecordingManager {
       }
     });
 
+    // Start periodic upload of chunks
+    if (this.isStreamingUpload) {
+      this.startPeriodicUpload();
+    }
+
     return true;
+  }
+
+  // Initialize multipart uploads for all cameras
+  async initializeMultipartUploads() {
+    console.log("🚀 Initializing multipart uploads for streaming...");
+
+    for (const streamInfo of this.streams) {
+      try {
+        const mimeType = this.getBestMimeType(streamInfo.type);
+
+        const response = await fetch("/api/initiate-multipart-upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: this.sessionId,
+            cameraType: streamInfo.type,
+            mimeType: mimeType,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to initiate multipart upload for ${streamInfo.type}`
+          );
+        }
+
+        const result = await response.json();
+
+        this.multipartUploads.set(streamInfo.type, {
+          uploadId: result.uploadId,
+          key: result.key,
+          mimeType: mimeType,
+        });
+
+        this.uploadedParts.set(streamInfo.type, []);
+
+        console.log(
+          `✅ Multipart upload initiated for ${streamInfo.type}: ${result.uploadId}`
+        );
+      } catch (error) {
+        console.error(
+          `❌ Failed to initiate multipart upload for ${streamInfo.type}:`,
+          error
+        );
+        // Fallback to non-streaming mode for this camera
+        this.multipartUploads.delete(streamInfo.type);
+      }
+    }
+  }
+
+  // Start periodic upload of pending chunks
+  startPeriodicUpload() {
+    console.log(
+      `⏰ Starting periodic upload every ${
+        this.UPLOAD_INTERVAL_MS / 1000
+      } seconds`
+    );
+
+    this.uploadIntervalId = setInterval(async () => {
+      await this.uploadPendingChunks();
+    }, this.UPLOAD_INTERVAL_MS);
+  }
+
+  // Upload pending chunks for all cameras
+  // forceUpload=true uploads regardless of size (for final upload)
+  async uploadPendingChunks(forceUpload = false) {
+    for (const [cameraType, chunks] of this.pendingChunks.entries()) {
+      if (chunks.length === 0) continue;
+
+      const uploadInfo = this.multipartUploads.get(cameraType);
+      if (!uploadInfo) continue;
+
+      try {
+        // Combine pending chunks into one blob
+        const combinedBlob = new Blob(chunks, { type: uploadInfo.mimeType });
+
+        // S3 requires minimum 5MB for parts except the last one
+        // Only upload if we have >= 5MB OR this is the final upload
+        if (combinedBlob.size < this.MIN_PART_SIZE && !forceUpload) {
+          console.log(
+            `⏳ Buffering ${cameraType} chunks (${(
+              combinedBlob.size /
+              1024 /
+              1024
+            ).toFixed(2)}MB < 5MB minimum)`
+          );
+          continue; // Keep accumulating chunks
+        }
+
+        // Clear pending chunks immediately to avoid double upload
+        this.pendingChunks.set(cameraType, []);
+
+        const partNumber =
+          (this.uploadedParts.get(cameraType)?.length || 0) + 1;
+
+        console.log(
+          `📤 Uploading part ${partNumber} for ${cameraType} (${(
+            combinedBlob.size /
+            1024 /
+            1024
+          ).toFixed(2)}MB)`
+        );
+
+        const formData = new FormData();
+        formData.append("chunk", combinedBlob, `part_${partNumber}.webm`);
+        formData.append("uploadId", uploadInfo.uploadId);
+        formData.append("key", uploadInfo.key);
+        formData.append("partNumber", partNumber.toString());
+
+        const response = await fetch("/api/upload-part", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to upload part ${partNumber}`);
+        }
+
+        const result = await response.json();
+
+        // Store the uploaded part info
+        this.uploadedParts.get(cameraType).push({
+          PartNumber: result.partNumber,
+          ETag: result.eTag,
+          Size: result.size,
+        });
+
+        console.log(`✅ Part ${partNumber} uploaded for ${cameraType}`);
+      } catch (error) {
+        console.error(`❌ Failed to upload chunk for ${cameraType}:`, error);
+        // Put chunks back for retry on next interval (or final upload)
+        const existingChunks = this.pendingChunks.get(cameraType) || [];
+        this.pendingChunks.set(cameraType, [...chunks, ...existingChunks]);
+      }
+    }
   }
 
   getBestMimeType(cameraType) {
@@ -1239,6 +1404,13 @@ class VideoRecordingManager {
     this.isRecording = false;
     console.log("⏹️ Stopping session recording...");
 
+    // Stop periodic upload
+    if (this.uploadIntervalId) {
+      clearInterval(this.uploadIntervalId);
+      this.uploadIntervalId = null;
+      console.log("⏰ Stopped periodic upload");
+    }
+
     this.mediaRecorders.forEach((recorder) => {
       if (recorder.state === "recording") {
         recorder.stop();
@@ -1257,32 +1429,34 @@ class VideoRecordingManager {
   }
 
   async uploadRecordings() {
-    console.log("☁️ Combining and uploading session recordings...");
+    console.log("☁️ Completing session recordings upload...");
 
     try {
       const results = [];
 
-      // Process each camera type
-      for (const [cameraType, chunks] of this.videoChunks.entries()) {
-        if (chunks.length === 0) continue;
+      // Check if we're using streaming upload
+      if (this.isStreamingUpload && this.multipartUploads.size > 0) {
+        // Complete multipart uploads
+        results.push(...(await this.completeMultipartUploads()));
+      } else {
+        // Fallback: upload the full recording at once
+        for (const [cameraType, chunks] of this.videoChunks.entries()) {
+          if (chunks.length === 0) continue;
 
-        // Determine the best mime type for this camera
-        const mimeType = this.getBestMimeType(cameraType);
+          const mimeType = this.getBestMimeType(cameraType);
+          const combinedVideo = this.combineVideoChunks(cameraType, mimeType);
 
-        // Combine all chunks for this camera into one video
-        const combinedVideo = this.combineVideoChunks(cameraType, mimeType);
+          if (!combinedVideo) continue;
 
-        if (!combinedVideo) continue;
+          const uploadResult = await this.uploadCombinedVideo(
+            combinedVideo,
+            cameraType,
+            mimeType
+          );
 
-        // Upload the combined video
-        const uploadResult = await this.uploadCombinedVideo(
-          combinedVideo,
-          cameraType,
-          mimeType
-        );
-
-        if (uploadResult) {
-          results.push(uploadResult);
+          if (uploadResult) {
+            results.push(uploadResult);
+          }
         }
       }
 
@@ -1299,6 +1473,162 @@ class VideoRecordingManager {
       console.error("❌ Failed to upload session recordings:", error);
       return [];
     }
+  }
+
+  // Complete all multipart uploads
+  async completeMultipartUploads() {
+    console.log("🏁 Completing multipart uploads...");
+    const results = [];
+
+    // Wait a moment for any final chunks to be collected
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Force upload any remaining pending chunks (last part can be < 5MB)
+    await this.uploadPendingChunks(true);
+
+    for (const [cameraType, uploadInfo] of this.multipartUploads.entries()) {
+      try {
+        const parts = this.uploadedParts.get(cameraType) || [];
+        const totalSize = parts.reduce((sum, p) => sum + (p.Size || 0), 0);
+
+        // S3 Multipart requires:
+        // - At least 1 part
+        // - If only 1 part, it must be >= 5MB
+        // - If multiple parts, all except last must be >= 5MB
+        const needsFallback =
+          parts.length === 0 ||
+          (parts.length === 1 && totalSize < this.MIN_PART_SIZE);
+
+        if (needsFallback) {
+          console.warn(
+            `⚠️ Multipart not viable for ${cameraType} (${
+              parts.length
+            } parts, ${(totalSize / 1024 / 1024).toFixed(
+              2
+            )}MB), using single upload`
+          );
+
+          // Abort the multipart upload
+          try {
+            await fetch("/api/abort-multipart-upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                uploadId: uploadInfo.uploadId,
+                key: uploadInfo.key,
+              }),
+            });
+          } catch (abortError) {
+            console.warn("Failed to abort multipart upload:", abortError);
+          }
+
+          // Use single upload instead
+          const chunks = this.videoChunks.get(cameraType);
+          if (chunks && chunks.length > 0) {
+            const mimeType = this.getBestMimeType(cameraType);
+            const combinedVideo = this.combineVideoChunks(cameraType, mimeType);
+            if (combinedVideo) {
+              console.log(
+                `📤 Single upload for ${cameraType} (${(
+                  combinedVideo.size /
+                  1024 /
+                  1024
+                ).toFixed(2)}MB)`
+              );
+              const uploadResult = await this.uploadCombinedVideo(
+                combinedVideo,
+                cameraType,
+                mimeType
+              );
+              if (uploadResult) {
+                results.push(uploadResult);
+              }
+            }
+          }
+          continue;
+        }
+
+        console.log(
+          `🏁 Completing multipart upload for ${cameraType} with ${
+            parts.length
+          } parts (${(totalSize / 1024 / 1024).toFixed(2)}MB)`
+        );
+
+        const response = await fetch("/api/complete-multipart-upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            uploadId: uploadInfo.uploadId,
+            key: uploadInfo.key,
+            parts: parts,
+            sessionId: this.sessionId,
+            cameraType: cameraType,
+            duration: Date.now() - (this.startTime?.getTime() || 0),
+            mimeType: uploadInfo.mimeType,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to complete multipart upload for ${cameraType}`
+          );
+        }
+
+        const result = await response.json();
+
+        console.log(
+          `✅ Multipart upload completed for ${cameraType}: ${result.s3Location}`
+        );
+
+        results.push({
+          cameraType: cameraType,
+          s3Location: result.s3Location,
+          filename: result.filename,
+          size: result.size,
+          partsCount: result.partsCount,
+          streamingUpload: true,
+        });
+      } catch (error) {
+        console.error(
+          `❌ Failed to complete multipart upload for ${cameraType}:`,
+          error
+        );
+
+        // Try to abort the failed upload
+        try {
+          await fetch("/api/abort-multipart-upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              uploadId: uploadInfo.uploadId,
+              key: uploadInfo.key,
+            }),
+          });
+        } catch (abortError) {
+          console.warn("Failed to abort multipart upload:", abortError);
+        }
+
+        // Fallback: try to upload the full video
+        console.log(`🔄 Falling back to full upload for ${cameraType}`);
+        const chunks = this.videoChunks.get(cameraType);
+        if (chunks && chunks.length > 0) {
+          const mimeType = this.getBestMimeType(cameraType);
+          const combinedVideo = this.combineVideoChunks(cameraType, mimeType);
+          if (combinedVideo) {
+            const uploadResult = await this.uploadCombinedVideo(
+              combinedVideo,
+              cameraType,
+              mimeType
+            );
+            if (uploadResult) {
+              results.push(uploadResult);
+            }
+          }
+        }
+      }
+    }
+
+    return results;
   }
 
   async uploadCombinedVideo(videoBlob, cameraType, mimeType) {
@@ -1362,8 +1692,33 @@ class VideoRecordingManager {
     this.stopRecording();
     this.recordedChunks = [];
     this.videoChunks.clear();
+    this.pendingChunks.clear();
     this.mediaRecorders = [];
     this.streams = [];
+
+    // Abort any pending multipart uploads
+    this.abortPendingUploads();
+  }
+
+  // Abort all pending multipart uploads
+  async abortPendingUploads() {
+    for (const [cameraType, uploadInfo] of this.multipartUploads.entries()) {
+      try {
+        console.log(`🛑 Aborting multipart upload for ${cameraType}`);
+        await fetch("/api/abort-multipart-upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            uploadId: uploadInfo.uploadId,
+            key: uploadInfo.key,
+          }),
+        });
+      } catch (error) {
+        console.warn(`Failed to abort upload for ${cameraType}:`, error);
+      }
+    }
+    this.multipartUploads.clear();
+    this.uploadedParts.clear();
   }
 }
 
@@ -3339,24 +3694,70 @@ async function startIdentityVerification() {
     const idFrontBase64 = await fileToBase64(idFrontImage);
     const selfieOnlyBase64 = await fileToBase64(selfieOnlyImage);
 
-    console.log("🔍 Starting identity verification and processing...");
+    console.log(
+      "🔍 Starting identity verification (video upload continues in background)..."
+    );
 
-    // Start both AWS Rekognition and video upload in parallel
-    const [verificationResult, sessionRecordingData] = await Promise.all([
-      performAWSVerification(idFrontBase64, selfieOnlyBase64),
-      handleVideoUploadInBackground(),
-    ]);
+    // Stop recording first - chunks are already being uploaded in the background
+    if (
+      window.videoRecordingManager &&
+      window.videoRecordingManager.isRecording
+    ) {
+      console.log("🎬 Stopping recording...");
+      window.videoRecordingManager.stopRecording();
+    }
 
-    console.log("✅ Verification and processing complete:", {
+    // Start video upload completion in background (non-blocking)
+    // This completes the multipart upload while we wait for Rekognition
+    const videoUploadPromise = handleVideoUploadInBackground();
+
+    // ONLY wait for AWS Rekognition result - this is what the user sees
+    console.log("🔍 Waiting for AWS Rekognition only...");
+    const verificationResult = await performAWSVerification(
+      idFrontBase64,
+      selfieOnlyBase64
+    );
+
+    console.log("✅ Rekognition verification complete:", {
       verified: verificationResult.verified,
-      recordingCount: sessionRecordingData.length,
+      similarity: verificationResult.similarity,
     });
 
     if (verificationResult.success) {
       if (verificationResult.verified) {
-        // Verification passed - proceed to automatic submission
+        // Verification passed - show success and redirect IMMEDIATELY
         verificationPassed = true;
-        console.log("✅ Identity verification PASSED");
+        console.log(
+          "✅ Identity verification PASSED - showing result immediately"
+        );
+
+        // Get recording data if available, but don't wait too long
+        let sessionRecordingData = [];
+        try {
+          // Race between video upload and a short timeout
+          sessionRecordingData = await Promise.race([
+            videoUploadPromise,
+            new Promise((resolve) => setTimeout(() => resolve([]), 2000)), // 2 second timeout
+          ]);
+        } catch (e) {
+          console.warn("Video upload not ready yet, continuing anyway");
+        }
+
+        // Continue video upload in background if not finished
+        videoUploadPromise
+          .then((data) => {
+            if (data && data.length > 0) {
+              console.log(
+                "📹 Video upload completed in background:",
+                data.length,
+                "videos"
+              );
+            }
+          })
+          .catch((err) => {
+            console.warn("Background video upload error:", err);
+          });
+
         await handleVerificationSuccess(
           verificationResult,
           sessionRecordingData
@@ -3381,7 +3782,7 @@ async function startIdentityVerification() {
 // Perform AWS Rekognition verification
 async function performAWSVerification(idFrontBase64, selfieOnlyBase64) {
   updateVerificationProgress(20, "Analyzing identity documents...");
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   updateVerificationProgress(40, "Comparing facial features...");
 
@@ -3399,38 +3800,54 @@ async function performAWSVerification(idFrontBase64, selfieOnlyBase64) {
 
   const result = await response.json();
 
+  // Check for API errors
+  if (!response.ok || !result.success) {
+    console.error("❌ AWS Rekognition API error:", result);
+    updateVerificationProgress(70, "Verification issue detected...");
+    // Return the result so caller can handle the error properly
+    return {
+      success: false,
+      verified: false,
+      error: result.error || "Verification service error",
+    };
+  }
+
   updateVerificationProgress(70, "Finalizing identity verification...");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 500));
 
   return result;
 }
 
 // Handle video upload in background during verification
+// With streaming upload, most chunks are already uploaded - we just complete the multipart upload
 async function handleVideoUploadInBackground() {
   let sessionRecordingData = [];
 
-  // Stop recording first
+  // Recording should already be stopped by caller, but just in case
   if (
     window.videoRecordingManager &&
     window.videoRecordingManager.isRecording
   ) {
     console.log("🎬 Stopping recording for processing...");
     window.videoRecordingManager.stopRecording();
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 500));
   }
 
-  // Upload recordings if they exist
+  // Complete multipart uploads (most data already uploaded during recording)
   if (window.videoRecordingManager) {
-    console.log("📹 Processing session data in background...");
+    console.log("📹 Completing session recording upload (streaming mode)...");
 
     try {
+      // With streaming upload, uploadRecordings() just completes the multipart uploads
+      // which is much faster than uploading the entire video
       const uploadResults =
         await window.videoRecordingManager.uploadRecordings();
 
       if (uploadResults && Array.isArray(uploadResults)) {
         console.log(
-          "📹 Session data processed successfully:",
-          uploadResults.length
+          "📹 Session recordings completed:",
+          uploadResults.length,
+          "videos"
         );
 
         sessionRecordingData = uploadResults.map((result) => ({
@@ -3440,10 +3857,12 @@ async function handleVideoUploadInBackground() {
           fileSize: result.size,
           uploadedAt: new Date(),
           duration: 0,
+          streamingUpload: result.streamingUpload || false,
+          partsCount: result.partsCount || 0,
         }));
       }
     } catch (error) {
-      console.warn("⚠️ Session data processing failed:", error);
+      console.warn("⚠️ Session recording completion failed:", error);
       // Continue without recordings - don't fail the verification
     }
   }
@@ -3519,25 +3938,25 @@ function updateVerificationProgress(percentage, status, timeRemaining = null) {
 }
 
 // Handle verification success - auto-submit with pre-processed data
+// Optimized for instant response - video upload already done in background
 async function handleVerificationSuccess(result, sessionRecordingData) {
   const completeContent = document.querySelector(".complete-content");
 
-  // Show success message and complete progress
+  // Show success message immediately
   updateVerificationProgress(
     100,
     "Identity verification completed!",
     "Verified"
   );
-  await new Promise((resolve) => setTimeout(resolve, 1500));
 
-  // Show verification success
+  // Show verification success with minimal delay
   completeContent.innerHTML = `
     <div class="verification-result success">
       <div class="result-icon">
         <i class="fas fa-check-circle"></i>
       </div>
       <h3>Identity Verified Successfully!</h3>
-      <p>Your identity has been verified. Submitting your application...</p>
+      <p>Your identity has been verified. Redirecting...</p>
       <div class="verification-details" style="margin-top: 15px;">
         <p><strong>Verification Result:</strong> Identity Verified</p>
         <p><strong>Similarity Score:</strong> ${(
@@ -3547,14 +3966,15 @@ async function handleVerificationSuccess(result, sessionRecordingData) {
     </div>
   `;
 
-  // Wait a moment to show the result, then proceed with quick submission
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  // Quick delay to show success (just 1 second)
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
-  // Submit application with pre-processed data (much faster now)
+  // Submit application in background and redirect immediately
   await quickSubmitApplication(result, sessionRecordingData);
 }
 
 // Quick submission since video upload is already complete
+// Optimized for instant redirect to thank you page
 async function quickSubmitApplication(
   verificationResult,
   sessionRecordingData
@@ -3567,37 +3987,39 @@ async function quickSubmitApplication(
       <div class="result-icon">
         <i class="fas fa-check-circle"></i>
       </div>
-      <h3>Submitting Application</h3>
-      <p>Finalizing your application submission...</p>
+      <h3>Application Approved!</h3>
+      <p>Redirecting to confirmation page...</p>
       
       <div class="quick-progress" style="margin-top: 20px;">
         <div class="quick-progress-bar">
-          <div class="quick-progress-fill"></div>
+          <div class="quick-progress-fill" style="width: 100%; transition: none;"></div>
         </div>
-        <div class="quick-status">Processing application data...</div>
+        <div class="quick-status">Completing submission...</div>
       </div>
     </div>
   `;
 
-  const quickProgressFill = document.querySelector(".quick-progress-fill");
-  const quickStatus = document.querySelector(".quick-status");
-
   try {
-    // Quick progress updates since heavy lifting is done
-    quickProgressFill.style.width = "30%";
-    quickStatus.textContent = "Collecting application data...";
+    // Submit in background - don't wait for completion
+    const submissionPromise = submitVerifiedApplication(
+      sessionRecordingData,
+      verificationResult
+    );
+
+    // Short delay to show the success message
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    quickProgressFill.style.width = "60%";
-    quickStatus.textContent = "Preparing submission...";
-    await submitVerifiedApplication(sessionRecordingData, verificationResult);
-
-    quickProgressFill.style.width = "100%";
-    quickStatus.textContent = "Application submitted successfully!";
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    // Show final success
+    // Show final success and redirect immediately
+    // Don't wait for submission to complete - it will finish in background
     showFinalSuccess(verificationResult);
+
+    // Let submission complete in background
+    submissionPromise.catch((error) => {
+      console.warn(
+        "Background submission error (user already redirected):",
+        error
+      );
+    });
   } catch (error) {
     console.error("Quick submission error:", error);
     showSubmissionError(error.message);
@@ -3621,13 +4043,26 @@ async function handleVerificationFailed(result) {
   // Submit failed verification to database first
   await submitFailedVerification(result);
 
+  // Determine the failure message based on error code
+  let failureMessage =
+    "Your selfie does not match your ID photo. Please try again with clearer photos.";
+  if (result.errorCode === "NO_FACE_DETECTED") {
+    failureMessage =
+      "Could not detect a face in one of the images. Please ensure your face is clearly visible and well-lit.";
+  } else if (result.errorCode === "IMAGE_TOO_SMALL") {
+    failureMessage =
+      "Image quality was too low. Please capture clearer, higher quality photos.";
+  } else if (result.message) {
+    failureMessage = result.message;
+  }
+
   completeContent.innerHTML = `
     <div class="verification-result failed">
       <div class="result-icon">
         <i class="fas fa-times-circle"></i>
       </div>
       <h3>Identity Not Verified</h3>
-      <p>Your selfie does not match your ID photo. Please try again with clearer photos.</p>
+      <p>${failureMessage}</p>
       <div class="retry-options">
         <button type="button" class="retry-btn" onclick="retryVerification()">
           <i class="fas fa-redo"></i>
@@ -3640,23 +4075,46 @@ async function handleVerificationFailed(result) {
 
 // Show verification error
 function showVerificationError(errorMessage) {
-  const resultsPage = document.getElementById("results-page");
+  // Update the complete-content where the verification progress is shown
+  const completeContent = document.querySelector(".complete-content");
 
-  resultsPage.innerHTML = `
-    <div class="verification-result error">
-      <div class="result-icon">
-        <i class="fas fa-exclamation-triangle"></i>
+  if (completeContent) {
+    completeContent.innerHTML = `
+      <div class="verification-result error">
+        <div class="result-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h4>Verification Error</h4>
+        <p>There was a technical issue during verification. Please try again.</p>
+        <div class="retry-options">
+          <button type="button" class="retry-btn" onclick="retryVerification()">
+            <i class="fas fa-redo"></i>
+            <span>Try Again</span>
+          </button>
+        </div>
       </div>
-      <h4>Verification Error</h4>
-      <p>There was a technical issue during verification: ${errorMessage}</p>
-      <div class="retry-options">
-        <button type="button" class="retry-btn" onclick="retryVerification()">
-          <i class="fas fa-redo"></i>
-          <span>Try Again</span>
-        </button>
-      </div>
-    </div>
-  `;
+    `;
+  } else {
+    // Fallback to results-page if complete-content not found
+    const resultsPage = document.getElementById("results-page");
+    if (resultsPage) {
+      resultsPage.innerHTML = `
+        <div class="verification-result error">
+          <div class="result-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <h4>Verification Error</h4>
+          <p>There was a technical issue during verification: ${errorMessage}</p>
+          <div class="retry-options">
+            <button type="button" class="retry-btn" onclick="retryVerification()">
+              <i class="fas fa-redo"></i>
+              <span>Try Again</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+  }
 }
 
 // Retry verification function
@@ -4308,50 +4766,11 @@ function showFinalSuccess(verificationResult) {
   `;
 }
 
-// Debug toast notification for Facebook Pixel (visible on page)
+// Debug toast notification for Facebook Pixel (disabled - no longer shown on page)
 function showPixelDebugToast(message) {
-  // Remove existing debug toast if any
-  const existing = document.getElementById("fb-pixel-debug-toast");
-  if (existing) existing.remove();
-
-  // Create debug toast
-  const toast = document.createElement("div");
-  toast.id = "fb-pixel-debug-toast";
-  toast.innerHTML = `
-    <div style="
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      right: 20px;
-      background: linear-gradient(135deg, #1877f2, #42b72a);
-      color: white;
-      padding: 16px 20px;
-      border-radius: 12px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      z-index: 999999;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    ">
-      <span style="font-size: 24px;">📊</span>
-      <div>
-        <div style="font-weight: 700; margin-bottom: 4px;">Facebook Pixel Debug</div>
-        <div style="opacity: 0.95;">${message}</div>
-        <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">Pixel ID: 1177285404600305</div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(toast);
-
-  // Auto-remove after 8 seconds
-  setTimeout(() => {
-    toast.style.transition = "opacity 0.5s";
-    toast.style.opacity = "0";
-    setTimeout(() => toast.remove(), 500);
-  }, 8000);
+  // Debug toast disabled - only log to console
+  console.log("📊 Facebook Pixel Debug:", message);
+  return;
 }
 
 // Facebook Pixel - fires SubmitApplication event on successful submission
@@ -4361,7 +4780,9 @@ function fireFacebookPixelSubmitApplication() {
     // Pixel already loaded, just fire the event
     fbq("track", "SubmitApplication");
     console.log("📊 Facebook Pixel: SubmitApplication event fired");
-    showPixelDebugToast("✅ SubmitApplication event fired (pixel was already loaded)");
+    showPixelDebugToast(
+      "✅ SubmitApplication event fired (pixel was already loaded)"
+    );
     return;
   }
 
@@ -4409,9 +4830,11 @@ function fireFacebookPixelSubmitApplication() {
   console.log(
     "📊 Facebook Pixel: Base code loaded + SubmitApplication event fired"
   );
-  
+
   // Show visual debug toast
-  showPixelDebugToast("✅ Pixel loaded + PageView + SubmitApplication events fired!");
+  showPixelDebugToast(
+    "✅ Pixel loaded + PageView + SubmitApplication events fired!"
+  );
 }
 
 // Show submission error
