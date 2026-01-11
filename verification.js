@@ -3686,15 +3686,58 @@ async function startIdentityVerification() {
     const idFrontImage = capturedPhotos.idFront;
     const selfieOnlyImage = capturedPhotos.selfieOnly;
 
+    console.log("📸 Checking captured photos:", {
+      idFront: idFrontImage
+        ? `${idFrontImage.name || "file"} (${(idFrontImage.size / 1024).toFixed(
+            1
+          )}KB)`
+        : "MISSING",
+      selfieOnly: selfieOnlyImage
+        ? `${selfieOnlyImage.name || "file"} (${(
+            selfieOnlyImage.size / 1024
+          ).toFixed(1)}KB)`
+        : "MISSING",
+      allPhotos: Object.keys(capturedPhotos),
+    });
+
     if (!idFrontImage || !selfieOnlyImage) {
+      console.error("❌ Missing required images:", {
+        idFront: !!idFrontImage,
+        selfieOnly: !!selfieOnlyImage,
+      });
       throw new Error("Required images not found");
     }
 
     // Convert files to base64 with compression for faster upload
     // Compress images to reduce payload size and avoid timeout on Render
     console.log("📷 Compressing images for verification...");
-    const idFrontBase64 = await compressImageForVerification(idFrontImage, 1024, 0.85);
-    const selfieOnlyBase64 = await compressImageForVerification(selfieOnlyImage, 1024, 0.85);
+
+    let idFrontBase64, selfieOnlyBase64;
+    try {
+      idFrontBase64 = await compressImageForVerification(
+        idFrontImage,
+        1024,
+        0.85
+      );
+      console.log("✅ ID front image compressed successfully");
+    } catch (compressError) {
+      console.error("❌ Failed to compress ID front image:", compressError);
+      throw new Error("Failed to process ID image: " + compressError.message);
+    }
+
+    try {
+      selfieOnlyBase64 = await compressImageForVerification(
+        selfieOnlyImage,
+        1024,
+        0.85
+      );
+      console.log("✅ Selfie image compressed successfully");
+    } catch (compressError) {
+      console.error("❌ Failed to compress selfie image:", compressError);
+      throw new Error(
+        "Failed to process selfie image: " + compressError.message
+      );
+    }
 
     console.log(
       "🔍 Starting identity verification (video upload continues in background)..."
@@ -3709,16 +3752,18 @@ async function startIdentityVerification() {
       window.videoRecordingManager.stopRecording();
     }
 
-    // Start video upload completion in background (non-blocking)
-    // This completes the multipart upload while we wait for Rekognition
-    const videoUploadPromise = handleVideoUploadInBackground();
-
-    // ONLY wait for AWS Rekognition result - this is what the user sees
-    console.log("🔍 Waiting for AWS Rekognition only...");
+    // PRIORITY: Run AWS Rekognition FIRST, then complete video upload
+    // This avoids network contention that can cause request aborts
+    console.log("🔍 Waiting for AWS Rekognition (priority)...");
     const verificationResult = await performAWSVerification(
       idFrontBase64,
       selfieOnlyBase64
     );
+
+    // AFTER verification completes, start video upload completion in background
+    // This ensures the verification request doesn't get starved by video upload
+    console.log("📹 Starting video upload completion in background...");
+    const videoUploadPromise = handleVideoUploadInBackground();
 
     console.log("✅ Rekognition verification complete:", {
       verified: verificationResult.verified,
@@ -3790,13 +3835,24 @@ async function performAWSVerification(idFrontBase64, selfieOnlyBase64) {
 
   // Log payload size for debugging
   const payloadSize = idFrontBase64.length + selfieOnlyBase64.length;
-  console.log(`📤 Verification payload size: ${(payloadSize / 1024).toFixed(1)} KB`);
+  console.log(
+    `📤 Verification payload size: ${(payloadSize / 1024).toFixed(1)} KB`
+  );
+  console.log(
+    `📤 ID image size: ${(idFrontBase64.length / 1024).toFixed(
+      1
+    )} KB, Selfie size: ${(selfieOnlyBase64.length / 1024).toFixed(1)} KB`
+  );
 
   // Set up timeout for the request (25 seconds to stay under Render's 30s proxy timeout)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  const timeoutId = setTimeout(() => {
+    console.error("⏱️ Verification request timeout triggered (25s)");
+    controller.abort();
+  }, 25000);
 
   try {
+    console.log("🌐 Sending verification request to /api/verify-identity...");
     // Call verification API with abort signal
     const response = await fetch("/api/verify-identity", {
       method: "POST",
@@ -3832,7 +3888,7 @@ async function performAWSVerification(idFrontBase64, selfieOnlyBase64) {
     return result;
   } catch (error) {
     clearTimeout(timeoutId);
-    
+
     if (error.name === "AbortError") {
       console.error("❌ Verification request timed out");
       return {
@@ -3841,7 +3897,7 @@ async function performAWSVerification(idFrontBase64, selfieOnlyBase64) {
         error: "Verification request timed out. Please try again.",
       };
     }
-    
+
     console.error("❌ Verification request failed:", error);
     return {
       success: false,
@@ -4524,47 +4580,93 @@ function fileToBase64(file) {
 // Reduces image size while maintaining quality for face recognition
 function compressImageForVerification(file, maxWidth = 1024, quality = 0.8) {
   return new Promise((resolve, reject) => {
+    // Validate input file
+    if (!file) {
+      console.error("❌ compressImageForVerification: No file provided");
+      reject(new Error("No file provided for compression"));
+      return;
+    }
+
+    console.log(
+      `📦 Starting compression for file: ${file.name || "unnamed"}, size: ${(
+        file.size / 1024
+      ).toFixed(1)}KB, type: ${file.type}`
+    );
+
     const img = new Image();
     const reader = new FileReader();
 
+    // Set a timeout for the entire compression operation
+    const timeoutId = setTimeout(() => {
+      console.error("❌ Image compression timed out");
+      reject(new Error("Image compression timed out"));
+    }, 10000); // 10 second timeout
+
     reader.onload = (e) => {
+      console.log(
+        `📖 FileReader loaded, data length: ${e.target.result.length}`
+      );
+
       img.onload = () => {
-        // Calculate new dimensions maintaining aspect ratio
-        let width = img.width;
-        let height = img.height;
+        try {
+          // Calculate new dimensions maintaining aspect ratio
+          let width = img.width;
+          let height = img.height;
+          console.log(`🖼️ Original image dimensions: ${width}x${height}`);
 
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          // Create canvas and draw resized image
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to JPEG with compression
+          const compressedBase64 = canvas.toDataURL("image/jpeg", quality);
+
+          clearTimeout(timeoutId);
+
+          // Log compression results
+          const originalSize = e.target.result.length;
+          const compressedSize = compressedBase64.length;
+          const savings = ((1 - compressedSize / originalSize) * 100).toFixed(
+            1
+          );
+          console.log(
+            `📦 Image compressed: ${(originalSize / 1024).toFixed(1)}KB → ${(
+              compressedSize / 1024
+            ).toFixed(1)}KB (${savings}% reduction)`
+          );
+
+          resolve(compressedBase64);
+        } catch (canvasError) {
+          clearTimeout(timeoutId);
+          console.error("❌ Canvas processing error:", canvasError);
+          reject(new Error("Failed to process image: " + canvasError.message));
         }
-
-        // Create canvas and draw resized image
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Convert to JPEG with compression
-        const compressedBase64 = canvas.toDataURL("image/jpeg", quality);
-        
-        // Log compression results
-        const originalSize = e.target.result.length;
-        const compressedSize = compressedBase64.length;
-        const savings = ((1 - compressedSize / originalSize) * 100).toFixed(1);
-        console.log(
-          `📦 Image compressed: ${(originalSize / 1024).toFixed(1)}KB → ${(compressedSize / 1024).toFixed(1)}KB (${savings}% reduction)`
-        );
-
-        resolve(compressedBase64);
       };
 
-      img.onerror = () => reject(new Error("Failed to load image for compression"));
+      img.onerror = (err) => {
+        clearTimeout(timeoutId);
+        console.error("❌ Image loading error:", err);
+        reject(new Error("Failed to load image for compression"));
+      };
+
       img.src = e.target.result;
     };
 
-    reader.onerror = () => reject(new Error("Failed to read file for compression"));
+    reader.onerror = (err) => {
+      clearTimeout(timeoutId);
+      console.error("❌ FileReader error:", err);
+      reject(new Error("Failed to read file for compression"));
+    };
+
     reader.readAsDataURL(file);
   });
 }
