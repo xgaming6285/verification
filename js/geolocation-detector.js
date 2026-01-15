@@ -31,7 +31,7 @@ class GeolocationDetector {
       },
       {
         name: "ip-api",
-        url: "http://ip-api.com/json/",
+        url: "https://ip-api.com/json/",
         parseResponse: (data) => data.countryCode?.toLowerCase(),
       },
     ];
@@ -55,11 +55,18 @@ class GeolocationDetector {
       const countryCode = await this.detectCountry();
       console.log(`Detected country: ${countryCode || "unknown"}`);
 
-      // Determine language based on country
-      const language = this.getLanguageForCountry(countryCode);
-      console.log(`Setting language to: ${language}`);
+      // If IP detection failed, keep the current language (from browser detection)
+      if (!countryCode) {
+        const currentLang = translationManager.getCurrentLanguage();
+        console.log(`IP detection failed, keeping current language: ${currentLang}`);
+        return currentLang;
+      }
 
-      // Apply the detected language
+      // Determine language based on detected country
+      const language = this.getLanguageForCountry(countryCode);
+      console.log(`Setting language to: ${language} based on country: ${countryCode}`);
+
+      // Apply the detected language only if different from current
       if (
         translationManager &&
         language !== translationManager.getCurrentLanguage()

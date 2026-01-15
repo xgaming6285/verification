@@ -4,9 +4,40 @@
  */
 class TranslationManager {
     constructor() {
-        this.currentLanguage = this.getStoredLanguage() || 'en';
+        // Priority: 1. Stored preference, 2. Browser language, 3. Default 'en'
+        this.currentLanguage = this.getStoredLanguage() || this.getBrowserLanguage() || 'en';
         this.translations = {};
         this.observers = [];
+    }
+
+    /**
+     * Get language from browser settings (navigator.language)
+     * This provides instant language detection without network calls
+     */
+    getBrowserLanguage() {
+        const supportedLanguages = ['bg', 'en', 'es', 'sv'];
+
+        // Check primary browser language
+        if (navigator.language) {
+            const browserLang = navigator.language.split('-')[0].toLowerCase();
+            if (supportedLanguages.includes(browserLang)) {
+                console.log(`Browser language detected: ${browserLang}`);
+                return browserLang;
+            }
+        }
+
+        // Check all browser languages (navigator.languages)
+        if (navigator.languages && navigator.languages.length > 0) {
+            for (const lang of navigator.languages) {
+                const langCode = lang.split('-')[0].toLowerCase();
+                if (supportedLanguages.includes(langCode)) {
+                    console.log(`Browser language detected from languages list: ${langCode}`);
+                    return langCode;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -50,10 +81,13 @@ class TranslationManager {
                 this.updatePageLanguage();
             }
         } catch (error) {
-            console.warn('Geolocation detection failed, using default language:', error);
-            // Fallback to English if detection fails
+            console.warn('Geolocation detection failed, using browser/default language:', error);
+            // Fallback to browser language or English if detection fails
             if (!this.getStoredLanguage()) {
-                await this.changeLanguage('en');
+                const fallbackLang = this.getBrowserLanguage() || 'en';
+                if (fallbackLang !== this.currentLanguage) {
+                    await this.changeLanguage(fallbackLang);
+                }
             }
         }
     }

@@ -780,26 +780,110 @@ function autoFillCountryFields(countryCode) {
  */
 async function initializeCountryAutoFill() {
   try {
+    let countryCode = null;
+
     // Check if GeolocationDetector is available
     if (window.GeolocationDetector) {
       const detector = new window.GeolocationDetector();
-      const countryCode = await detector.detectCountry();
+      countryCode = await detector.detectCountry();
 
       if (countryCode) {
         console.log(
           `🌐 Detected country from IP: ${countryCode.toUpperCase()}`
         );
-        autoFillCountryFields(countryCode);
-
-        // Store the detected country for later use
-        window.detectedCountryCode = countryCode.toUpperCase();
       }
+    }
+
+    // Fallback: Use browser language to infer country if IP detection failed
+    if (!countryCode) {
+      countryCode = getCountryFromBrowserLanguage();
+      if (countryCode) {
+        console.log(
+          `🌐 Inferred country from browser language: ${countryCode.toUpperCase()}`
+        );
+      }
+    }
+
+    if (countryCode) {
+      autoFillCountryFields(countryCode);
+      // Store the detected country for later use
+      window.detectedCountryCode = countryCode.toUpperCase();
     } else {
-      console.warn("GeolocationDetector not available for country auto-fill");
+      console.warn("Could not detect country from IP or browser language");
     }
   } catch (error) {
     console.warn("Failed to auto-fill country fields:", error);
   }
+}
+
+/**
+ * Infer country code from browser language settings
+ * This is used as a fallback when IP detection fails
+ */
+function getCountryFromBrowserLanguage() {
+  const langToCountry = {
+    'bg': 'bg',      // Bulgarian -> Bulgaria
+    'en-us': 'us',   // English (US) -> United States
+    'en-gb': 'gb',   // English (UK) -> United Kingdom
+    'en-au': 'au',   // English (AU) -> Australia
+    'en-ca': 'ca',   // English (CA) -> Canada
+    'de': 'de',      // German -> Germany
+    'de-at': 'at',   // German (Austria) -> Austria
+    'de-ch': 'ch',   // German (Swiss) -> Switzerland
+    'fr': 'fr',      // French -> France
+    'fr-ca': 'ca',   // French (CA) -> Canada
+    'fr-be': 'be',   // French (Belgium) -> Belgium
+    'fr-ch': 'ch',   // French (Swiss) -> Switzerland
+    'es': 'es',      // Spanish -> Spain
+    'es-mx': 'mx',   // Spanish (Mexico) -> Mexico
+    'es-ar': 'ar',   // Spanish (Argentina) -> Argentina
+    'it': 'it',      // Italian -> Italy
+    'pt': 'pt',      // Portuguese -> Portugal
+    'pt-br': 'br',   // Portuguese (Brazil) -> Brazil
+    'nl': 'nl',      // Dutch -> Netherlands
+    'nl-be': 'be',   // Dutch (Belgium) -> Belgium
+    'sv': 'se',      // Swedish -> Sweden
+    'ru': 'ru',      // Russian -> Russia
+    'pl': 'pl',      // Polish -> Poland
+    'ro': 'ro',      // Romanian -> Romania
+    'el': 'gr',      // Greek -> Greece
+    'tr': 'tr',      // Turkish -> Turkey
+    'ja': 'jp',      // Japanese -> Japan
+    'zh': 'cn',      // Chinese -> China
+    'ko': 'kr',      // Korean -> South Korea
+  };
+
+  // Check navigator.language first (e.g., "bg", "en-US", "de-DE")
+  if (navigator.language) {
+    const fullLang = navigator.language.toLowerCase();
+    const shortLang = fullLang.split('-')[0];
+
+    // Try full language code first (e.g., "en-us")
+    if (langToCountry[fullLang]) {
+      return langToCountry[fullLang];
+    }
+    // Try short language code (e.g., "en")
+    if (langToCountry[shortLang]) {
+      return langToCountry[shortLang];
+    }
+  }
+
+  // Check navigator.languages array
+  if (navigator.languages) {
+    for (const lang of navigator.languages) {
+      const fullLang = lang.toLowerCase();
+      const shortLang = fullLang.split('-')[0];
+
+      if (langToCountry[fullLang]) {
+        return langToCountry[fullLang];
+      }
+      if (langToCountry[shortLang]) {
+        return langToCountry[shortLang];
+      }
+    }
+  }
+
+  return null;
 }
 
 // Video Recording Manager Class for Session Recording
@@ -1877,11 +1961,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Initialize translation manager
   translationManager = new TranslationManager();
   await translationManager.init();
-
-  // Set language to English by default
-  if (translationManager.getCurrentLanguage() !== "en") {
-    await translationManager.changeLanguage("en");
-  }
 
   // Initialize session recording
   try {
