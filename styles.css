@@ -24,6 +24,15 @@ body {
     min-height: 100vh;
 }
 
+/* Hide content until translations are loaded to prevent flash of wrong language */
+body:not(.translations-loaded) {
+    visibility: hidden;
+}
+
+body.translations-loaded {
+    visibility: visible;
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;

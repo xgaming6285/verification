@@ -106,7 +106,7 @@ class TranslationManager {
      * Load translations for all supported languages
      */
     async loadTranslations() {
-        const languages = ['bg', 'en', 'es'];
+        const languages = ['bg', 'en', 'es', 'sv'];
         
         for (const lang of languages) {
             try {
@@ -159,7 +159,10 @@ class TranslationManager {
         if (this.translations[language]) {
             this.currentLanguage = language;
             this.storeLanguage(language);
-            
+
+            // Update HTML lang attribute
+            document.documentElement.lang = language;
+
             // Update all major sections safely
             this.updateNavigationSafe();
             this.updateHeroSafe();
@@ -174,7 +177,10 @@ class TranslationManager {
             this.updateVerificationModalSafe();
             this.updateCameraModalSafe();
             this.updateMiscellaneousSafe();
-            
+
+            // Mark translations as loaded to show the page content
+            document.body.classList.add('translations-loaded');
+
             this.notifyObservers(language);
         } else {
             console.warn(`Language '${language}' not supported`);
@@ -223,6 +229,9 @@ class TranslationManager {
 
         // Update all elements with data-translate attributes
         this.updateTranslatedElements();
+
+        // Mark translations as loaded to show the page content
+        document.body.classList.add('translations-loaded');
 
         // Only update safe elements and only when explicitly changing language
         // This prevents overwriting original content on page load

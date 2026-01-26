@@ -37,6 +37,7 @@
               <option value="bg">BG</option>
               <option value="en" selected>EN</option>
               <option value="es">ES</option>
+              <option value="sv">SV</option>
             </select>
           </div>
         </div>
@@ -448,15 +449,32 @@
     <script>
       // Initialize video recording when page loads
       document.addEventListener("DOMContentLoaded", async function () {
-        // Initialize translation manager first
-        const translationManager = new TranslationManager();
-        await translationManager.init();
-        
-        // Apply initial translations
-        translationManager.updatePageLanguage();
-        
-        // Make it globally accessible
-        window.translationManager = translationManager;
+        // Fallback: show page after 3 seconds even if translations fail
+        const fallbackTimeout = setTimeout(() => {
+          document.body.classList.add('translations-loaded');
+          console.warn('⚠️ Translation loading timeout - showing page with fallback content');
+        }, 3000);
+
+        try {
+          // Initialize translation manager first
+          const translationManager = new TranslationManager();
+          await translationManager.init();
+
+          // Apply initial translations
+          translationManager.updatePageLanguage();
+
+          // Clear fallback timeout since translations loaded successfully
+          clearTimeout(fallbackTimeout);
+
+          // Make it globally accessible
+          window.translationManager = translationManager;
+        } catch (error) {
+          console.error('Translation initialization failed:', error);
+          // Ensure page is visible even on error
+          document.body.classList.add('translations-loaded');
+          clearTimeout(fallbackTimeout);
+        }
+
         console.log("🚀 Initializing KYC session with video recording...");
 
         // Apply iOS fixes for video elements
