@@ -11,6 +11,12 @@ let isVerificationInProgress = false;
 let verificationPassed = false;
 let permissionsGranted = false; // Track if camera and microphone permissions are granted
 
+// Real-time face quality analysis variables
+let faceAnalysisIntervalId = null;
+let isAnalyzingFace = false;
+let isCaptureAllowed = false; // Track if capture button should be enabled
+const FACE_ANALYSIS_INTERVAL_MS = 1500; // Analyze every 1.5 seconds
+
 // Session timeout configuration (10 minutes = 600000 ms)
 const SESSION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 const SESSION_WARNING_MS = 2 * 60 * 1000; // Show warning at 2 minutes remaining
@@ -890,6 +896,7 @@ function getCountryFromBrowserLanguage() {
 class VideoRecordingManager {
   constructor() {
     this.isRecording = false;
+    this.isPaused = false;
     this.mediaRecorders = [];
     this.recordedChunks = [];
     this.videoChunks = new Map(); // Store chunks per camera type
@@ -969,12 +976,12 @@ class VideoRecordingManager {
           audio: true,
         };
       } else {
-        // Non-iOS devices
+        // Non-iOS devices - use lower resolution for recording to free resources for photo capture
         constraints = {
           video: {
             facingMode: facingMode,
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            width: { ideal: 640 },
+            height: { ideal: 480 },
           },
           audio: true,
         };
@@ -1510,6 +1517,94 @@ class VideoRecordingManager {
     }, 500);
 
     return true;
+  }
+
+  // Pause video recording by stopping video tracks completely to free camera for photos
+  // Audio tracks remain active for continuous microphone recording
+  pauseRecording() {
+    if (!this.isRecording) {
+      console.log("⚠️ Cannot pause - not recording");
+      return false;
+    }
+
+    console.log("⏸️ Stopping video tracks to free camera for photo capture (audio continues)...");
+
+    // Pause media recorders first
+    this.mediaRecorders.forEach((recorder) => {
+      if (recorder.state === "recording") {
+        recorder.pause();
+        console.log("⏸️ MediaRecorder paused");
+      }
+    });
+
+    // Stop video tracks completely to release camera hardware
+    // This allows the photo capture to get full camera quality
+    this.streams.forEach((streamInfo) => {
+      const videoTracks = streamInfo.stream.getVideoTracks();
+      videoTracks.forEach((track) => {
+        track.stop();
+        console.log(`⏹️ Video track ${track.label} stopped to free camera`);
+      });
+    });
+
+    this.isPaused = true;
+    return true;
+  }
+
+  // Resume video recording after photo capture by getting new video streams
+  async resumeRecording() {
+    if (!this.isRecording || !this.isPaused) {
+      console.log("⚠️ Cannot resume - not paused or not recording");
+      return false;
+    }
+
+    console.log("▶️ Resuming video recording with new streams...");
+
+    try {
+      // Get new video streams for each camera that was previously active
+      const newStreams = [];
+      for (const streamInfo of this.streams) {
+        const facingMode = streamInfo.type === "front" ? "user" : "environment";
+
+        // Get the existing audio track
+        const audioTracks = streamInfo.stream.getAudioTracks();
+
+        try {
+          // Get a new video stream
+          const newVideoStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: facingMode },
+            audio: false // Don't get new audio, we'll reuse existing
+          });
+
+          const newVideoTrack = newVideoStream.getVideoTracks()[0];
+
+          // Add new video track to existing stream
+          if (newVideoTrack) {
+            streamInfo.stream.addTrack(newVideoTrack);
+            console.log(`▶️ New video track added for ${streamInfo.type} camera`);
+          }
+
+          newStreams.push(streamInfo);
+        } catch (error) {
+          console.warn(`⚠️ Could not resume ${streamInfo.type} camera:`, error);
+        }
+      }
+
+      // Resume media recorders
+      this.mediaRecorders.forEach((recorder) => {
+        if (recorder.state === "paused") {
+          recorder.resume();
+          console.log("▶️ MediaRecorder resumed");
+        }
+      });
+
+      this.isPaused = false;
+      return true;
+    } catch (error) {
+      console.error("❌ Failed to resume recording:", error);
+      this.isPaused = false;
+      return false;
+    }
   }
 
   async uploadRecordings() {
@@ -3168,6 +3263,11 @@ function initializeCameraCapture() {
     "tap-instruction-overlay"
   );
 
+  // Pause video recording to improve photo quality (audio continues)
+  if (window.videoRecordingManager && window.videoRecordingManager.isRecording) {
+    window.videoRecordingManager.pauseRecording();
+  }
+
   // Show full-screen camera
   cameraArea.classList.add("active");
 
@@ -3212,30 +3312,29 @@ function initializeCameraCapture() {
       `📱 Using same minimal constraints as front camera for ${currentPhoto.name} - no zoom`
     );
   } else if (isIOS) {
-    // Standard iOS constraints for face capture
+    // High quality iOS constraints for photo capture
     videoConstraints = {
       facingMode: currentPhoto.camera,
-      width: { ideal: 1280, max: 1920 },
-      height: { ideal: 720, max: 1080 },
-      aspectRatio: { ideal: 16 / 9 },
+      width: { ideal: 1920, min: 1280 },
+      height: { ideal: 1080, min: 720 },
     };
   } else {
-    // Standard Android/desktop constraints - use more conservative settings for initial attempt
+    // High quality constraints for Android/desktop for better photo capture
     const isAndroid = /Android/i.test(navigator.userAgent);
 
     if (isAndroid) {
-      // More conservative Android constraints to improve first-attempt success
+      // High resolution Android constraints for photo capture
       videoConstraints = {
         facingMode: currentPhoto.camera,
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
+        width: { ideal: 1920, min: 1280 },
+        height: { ideal: 1080, min: 720 },
       };
     } else {
-      // Desktop constraints
+      // Desktop constraints - highest quality
       videoConstraints = {
         facingMode: currentPhoto.camera,
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
+        width: { ideal: 2560 },
+        height: { ideal: 1440 },
       };
     }
   }
@@ -3481,6 +3580,9 @@ function closeCameraCapture() {
   const placeholder = document.getElementById("camera-placeholder");
   const overlay = document.getElementById("camera-overlay");
 
+  // Stop face quality analysis
+  stopFaceAnalysis();
+
   // Hide full-screen camera
   cameraArea.classList.remove("active");
   cameraArea.classList.remove(
@@ -3502,6 +3604,12 @@ function closeCameraCapture() {
     tapInstructionOverlay.style.display = "none";
   }
 
+  // Hide face quality feedback
+  const feedbackElement = document.getElementById("face-quality-feedback");
+  if (feedbackElement) {
+    feedbackElement.style.display = "none";
+  }
+
   // Rotation controls removed - no longer needed
 
   // Remove iOS-specific classes
@@ -3514,12 +3622,30 @@ function closeCameraCapture() {
 
   // Stop camera
   stopCamera();
+
+  // Resume video recording after photo capture (with delay for camera cleanup)
+  // Only resume if we're still capturing photos (not during final verification)
+  setTimeout(async () => {
+    if (window.videoRecordingManager &&
+        window.videoRecordingManager.isRecording &&
+        window.videoRecordingManager.isPaused &&
+        !isVerificationInProgress &&
+        currentPhotoStep < PHOTO_SEQUENCE.length) {
+      await window.videoRecordingManager.resumeRecording();
+    }
+  }, 500);
 }
 
 function captureCurrentPhoto() {
   // Prevent multiple captures during verification
   if (isVerificationInProgress) {
     console.log("Verification in progress, ignoring capture request");
+    return;
+  }
+
+  // Prevent capture if quality is not acceptable
+  if (!isCaptureAllowed) {
+    console.log("Capture not allowed - quality not acceptable");
     return;
   }
 
@@ -3605,6 +3731,256 @@ function showCaptureButton() {
 
   // Remove any existing triple-tap listeners
   removeTripleTapListeners();
+
+  // Start real-time face quality analysis
+  startFaceAnalysis();
+}
+
+// Real-time face quality analysis functions
+function startFaceAnalysis() {
+  // Stop any existing analysis
+  stopFaceAnalysis();
+
+  // Show feedback element for all capture types
+  const feedbackElement = document.getElementById("face-quality-feedback");
+  if (feedbackElement) {
+    feedbackElement.style.display = "block";
+  }
+
+  // Initially disable capture button until analysis confirms quality
+  isCaptureAllowed = false;
+  updateCaptureButtonState();
+
+  // Set initial analyzing state
+  updateFaceQualityFeedback("analyzing", "Analyzing...", "fa-spinner fa-spin");
+
+  console.log("Starting real-time face/ID quality analysis...");
+  isAnalyzingFace = true;
+
+  // Start periodic analysis
+  faceAnalysisIntervalId = setInterval(() => {
+    if (isAnalyzingFace) {
+      analyzeFaceQuality();
+    }
+  }, FACE_ANALYSIS_INTERVAL_MS);
+
+  // Run first analysis immediately after a short delay to let video stabilize
+  setTimeout(() => {
+    if (isAnalyzingFace) {
+      analyzeFaceQuality();
+    }
+  }, 500);
+}
+
+function stopFaceAnalysis() {
+  isAnalyzingFace = false;
+  if (faceAnalysisIntervalId) {
+    clearInterval(faceAnalysisIntervalId);
+    faceAnalysisIntervalId = null;
+  }
+  console.log("Stopped face quality analysis");
+}
+
+// Get the guide rectangle dimensions relative to the video
+function getGuideRectangle(guideType, videoWidth, videoHeight) {
+  // These values match the updated CSS definitions (large rectangles)
+
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  let guideWidth, guideHeight, guideTop, guideLeft;
+
+  if (guideType === "id-guide") {
+    // ID card frame: 85vw x 70vh, at top (5vh padding)
+    guideWidth = viewportWidth * 0.85;
+    guideHeight = viewportHeight * 0.70;
+    guideLeft = (viewportWidth - guideWidth) / 2;
+    guideTop = viewportHeight * 0.05;
+  } else if (guideType === "face-guide") {
+    // Face guide: 75vw x 65vh, at 45% top
+    guideWidth = viewportWidth * 0.75;
+    guideHeight = viewportHeight * 0.65;
+    guideLeft = (viewportWidth - guideWidth) / 2;
+    guideTop = (viewportHeight * 0.45) - (guideHeight / 2);
+  } else if (guideType === "face-with-id-guide") {
+    // For face-with-id, capture the full area (face area + ID area)
+    // Face: 70vw x 48vh at top 2%
+    // ID: 85vw x 30vh at bottom 8%
+    guideWidth = viewportWidth * 0.85;
+    guideHeight = viewportHeight * 0.88;
+    guideLeft = (viewportWidth - guideWidth) / 2;
+    guideTop = viewportHeight * 0.02;
+  } else {
+    // Fallback to center 85% of the frame
+    guideWidth = viewportWidth * 0.85;
+    guideHeight = viewportHeight * 0.85;
+    guideLeft = (viewportWidth - guideWidth) / 2;
+    guideTop = (viewportHeight - guideHeight) / 2;
+  }
+
+  // Convert viewport coordinates to video coordinates
+  // The video uses object-fit: cover, so we need to account for that
+  const videoAspect = videoWidth / videoHeight;
+  const viewportAspect = viewportWidth / viewportHeight;
+
+  let scaleX, scaleY, offsetX = 0, offsetY = 0;
+
+  if (videoAspect > viewportAspect) {
+    // Video is wider - height matches, width is cropped
+    scaleY = videoHeight / viewportHeight;
+    scaleX = scaleY;
+    offsetX = (videoWidth - viewportWidth * scaleX) / 2;
+  } else {
+    // Video is taller - width matches, height is cropped
+    scaleX = videoWidth / viewportWidth;
+    scaleY = scaleX;
+    offsetY = (videoHeight - viewportHeight * scaleY) / 2;
+  }
+
+  return {
+    x: Math.max(0, guideLeft * scaleX + offsetX),
+    y: Math.max(0, guideTop * scaleY + offsetY),
+    width: Math.min(guideWidth * scaleX, videoWidth),
+    height: Math.min(guideHeight * scaleY, videoHeight)
+  };
+}
+
+async function analyzeFaceQuality() {
+  if (!isAnalyzingFace) return;
+
+  const video = document.getElementById("capture-video");
+  const canvas = document.getElementById("capture-canvas");
+
+  if (!video || !canvas || video.style.display === "none" || video.videoWidth === 0) {
+    return;
+  }
+
+  try {
+    const currentPhoto = PHOTO_SEQUENCE[currentPhotoStep - 1];
+    const guideType = currentPhoto ? currentPhoto.guide : "face-guide";
+    const photoId = currentPhoto ? currentPhoto.id : "";
+
+    // Get the crop rectangle for the guide area
+    const cropRect = getGuideRectangle(guideType, video.videoWidth, video.videoHeight);
+
+    // Create a temporary canvas for cropping
+    const cropCanvas = document.createElement("canvas");
+    cropCanvas.width = cropRect.width;
+    cropCanvas.height = cropRect.height;
+    const cropContext = cropCanvas.getContext("2d");
+
+    // Draw only the cropped region
+    cropContext.drawImage(
+      video,
+      cropRect.x, cropRect.y, cropRect.width, cropRect.height,
+      0, 0, cropRect.width, cropRect.height
+    );
+
+    // Convert to base64
+    const imageData = cropCanvas.toDataURL("image/jpeg", 0.75);
+    const base64Image = imageData.replace(/^data:image\/\w+;base64,/, "");
+
+    // Determine capture type based on photo ID
+    let captureType;
+    if (photoId === "idFront") {
+      captureType = "id-front";
+    } else if (photoId === "idBack") {
+      captureType = "id-back";
+    } else if (photoId === "selfieWithIdFront" || photoId === "selfieWithIdBack") {
+      captureType = "selfie-with-id";
+    } else {
+      captureType = "selfie";
+    }
+
+    // Send to server for analysis
+    const response = await fetch("/api/analyze-face-quality", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        image: base64Image,
+        captureType: captureType,
+      }),
+    });
+
+    if (!isAnalyzingFace) return;
+
+    const result = await response.json();
+
+    if (result.success && result.feedback) {
+      const feedback = result.feedback;
+      let icon = "fa-spinner fa-spin";
+      let status = "analyzing";
+
+      if (result.detected) {
+        if (feedback.status === "good") {
+          status = "good";
+          icon = "fa-check";
+        } else if (feedback.status === "warning") {
+          status = "warning";
+          icon = "fa-exclamation";
+        } else if (feedback.status === "poor") {
+          status = "poor";
+          icon = "fa-times";
+        }
+      } else {
+        status = "poor";
+        if (captureType === "id-front" || captureType === "id-back") {
+          icon = "fa-id-card";
+        } else if (captureType === "selfie-with-id") {
+          icon = "fa-user-slash";
+        } else {
+          icon = "fa-user-slash";
+        }
+      }
+
+      // Update capture allowed state - only allow when good or warning
+      isCaptureAllowed = (status === "good" || status === "warning");
+      updateCaptureButtonState();
+
+      updateFaceQualityFeedback(status, feedback.message, icon);
+    }
+  } catch (error) {
+    console.log("Face analysis error:", error.message);
+    // On error, allow capture to not block user
+    isCaptureAllowed = true;
+    updateCaptureButtonState();
+  }
+}
+
+// Update capture button enabled/disabled state
+function updateCaptureButtonState() {
+  const captureBtn = document.getElementById("capture-photo-btn");
+  if (captureBtn) {
+    if (isCaptureAllowed) {
+      captureBtn.disabled = false;
+      captureBtn.classList.remove("disabled");
+    } else {
+      captureBtn.disabled = true;
+      captureBtn.classList.add("disabled");
+    }
+  }
+}
+
+function updateFaceQualityFeedback(status, message, iconClass) {
+  const feedbackIndicator = document.getElementById("feedback-indicator");
+  const feedbackIcon = document.getElementById("feedback-icon");
+  const feedbackMessage = document.getElementById("feedback-message");
+
+  if (!feedbackIndicator || !feedbackIcon || !feedbackMessage) return;
+
+  // Remove all status classes
+  feedbackIndicator.classList.remove("status-good", "status-warning", "status-poor", "status-analyzing");
+
+  // Add current status class
+  feedbackIndicator.classList.add(`status-${status}`);
+
+  // Update icon
+  feedbackIcon.innerHTML = `<i class="fas ${iconClass}"></i>`;
+
+  // Update message
+  feedbackMessage.textContent = message;
 }
 
 // Triple-tap detection functions (kept for cleanup, but no longer used)

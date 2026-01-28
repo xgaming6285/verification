@@ -231,6 +231,135 @@ function generateUniqueId() {
   });
 }
 
+// API endpoint for real-time quality analysis during camera capture
+// Only uses DetectFaces (the only Rekognition permission available)
+app.post("/api/analyze-face-quality", async (req, res) => {
+  try {
+    const { image, captureType } = req.body;
+
+    if (!image) {
+      return res.status(400).json({ success: false, error: "Image is required" });
+    }
+
+    const imageBuffer = base64ToBuffer(image);
+
+    if (imageBuffer.length < 1000) {
+      return res.json({
+        success: true,
+        detected: false,
+        feedback: { message: "Image too small", code: "IMAGE_TOO_SMALL", status: "poor" },
+      });
+    }
+
+    // ID BACK: No face to detect, just allow capture
+    // (We don't have DetectLabels permission to verify document)
+    if (captureType === "id-back") {
+      return res.json({
+        success: true,
+        detected: true,
+        feedback: {
+          message: "Position ID back in frame - ready to capture",
+          code: "GOOD",
+          status: "good",
+        },
+      });
+    }
+
+    // For all other types, use DetectFaces
+    const result = await rekognition.detectFaces({
+      Image: { Bytes: imageBuffer },
+      Attributes: ["ALL"],
+    }).promise();
+
+    const faces = result.FaceDetails || [];
+
+    // No face detected
+    if (faces.length === 0) {
+      let msg;
+      if (captureType === "id-front") {
+        msg = "ID not detected - position ID within frame";
+      } else if (captureType === "selfie-with-id") {
+        msg = "Face not detected - show your face and ID";
+      } else {
+        msg = "Face not detected - position face within frame";
+      }
+      return res.json({
+        success: true,
+        detected: false,
+        feedback: { message: msg, code: "NO_FACE", status: "poor" },
+      });
+    }
+
+    const face = faces[0];
+    const quality = face.Quality || {};
+    const brightness = quality.Brightness || 0;
+    const sharpness = quality.Sharpness || 0;
+    const boundingBox = face.BoundingBox || {};
+
+    const issues = [];
+    let overallStatus = "good";
+
+    // Check brightness
+    if (brightness < 35) {
+      issues.push("Too dark");
+      overallStatus = "poor";
+    } else if (brightness > 92) {
+      issues.push("Too bright");
+      overallStatus = "poor";
+    }
+
+    // Check sharpness (blur)
+    if (sharpness < 15) {
+      issues.push("Blurry - hold steady");
+      overallStatus = overallStatus === "poor" ? "poor" : "warning";
+    }
+
+    // Check if close enough
+    const minSize = captureType === "id-front" ? 0.05 : 0.10;
+    if (boundingBox.Width && boundingBox.Width < minSize) {
+      issues.push("Move closer");
+      overallStatus = overallStatus === "poor" ? "poor" : "warning";
+    }
+
+    // For selfie types, check pose
+    if (captureType === "selfie" || captureType === "selfie-with-id") {
+      const pose = face.Pose || {};
+      if (Math.abs(pose.Yaw || 0) > 30) {
+        issues.push("Face camera");
+        overallStatus = overallStatus === "poor" ? "poor" : "warning";
+      }
+    }
+
+    // Build ready message
+    let readyMsg;
+    if (captureType === "id-front") {
+      readyMsg = "ID detected - ready to capture";
+    } else if (captureType === "selfie-with-id") {
+      readyMsg = "Face detected - hold ID visible";
+    } else {
+      readyMsg = "Face detected - ready to capture";
+    }
+
+    res.json({
+      success: true,
+      detected: true,
+      feedback: {
+        message: issues.length === 0 ? readyMsg : issues.join(" • "),
+        code: overallStatus.toUpperCase(),
+        status: overallStatus,
+      },
+    });
+  } catch (error) {
+    console.error("Quality analysis error:", error.code, error.message);
+    // On error, allow capture
+    res.json({
+      success: true,
+      detected: true,
+      feedback: { message: "Ready to capture", code: "WARNING", status: "warning" },
+    });
+  }
+});
+
 // API endpoint for AWS Rekognition face verification
 app.post("/api/verify-identity", async (req, res) => {
   try {

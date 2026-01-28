@@ -1241,6 +1241,82 @@ body {
   white-space: nowrap;
 }
 
+/* Real-time face quality feedback */
+.face-quality-feedback {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10004;
+  pointer-events: none;
+  display: none;
+}
+
+.camera-capture-area.active .face-quality-feedback {
+  display: block;
+}
+
+.feedback-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  min-width: 180px;
+  text-align: center;
+}
+
+.feedback-icon {
+  font-size: 24px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: white;
+}
+
+.feedback-indicator.status-good .feedback-icon {
+  background: rgba(34, 197, 94, 0.9);
+}
+
+.feedback-indicator.status-warning .feedback-icon {
+  background: rgba(234, 179, 8, 0.9);
+}
+
+.feedback-indicator.status-poor .feedback-icon {
+  background: rgba(239, 68, 68, 0.9);
+}
+
+.feedback-indicator.status-analyzing .feedback-icon {
+  background: rgba(59, 130, 246, 0.9);
+}
+
+.feedback-message {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  line-height: 1.4;
+}
+
+.feedback-indicator.status-good .feedback-message {
+  color: #86efac;
+}
+
+.feedback-indicator.status-warning .feedback-message {
+  color: #fde047;
+}
+
+.feedback-indicator.status-poor .feedback-message {
+  color: #fca5a5;
+}
+
 /* Rotation Controls removed - no longer needed */
 
 #capture-video {
@@ -1315,15 +1391,16 @@ body {
   width: 100%;
   height: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 5vh;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
 }
 
 .id-card-frame {
   position: relative;
-  width: min(70vw, 320px);
-  height: min(95vh, 480px);
+  width: 85vw;
+  height: 70vh;
   border: 3px solid var(--primary-color);
   border-radius: 16px;
   background: transparent;
@@ -1371,16 +1448,16 @@ body {
   border-bottom-right-radius: 12px;
 }
 
-/* Face Guide - moved even higher */
+/* Face Guide - large oval */
 .face-guide {
   position: absolute;
-  top: 40%;
+  top: 45%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 320px;
-  height: 420px;
+  width: 75vw;
+  height: 65vh;
   border: 3px solid var(--primary-color);
-  border-radius: 160px;
+  border-radius: 50%;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
 }
 
@@ -1400,13 +1477,13 @@ body {
 
 .face-area {
   position: absolute;
-  top: 5%;
+  top: 2%;
   left: 50%;
   transform: translateX(-50%);
-  width: 350px;
-  height: 420px;
+  width: 70vw;
+  height: 48vh;
   border: 3px solid var(--primary-color);
-  border-radius: 175px;
+  border-radius: 50%;
 }
 
 .face-area::before {
@@ -1416,11 +1493,11 @@ body {
 
 .id-area {
   position: absolute;
-  bottom: 5%;
+  bottom: 8%;
   left: 50%;
   transform: translateX(-50%);
-  width: 380px;
-  height: 240px;
+  width: 85vw;
+  height: 30vh;
   border: 3px solid var(--warning-color, #f59e0b);
   border-radius: 12px;
 }
@@ -1490,6 +1567,16 @@ body {
 
 .capture-photo-btn.hidden {
   display: none !important;
+}
+
+.capture-photo-btn.disabled,
+.capture-photo-btn:disabled {
+  background: rgba(100, 100, 100, 0.3);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* Triple-tap indicator styles */
@@ -2447,12 +2534,14 @@ body {
     bottom: 65px;
   }
 
-  /* Visual guides mobile adjustments */
+  /* Visual guides mobile adjustments - large rectangles */
 
   /* ID card guide mobile */
   .id-card-frame {
-    width: min(65vw, 280px);
-    height: min(85vh, 420px);
+    width: 85vw;
+    height: 70vh;
+    max-width: none;
+    max-height: none;
   }
 
   .id-card-frame .corner {
@@ -2461,9 +2550,11 @@ body {
   }
 
   .face-guide {
-    width: 220px;
-    height: 300px;
-    border-radius: 110px;
+    width: 75vw;
+    height: 65vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 50%;
   }
 
   .face-guide::before {
@@ -2471,10 +2562,12 @@ body {
   }
 
   .face-area {
-    top: 8%;
-    width: 220px;
-    height: 270px;
-    border-radius: 110px;
+    top: 2%;
+    width: 70vw;
+    height: 48vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 50%;
   }
 
   .face-area::before {
@@ -2648,10 +2741,12 @@ body {
     bottom: 40px;
   }
 
-  /* Adjust guides for landscape */
+  /* Adjust guides for landscape - large rectangles */
   .id-card-frame {
-    width: min(50vw, 240px);
-    height: min(80vh, 360px);
+    width: 55vw;
+    height: 85vh;
+    max-width: none;
+    max-height: none;
   }
 
   .id-card-frame .corner {
@@ -2660,21 +2755,27 @@ body {
   }
 
   .face-guide {
-    width: 180px;
-    height: 240px;
-    border-radius: 90px;
+    width: 45vw;
+    height: 80vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 50%;
   }
 
   .face-area {
-    width: 190px;
-    height: 230px;
-    border-radius: 95px;
-    top: 15%;
+    width: 40vw;
+    height: 55vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 50%;
+    top: 2%;
   }
 
   .id-area {
-    width: 200px;
-    height: 120px;
+    width: 50vw;
+    height: 30vh;
+    max-width: none;
+    max-height: none;
     bottom: 10%;
   }
 }
@@ -2826,10 +2927,12 @@ body {
     font-size: 14px;
   }
 
-  /* Camera guides for small screens */
+  /* Camera guides for small screens - large rectangles */
   .id-card-frame {
-    width: min(60vw, 260px);
-    height: min(80vh, 380px);
+    width: 90vw;
+    height: 70vh;
+    max-width: none;
+    max-height: none;
   }
 
   .id-card-frame .corner {
@@ -2838,16 +2941,20 @@ body {
   }
 
   .face-guide {
-    width: 240px;
-    height: 320px;
-    border-radius: 120px;
+    width: 80vw;
+    height: 65vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 50%;
   }
 
   /* Adjust ID area positioning for small screens */
   .id-area {
-    bottom: 18% !important;
-    width: min(65vw, 260px) !important;
-    height: min(18vh, 140px) !important;
+    bottom: 8% !important;
+    width: 90vw !important;
+    height: 30vh !important;
+    max-width: none !important;
+    max-height: none !important;
   }
 
   /* Camera button positioning for small screens */

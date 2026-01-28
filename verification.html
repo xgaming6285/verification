@@ -63,6 +63,7 @@
               <option value="bg">BG</option>
               <option value="en" selected>EN</option>
               <option value="es">ES</option>
+              <option value="sv">SE</option>
             </select>
           </div>
         </div>
@@ -1269,6 +1270,16 @@
           <button class="camera-close-arrow" onclick="closeCameraCapture()">
             <i class="fas fa-arrow-left"></i>
           </button>
+
+          <!-- Real-time face quality feedback -->
+          <div class="face-quality-feedback" id="face-quality-feedback">
+            <div class="feedback-indicator" id="feedback-indicator">
+              <span class="feedback-icon" id="feedback-icon">
+                <i class="fas fa-spinner fa-spin"></i>
+              </span>
+              <span class="feedback-message" id="feedback-message">Analyzing...</span>
+            </div>
+          </div>
 
           <!-- Capture instruction overlay -->
           <div class="tap-instruction-overlay" id="tap-instruction-overlay">
