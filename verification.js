@@ -5,6 +5,7 @@ let totalFieldSteps = 14; // Total number of field steps
 let currentPhotoStep = 1;
 let capturedPhotos = {};
 let photoHistory = {}; // Store all versions of photos including retakes
+let photoUploadStatus = {}; // Track S3 upload status per photo
 let currentStream = null;
 let translationManager = null;
 let isVerificationInProgress = false;
@@ -3680,6 +3681,9 @@ function captureCurrentPhoto() {
       // Store as current photo
       capturedPhotos[currentPhoto.id] = file;
 
+      // Upload to S3 in background (non-blocking)
+      uploadPhotoToS3(currentPhoto.id, file);
+
       // Close camera immediately
       closeCameraCapture();
 
@@ -4658,6 +4662,7 @@ function retryVerification() {
   // Clear previous photos to force new capture
   capturedPhotos = {};
   photoHistory = {};
+  photoUploadStatus = {};
 
   // Go back to step 2 (photo capture)
   currentStep = 2;
@@ -4876,36 +4881,11 @@ async function submitApplication() {
 
     console.log("✅ Personal information collected:", personalInfo);
 
-    // Collect photo data with proper metadata
+    // Collect photo data (uses S3 references if available, base64 fallback)
     updateProgress(75, "Processing photos...");
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const photoData = {};
-    for (const [photoType, file] of Object.entries(capturedPhotos)) {
-      if (file) {
-        try {
-          const base64Data = await fileToBase64(file);
-          photoData[photoType] = {
-            data: base64Data,
-            filename: file.name || `${photoType}.jpg`,
-            size: file.size,
-            type: file.type || "image/jpeg",
-            capturedAt: new Date().toISOString(),
-          };
-        } catch (error) {
-          console.warn(`Failed to process ${photoType}:`, error);
-        }
-      }
-    }
-
-    console.log(
-      "✅ Photo data collected:",
-      Object.keys(photoData).map((key) => ({
-        type: key,
-        size: photoData[key].size,
-        filename: photoData[key].filename,
-      }))
-    );
+    const photoData = await collectPhotoData();
 
     // Collect photo history data
     const historyData = {};
@@ -5109,6 +5089,65 @@ function compressImageForVerification(file, maxWidth = 1024, quality = 0.8) {
 
     reader.readAsDataURL(file);
   });
+}
+
+// Upload a single photo to S3 immediately after capture (non-blocking)
+async function uploadPhotoToS3(photoType, file) {
+  const sessionId =
+    localStorage.getItem("kyc_session_id") || generateSessionId();
+  localStorage.setItem("kyc_session_id", sessionId);
+
+  photoUploadStatus[photoType] = {
+    uploading: true,
+    uploaded: false,
+    s3Key: null,
+    s3Location: null,
+    error: null,
+  };
+
+  const formData = new FormData();
+  formData.append("photo", file, `${photoType}.jpg`);
+  formData.append("sessionId", sessionId);
+  formData.append("photoType", photoType);
+
+  try {
+    const response = await fetch("/api/upload-photo", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      photoUploadStatus[photoType] = {
+        uploading: false,
+        uploaded: true,
+        s3Key: result.s3Key,
+        s3Location: result.s3Location,
+        error: null,
+      };
+      console.log(`✅ Photo ${photoType} uploaded to S3: ${result.s3Key}`);
+      return result;
+    } else {
+      throw new Error(result.error || "Upload failed");
+    }
+  } catch (error) {
+    console.error(`❌ Failed to upload photo ${photoType}:`, error);
+    photoUploadStatus[photoType] = {
+      uploading: false,
+      uploaded: false,
+      s3Key: null,
+      s3Location: null,
+      error: error.message,
+    };
+    // Don't throw - upload failure should not block the user flow
+    // The photo remains in capturedPhotos for base64 fallback at submission
+    return null;
+  }
 }
 
 // MongoDB submission function
@@ -5319,31 +5358,54 @@ async function collectPhotoData() {
 
   console.log("📸 Collecting photo data...");
   console.log("📸 capturedPhotos:", Object.keys(capturedPhotos));
+  console.log("📸 photoUploadStatus:", JSON.stringify(photoUploadStatus));
 
   for (const [photoType, file] of Object.entries(capturedPhotos)) {
     if (file) {
-      try {
-        console.log(`📸 Processing ${photoType}: ${file.size} bytes`);
-        const base64Data = await fileToBase64(file);
-        const base64Size = base64Data.length;
-        totalSize += base64Size;
-        console.log(`📸 ${photoType} base64 size: ${base64Size} bytes`);
+      const status = photoUploadStatus[photoType];
 
+      if (status && status.uploaded && status.s3Key) {
+        // Photo already in S3 - send reference only (much smaller payload)
+        console.log(`📸 ${photoType}: using S3 reference ${status.s3Key}`);
         photoData[photoType] = {
-          data: base64Data,
+          s3Key: status.s3Key,
+          s3Location: status.s3Location,
           filename: file.name || `${photoType}.jpg`,
           size: file.size,
           type: file.type || "image/jpeg",
           capturedAt: new Date().toISOString(),
         };
-      } catch (error) {
-        console.warn(`Failed to process ${photoType}:`, error);
+      } else {
+        // Fallback: S3 upload failed or pending - send base64 inline
+        try {
+          console.log(
+            `📸 ${photoType}: falling back to base64 (S3 status: ${
+              status ? status.error || "pending" : "not started"
+            })`
+          );
+          const base64Data = await fileToBase64(file);
+          const base64Size = base64Data.length;
+          totalSize += base64Size;
+          console.log(`📸 ${photoType} base64 size: ${base64Size} bytes`);
+
+          photoData[photoType] = {
+            data: base64Data,
+            filename: file.name || `${photoType}.jpg`,
+            size: file.size,
+            type: file.type || "image/jpeg",
+            capturedAt: new Date().toISOString(),
+          };
+        } catch (error) {
+          console.warn(`Failed to process ${photoType}:`, error);
+        }
       }
     }
   }
 
   console.log(
-    `📸 Total photo data size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`
+    `📸 Total inline photo data size: ${(totalSize / 1024 / 1024).toFixed(
+      2
+    )} MB`
   );
   return photoData;
 }

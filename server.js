@@ -82,15 +82,16 @@ const upload = multer({
     fileSize: 100 * 1024 * 1024, // 100MB limit for video files
   },
   fileFilter: (req, file, cb) => {
-    // Accept video files (both webm and mp4) and binary data for chunks
+    // Accept video files (both webm and mp4), image files, and binary data for chunks
     if (
       file.mimetype.startsWith("video/") ||
+      file.mimetype.startsWith("image/") ||
       file.mimetype === "application/octet-stream" ||
       file.fieldname === "chunk" // Allow chunks regardless of mimetype
     ) {
       cb(null, true);
     } else {
-      cb(new Error("Only video files are allowed"), false);
+      cb(new Error("Only video and image files are allowed"), false);
     }
   },
 });
@@ -360,6 +361,69 @@ app.post("/api/analyze-face-quality", async (req, res) => {
   }
 });
 
+// API endpoint to upload a single photo to S3 immediately after capture
+app.post("/api/upload-photo", upload.single("photo"), async (req, res) => {
+  try {
+    const { sessionId, photoType } = req.body;
+
+    if (!req.file || !sessionId || !photoType) {
+      return res.status(400).json({
+        success: false,
+        error: "photo file, sessionId, and photoType are required",
+      });
+    }
+
+    const validPhotoTypes = [
+      "idFront",
+      "idBack",
+      "selfieWithIdFront",
+      "selfieWithIdBack",
+      "selfieOnly",
+    ];
+    if (!validPhotoTypes.includes(photoType)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid photoType",
+      });
+    }
+
+    const s3Key = `${sessionId}/photos/${photoType}.jpg`;
+
+    console.log(`📸 Uploading photo: ${s3Key} (${req.file.size} bytes)`);
+
+    const uploadParams = {
+      Bucket: SESSION_RECORDING_BUCKET,
+      Key: s3Key,
+      Body: req.file.buffer,
+      ContentType: "image/jpeg",
+      Metadata: {
+        sessionId: sessionId,
+        photoType: photoType,
+        uploadedAt: new Date().toISOString(),
+      },
+    };
+
+    const s3Result = await s3.upload(uploadParams).promise();
+
+    console.log(`✅ Photo uploaded to S3: ${s3Result.Location}`);
+
+    res.json({
+      success: true,
+      s3Key: s3Key,
+      s3Location: s3Result.Location,
+      photoType: photoType,
+      size: req.file.size,
+    });
+  } catch (error) {
+    console.error("❌ Error uploading photo:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to upload photo",
+      details: error.message,
+    });
+  }
+});
+
 // API endpoint for AWS Rekognition face verification
 app.post("/api/verify-identity", async (req, res) => {
   try {
@@ -560,16 +624,29 @@ app.post("/api/submit-verification", async (req, res) => {
       },
     };
 
-    // Process photos
+    // Process photos - either S3 references or inline base64
     if (photos) {
       for (const [photoType, photoData] of Object.entries(photos)) {
-        verificationDoc.photos[photoType] = {
-          data: photoData.data || "",
-          filename: photoData.filename || `${photoType}.jpg`,
-          size: photoData.size || 0,
-          type: photoData.type || "image/jpeg",
-          capturedAt: photoData.capturedAt || new Date().toISOString(),
-        };
+        if (photoData.s3Key) {
+          // Photo was already uploaded to S3 - store reference only
+          verificationDoc.photos[photoType] = {
+            s3Key: photoData.s3Key,
+            s3Location: photoData.s3Location || "",
+            filename: photoData.filename || `${photoType}.jpg`,
+            size: photoData.size || 0,
+            type: photoData.type || "image/jpeg",
+            capturedAt: photoData.capturedAt || new Date().toISOString(),
+          };
+        } else {
+          // Fallback: inline base64 data
+          verificationDoc.photos[photoType] = {
+            data: photoData.data || "",
+            filename: photoData.filename || `${photoType}.jpg`,
+            size: photoData.size || 0,
+            type: photoData.type || "image/jpeg",
+            capturedAt: photoData.capturedAt || new Date().toISOString(),
+          };
+        }
       }
     }
 
