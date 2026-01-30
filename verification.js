@@ -5506,20 +5506,16 @@ function showPixelDebugToast(message) {
   return;
 }
 
-// Facebook Pixel - fires SubmitApplication event on successful submission
+// Facebook Pixel - fires Lead event on successful form submission
 function fireFacebookPixelSubmitApplication() {
-  // Only inject the pixel once
   if (window.fbq) {
-    // Pixel already loaded, just fire the event
-    fbq("track", "SubmitApplication");
-    console.log("📊 Facebook Pixel: SubmitApplication event fired");
-    showPixelDebugToast(
-      "✅ SubmitApplication event fired (pixel was already loaded)"
-    );
+    fbq("track", "Lead");
+    console.log("📊 Facebook Pixel: Lead event fired on form submission");
+    showPixelDebugToast("✅ Lead event fired on form submission");
     return;
   }
 
-  // Inject Facebook Pixel Base Code + SubmitApplication event
+  // Fallback: pixel should already be loaded from <head>, but init if missing
   !(function (f, b, e, v, n, t, s) {
     if (f.fbq) return;
     n = f.fbq = function () {
@@ -5542,71 +5538,21 @@ function fireFacebookPixelSubmitApplication() {
     "https://connect.facebook.net/en_US/fbevents.js"
   );
 
-  // Initialize with your ID
   fbq("init", "1177285404600305");
-
-  // Track PageView (Standard)
   fbq("track", "PageView");
+  fbq("track", "Lead");
 
-  // Track SubmitApplication (The event you requested)
-  fbq("track", "SubmitApplication");
-
-  // Add noscript fallback image
-  const noscriptImg = document.createElement("img");
-  noscriptImg.height = 1;
-  noscriptImg.width = 1;
-  noscriptImg.style.display = "none";
-  noscriptImg.src =
-    "https://www.facebook.com/tr?id=1177285404600305&ev=PageView&noscript=1";
-  document.body.appendChild(noscriptImg);
-
-  console.log(
-    "📊 Facebook Pixel: Base code loaded + SubmitApplication event fired"
-  );
-
-  // Show visual debug toast
-  showPixelDebugToast(
-    "✅ Pixel loaded + PageView + SubmitApplication events fired!"
-  );
+  console.log("📊 Facebook Pixel: Base code loaded + Lead event fired");
+  showPixelDebugToast("✅ Pixel loaded + Lead event fired!");
 }
 
 // Facebook Pixel for direct mode - fires events at each verification step
-function ensureDirectModePixelLoaded() {
-  if (window.fbq) return;
-
-  !(function (f, b, e, v, n, t, s) {
-    if (f.fbq) return;
-    n = f.fbq = function () {
-      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
-    };
-    if (!f._fbq) f._fbq = n;
-    n.push = n;
-    n.loaded = !0;
-    n.version = "2.0";
-    n.queue = [];
-    t = b.createElement(e);
-    t.async = !0;
-    t.src = v;
-    s = b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t, s);
-  })(
-    window,
-    document,
-    "script",
-    "https://connect.facebook.net/en_US/fbevents.js"
-  );
-
-  fbq("init", "1177285404600305");
-  fbq("track", "PageView");
-  console.log("📊 Direct mode pixel: initialized with ID 1177285404600305");
-}
-
 function fireDirectModeStepEvent(stepName) {
   if (!isDirectMode) return;
+  if (!window.fbq) return;
 
-  ensureDirectModePixelLoaded();
-  fbq("trackCustom", "VerificationStep", { step: stepName });
-  console.log(`📊 Direct mode pixel: VerificationStep event fired - ${stepName}`);
+  fbq("track", "PageView");
+  console.log(`📊 Direct mode pixel: PageView event fired - ${stepName}`);
 }
 
 // Show submission error
