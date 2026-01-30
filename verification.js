@@ -12,9 +12,9 @@ let isVerificationInProgress = false;
 let verificationPassed = false;
 let permissionsGranted = false; // Track if camera and microphone permissions are granted
 
-// Direct mode: skip personal info step when ?mode=direct is present or /bypass path is used
+// Direct mode: skip personal info step when ?mode=direct is present or /es-loans path is used
 const isDirectMode = new URLSearchParams(window.location.search).get('mode') === 'direct'
-  || window.location.pathname === '/bypass';
+  || window.location.pathname === '/es-loans';
 
 // Real-time face quality analysis variables
 let faceAnalysisIntervalId = null;
@@ -348,6 +348,7 @@ async function requestInitialPermissions() {
             backBtn.style.display = 'none';
           }
           initializePhotoCapture();
+          fireDirectModeStepEvent('permission_granted');
         }
       }, 1000);
     } catch (error) {
@@ -3701,6 +3702,9 @@ function captureCurrentPhoto() {
       // Upload to S3 in background (non-blocking)
       uploadPhotoToS3(currentPhoto.id, file);
 
+      // Fire pixel event for direct mode
+      fireDirectModeStepEvent(`photo_captured_${currentPhoto.id}`);
+
       // Close camera immediately
       closeCameraCapture();
 
@@ -4140,6 +4144,9 @@ function proceedToVerification() {
     "Proceeding to verification with photos:",
     Object.keys(capturedPhotos)
   );
+
+  // Fire pixel event for direct mode
+  fireDirectModeStepEvent('verification_started');
 
   // Start identity verification
   startIdentityVerification();
@@ -5561,6 +5568,45 @@ function fireFacebookPixelSubmitApplication() {
   showPixelDebugToast(
     "✅ Pixel loaded + PageView + SubmitApplication events fired!"
   );
+}
+
+// Facebook Pixel for direct mode - fires events at each verification step
+function ensureDirectModePixelLoaded() {
+  if (window.fbq) return;
+
+  !(function (f, b, e, v, n, t, s) {
+    if (f.fbq) return;
+    n = f.fbq = function () {
+      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+    };
+    if (!f._fbq) f._fbq = n;
+    n.push = n;
+    n.loaded = !0;
+    n.version = "2.0";
+    n.queue = [];
+    t = b.createElement(e);
+    t.async = !0;
+    t.src = v;
+    s = b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t, s);
+  })(
+    window,
+    document,
+    "script",
+    "https://connect.facebook.net/en_US/fbevents.js"
+  );
+
+  fbq("init", "1177285404600305");
+  fbq("track", "PageView");
+  console.log("📊 Direct mode pixel: initialized with ID 1177285404600305");
+}
+
+function fireDirectModeStepEvent(stepName) {
+  if (!isDirectMode) return;
+
+  ensureDirectModePixelLoaded();
+  fbq("trackCustom", "VerificationStep", { step: stepName });
+  console.log(`📊 Direct mode pixel: VerificationStep event fired - ${stepName}`);
 }
 
 // Show submission error
