@@ -12,6 +12,10 @@ let isVerificationInProgress = false;
 let verificationPassed = false;
 let permissionsGranted = false; // Track if camera and microphone permissions are granted
 
+// Direct mode: skip personal info step when ?mode=direct is present or /bypass path is used
+const isDirectMode = new URLSearchParams(window.location.search).get('mode') === 'direct'
+  || window.location.pathname === '/bypass';
+
 // Real-time face quality analysis variables
 let faceAnalysisIntervalId = null;
 let isAnalyzingFace = false;
@@ -331,6 +335,19 @@ async function requestInitialPermissions() {
         // Initialize video recording after permissions are granted
         if (typeof initializeVideoRecording === "function") {
           initializeVideoRecording();
+        }
+
+        // Direct mode: skip Step 1 entirely, go straight to photo capture
+        if (isDirectMode) {
+          console.log("📸 Direct mode active - skipping personal info, going to photo capture");
+          document.getElementById('step-1').classList.remove('active');
+          document.getElementById('step-2').classList.add('active');
+          currentStep = 2;
+          const backBtn = document.querySelector('#step-2 .prev-btn');
+          if (backBtn) {
+            backBtn.style.display = 'none';
+          }
+          initializePhotoCapture();
         }
       }, 1000);
     } catch (error) {
@@ -2965,7 +2982,7 @@ function handleKeyboardNavigation(event) {
 function validateCurrentStep() {
   switch (currentStep) {
     case 1:
-      return validatePersonalInfo();
+      return isDirectMode ? true : validatePersonalInfo();
     case 2:
       return validatePhotoCapture();
     case 3:
@@ -5226,6 +5243,7 @@ async function submitFailedVerification(verificationResult) {
         similarity: verificationResult.similarity || 0,
         confidence: verificationResult.confidence || 0,
         isRetry: isRetry,
+        directMode: isDirectMode,
       },
     };
 
@@ -5270,6 +5288,7 @@ async function submitVerifiedApplication(
       similarity: verificationResult.similarity || 0,
       confidence: verificationResult.confidence || 0,
       isRetry: isRetry,
+      directMode: isDirectMode,
     },
   };
 
@@ -5295,6 +5314,27 @@ async function submitVerifiedApplication(
 
 // Helper functions for data collection
 function collectPersonalInfo() {
+  // In direct mode, personal info comes from external source - return placeholders
+  if (isDirectMode) {
+    return {
+      firstName: "N/A",
+      lastName: "N/A",
+      egn: "N/A",
+      phone: "N/A",
+      email: "N/A",
+      income: "0",
+      employment: "N/A",
+      address: "N/A",
+      streetName: "N/A",
+      houseNumber: "N/A",
+      apartment: "",
+      city: "N/A",
+      state: "N/A",
+      postalCode: "N/A",
+      country: "N/A",
+    };
+  }
+
   function getStateValue() {
     const stateSelect = document.getElementById("state-select");
     const stateInput = document.getElementById("state-input");

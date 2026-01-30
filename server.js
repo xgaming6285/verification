@@ -1295,6 +1295,11 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "verification.html"));
 });
 
+// Serve direct/bypass verification (skips personal info, goes straight to camera)
+app.get("/bypass", (req, res) => {
+  res.sendFile(path.join(__dirname, "verification.html"));
+});
+
 // Generate session ID
 function generateSessionId() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {

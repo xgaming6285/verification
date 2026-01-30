@@ -1499,6 +1499,14 @@
         // Request permissions immediately before allowing any interaction
         await requestInitialPermissions();
 
+        // In direct mode, hide Step 1 entirely to prevent any flash
+        if (typeof isDirectMode !== 'undefined' && isDirectMode) {
+          const step1Element = document.getElementById('step-1');
+          if (step1Element) {
+            step1Element.style.display = 'none';
+          }
+        }
+
         // After permissions are granted, initialize video recording
         async function initializeVideoRecording() {
           // Get existing session ID from localStorage
