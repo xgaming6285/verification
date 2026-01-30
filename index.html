@@ -28,9 +28,9 @@
       s.parentNode.insertBefore(t,s)}(window, document,'script',
       'https://connect.facebook.net/en_US/fbevents.js');
       fbq('init', '1177285404600305');
-      console.log('[FB Pixel] Initialized with ID 1177285404600305');
       fbq('track', 'PageView');
       console.log('[FB Pixel] PageView fired on', window.location.pathname);
+      fetch('/api/pixel-log', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'PageView', page: window.location.pathname }) }).catch(function(){});
     </script>
     <noscript><img height="1" width="1" style="display:none"
       src="https://www.facebook.com/tr?id=1177285404600305&ev=PageView&noscript=1"

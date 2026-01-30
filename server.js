@@ -796,6 +796,13 @@ app.get("/api/verification-status/:sessionId", async (req, res) => {
   }
 });
 
+// Pixel event debug logging (shows in Render logs)
+app.post("/api/pixel-log", (req, res) => {
+  const { event, page, step } = req.body;
+  console.log(`📊 [FB Pixel] event="${event}" page="${page}" step="${step || "N/A"}"`);
+  res.json({ ok: true });
+});
+
 // Health check endpoint
 app.get("/api/health", (req, res) => {
   res.json({

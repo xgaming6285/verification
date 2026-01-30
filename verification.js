@@ -5506,11 +5506,21 @@ function showPixelDebugToast(message) {
   return;
 }
 
+// Send pixel event to server so it shows in Render logs
+function logPixelToServer(event, step) {
+  fetch("/api/pixel-log", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ event, page: window.location.pathname, step }),
+  }).catch(() => {});
+}
+
 // Facebook Pixel - fires Lead event on successful form submission
 function fireFacebookPixelSubmitApplication() {
   if (window.fbq) {
     fbq("track", "Lead");
     console.log("[FB Pixel] Lead fired on form submission (pixel already loaded)");
+    logPixelToServer("Lead", "form_submitted");
     return;
   }
 
@@ -5542,6 +5552,7 @@ function fireFacebookPixelSubmitApplication() {
   fbq("track", "PageView");
   fbq("track", "Lead");
   console.log("[FB Pixel] Fallback loaded + Lead fired on form submission");
+  logPixelToServer("Lead", "form_submitted_fallback");
 }
 
 // Facebook Pixel for direct mode - fires events at each verification step
@@ -5551,6 +5562,7 @@ function fireDirectModeStepEvent(stepName) {
 
   fbq("track", "PageView");
   console.log(`[FB Pixel] PageView fired on step: ${stepName}`);
+  logPixelToServer("PageView", stepName);
 }
 
 // Show submission error
