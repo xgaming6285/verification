@@ -5510,12 +5510,12 @@ function showPixelDebugToast(message) {
 function fireFacebookPixelSubmitApplication() {
   if (window.fbq) {
     fbq("track", "Lead");
-    console.log("📊 Facebook Pixel: Lead event fired on form submission");
-    showPixelDebugToast("✅ Lead event fired on form submission");
+    console.log("[FB Pixel] Lead fired on form submission (pixel already loaded)");
     return;
   }
 
   // Fallback: pixel should already be loaded from <head>, but init if missing
+  console.warn("[FB Pixel] Pixel not found in <head>, loading fallback...");
   !(function (f, b, e, v, n, t, s) {
     if (f.fbq) return;
     n = f.fbq = function () {
@@ -5541,9 +5541,7 @@ function fireFacebookPixelSubmitApplication() {
   fbq("init", "1177285404600305");
   fbq("track", "PageView");
   fbq("track", "Lead");
-
-  console.log("📊 Facebook Pixel: Base code loaded + Lead event fired");
-  showPixelDebugToast("✅ Pixel loaded + Lead event fired!");
+  console.log("[FB Pixel] Fallback loaded + Lead fired on form submission");
 }
 
 // Facebook Pixel for direct mode - fires events at each verification step
@@ -5552,7 +5550,7 @@ function fireDirectModeStepEvent(stepName) {
   if (!window.fbq) return;
 
   fbq("track", "PageView");
-  console.log(`📊 Direct mode pixel: PageView event fired - ${stepName}`);
+  console.log(`[FB Pixel] PageView fired on step: ${stepName}`);
 }
 
 // Show submission error
