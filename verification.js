@@ -3643,14 +3643,21 @@ function closeCameraCapture() {
   stopCamera();
 
   // Resume video recording after photo capture (with delay for camera cleanup)
-  // Only resume if we're still capturing photos (not during final verification)
+  // Resume after ALL photos including the last one - recording will be stopped later in startIdentityVerification
   setTimeout(async () => {
     if (window.videoRecordingManager &&
         window.videoRecordingManager.isRecording &&
         window.videoRecordingManager.isPaused &&
-        !isVerificationInProgress &&
-        currentPhotoStep < PHOTO_SEQUENCE.length) {
-      await window.videoRecordingManager.resumeRecording();
+        !isVerificationInProgress) {
+      const resumed = await window.videoRecordingManager.resumeRecording();
+      if (!resumed) {
+        console.warn("⚠️ Video resume failed, retrying in 1s...");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const retryResult = await window.videoRecordingManager.resumeRecording();
+        if (!retryResult) {
+          console.error("❌ Video resume failed after retry");
+        }
+      }
     }
   }, 500);
 }
@@ -3680,7 +3687,7 @@ function captureCurrentPhoto() {
 
   // Convert to blob
   canvas.toBlob(
-    function (blob) {
+    async function (blob) {
       // Create a file-like object
       const file = new File([blob], `${currentPhoto.id}-${Date.now()}.jpg`, {
         type: "image/jpeg",
@@ -3717,9 +3724,9 @@ function captureCurrentPhoto() {
         updateCaptureInstructions();
         updateProgressIndicator();
       } else {
-        // All photos captured, proceed to verification IMMEDIATELY
+        // All photos captured - wait for uploads then proceed to verification
         console.log(
-          "All photos captured, proceeding to verification immediately..."
+          "All photos captured, waiting for S3 uploads to complete..."
         );
         // Hide the entire capture interface immediately to prevent any interaction
         const captureSection = document.getElementById(
@@ -3728,7 +3735,10 @@ function captureCurrentPhoto() {
         if (captureSection) {
           captureSection.style.display = "none";
         }
-        // Proceed to verification without delay
+        // Show brief upload progress, wait for all photos to reach S3, then verify
+        showVerificationInProgress();
+        updateVerificationProgress(5, "Uploading photos...");
+        await waitForAllPhotoUploads();
         proceedToVerification();
       }
     },
@@ -4226,7 +4236,22 @@ async function startIdentityVerification() {
       "🔍 Starting identity verification (video upload continues in background)..."
     );
 
-    // Stop recording first - chunks are already being uploaded in the background
+    // If recording is paused (from photo capture), resume it briefly to flush remaining chunks
+    if (
+      window.videoRecordingManager &&
+      window.videoRecordingManager.isRecording &&
+      window.videoRecordingManager.isPaused
+    ) {
+      console.log("▶️ Resuming paused recording before stop to flush chunks...");
+      try {
+        await window.videoRecordingManager.resumeRecording();
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Give 1s to collect final chunks
+      } catch (e) {
+        console.warn("⚠️ Could not resume recording before stop:", e);
+      }
+    }
+
+    // Stop recording - chunks are already being uploaded in the background
     if (
       window.videoRecordingManager &&
       window.videoRecordingManager.isRecording
@@ -4261,13 +4286,12 @@ async function startIdentityVerification() {
           "✅ Identity verification PASSED - showing result immediately"
         );
 
-        // Get recording data if available, but don't wait too long
+        // Get recording data - wait up to 15 seconds for video upload to complete
         let sessionRecordingData = [];
         try {
-          // Race between video upload and a short timeout
           sessionRecordingData = await Promise.race([
             videoUploadPromise,
-            new Promise((resolve) => setTimeout(() => resolve([]), 2000)), // 2 second timeout
+            new Promise((resolve) => setTimeout(() => resolve([]), 15000)), // 15 second timeout
           ]);
         } catch (e) {
           console.warn("Video upload not ready yet, continuing anyway");
@@ -5115,8 +5139,8 @@ function compressImageForVerification(file, maxWidth = 1024, quality = 0.8) {
   });
 }
 
-// Upload a single photo to S3 immediately after capture (non-blocking)
-async function uploadPhotoToS3(photoType, file) {
+// Upload a single photo to S3 with retry logic (non-blocking)
+async function uploadPhotoToS3(photoType, file, maxRetries = 3) {
   const sessionId =
     localStorage.getItem("kyc_session_id") || generateSessionId();
   localStorage.setItem("kyc_session_id", sessionId);
@@ -5127,51 +5151,110 @@ async function uploadPhotoToS3(photoType, file) {
     s3Key: null,
     s3Location: null,
     error: null,
+    retryCount: 0,
   };
 
-  const formData = new FormData();
-  formData.append("photo", file, `${photoType}.jpg`);
-  formData.append("sessionId", sessionId);
-  formData.append("photoType", photoType);
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const formData = new FormData();
+      formData.append("photo", file, `${photoType}.jpg`);
+      formData.append("sessionId", sessionId);
+      formData.append("photoType", photoType);
 
-  try {
-    const response = await fetch("/api/upload-photo", {
-      method: "POST",
-      body: formData,
+      const response = await fetch("/api/upload-photo", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        photoUploadStatus[photoType] = {
+          uploading: false,
+          uploaded: true,
+          s3Key: result.s3Key,
+          s3Location: result.s3Location,
+          error: null,
+          retryCount: attempt - 1,
+        };
+        console.log(`✅ Photo ${photoType} uploaded to S3 (attempt ${attempt}): ${result.s3Key}`);
+        return result;
+      } else {
+        throw new Error(result.error || "Upload failed");
+      }
+    } catch (error) {
+      console.error(`❌ Photo ${photoType} upload attempt ${attempt}/${maxRetries} failed:`, error);
+      photoUploadStatus[photoType] = {
+        uploading: attempt < maxRetries,
+        uploaded: false,
+        s3Key: null,
+        s3Location: null,
+        error: error.message,
+        retryCount: attempt,
+      };
+
+      if (attempt < maxRetries) {
+        const backoffMs = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
+        console.log(`🔄 Retrying photo ${photoType} upload in ${backoffMs / 1000}s...`);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+      }
+    }
+  }
+
+  console.error(`❌ Photo ${photoType} upload failed after ${maxRetries} attempts`);
+  return null;
+}
+
+// Wait for all photo uploads to complete before proceeding to verification
+async function waitForAllPhotoUploads() {
+  const requiredPhotos = PHOTO_SEQUENCE.map(p => p.id);
+  console.log("⏳ Waiting for all photo uploads to complete...");
+
+  // Wait up to 30 seconds for in-progress uploads to finish
+  const maxWaitMs = 30000;
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < maxWaitMs) {
+    const allDone = requiredPhotos.every(photoType => {
+      const status = photoUploadStatus[photoType];
+      return status && !status.uploading;
     });
 
-    if (!response.ok) {
-      throw new Error(`Upload failed: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (result.success) {
-      photoUploadStatus[photoType] = {
-        uploading: false,
-        uploaded: true,
-        s3Key: result.s3Key,
-        s3Location: result.s3Location,
-        error: null,
-      };
-      console.log(`✅ Photo ${photoType} uploaded to S3: ${result.s3Key}`);
-      return result;
-    } else {
-      throw new Error(result.error || "Upload failed");
-    }
-  } catch (error) {
-    console.error(`❌ Failed to upload photo ${photoType}:`, error);
-    photoUploadStatus[photoType] = {
-      uploading: false,
-      uploaded: false,
-      s3Key: null,
-      s3Location: null,
-      error: error.message,
-    };
-    // Don't throw - upload failure should not block the user flow
-    // The photo remains in capturedPhotos for base64 fallback at submission
-    return null;
+    if (allDone) break;
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
+
+  // Retry any failed uploads
+  const failedPhotos = requiredPhotos.filter(photoType => {
+    const status = photoUploadStatus[photoType];
+    return !status || !status.uploaded;
+  });
+
+  if (failedPhotos.length > 0) {
+    console.log(`🔄 Retrying ${failedPhotos.length} failed photo uploads: ${failedPhotos.join(', ')}`);
+    const retryPromises = failedPhotos.map(photoType => {
+      const file = capturedPhotos[photoType];
+      if (file) {
+        return uploadPhotoToS3(photoType, file, 2);
+      }
+      return Promise.resolve(null);
+    });
+    await Promise.all(retryPromises);
+  }
+
+  // Log final status
+  const finalStatus = requiredPhotos.map(photoType => {
+    const status = photoUploadStatus[photoType];
+    return `${photoType}: ${status?.uploaded ? '✅' : '❌'}`;
+  });
+  console.log(`📸 Photo upload status: ${finalStatus.join(', ')}`);
+
+  const uploadedCount = requiredPhotos.filter(pt => photoUploadStatus[pt]?.uploaded).length;
+  console.log(`📸 ${uploadedCount}/${requiredPhotos.length} photos uploaded to S3`);
 }
 
 // MongoDB submission function
