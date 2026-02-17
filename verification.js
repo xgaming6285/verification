@@ -12,9 +12,10 @@ let isVerificationInProgress = false;
 let verificationPassed = false;
 let permissionsGranted = false; // Track if camera and microphone permissions are granted
 
-// Direct mode: skip personal info step when ?mode=direct is present or /es-loans path is used
+// Direct mode: skip personal info step when ?mode=direct is present or /es-loans or /ca-loans path is used
 const isDirectMode = new URLSearchParams(window.location.search).get('mode') === 'direct'
-  || window.location.pathname === '/es-loans';
+  || window.location.pathname === '/es-loans'
+  || window.location.pathname === '/ca-loans';
 
 // Real-time face quality analysis variables
 let faceAnalysisIntervalId = null;
